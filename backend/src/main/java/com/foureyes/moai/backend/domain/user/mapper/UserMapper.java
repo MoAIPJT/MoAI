@@ -1,8 +1,8 @@
-package com.foureyes.moai.backend.domain.user.repository;
+package com.foureyes.moai.backend.domain.user.mapper;
 
 import com.foureyes.moai.backend.domain.user.entity.User;
 
 public interface UserMapper {
-    User selectByEmail(String email);
     void insertUser(User user);
+    User findByEmail(String email);
 }

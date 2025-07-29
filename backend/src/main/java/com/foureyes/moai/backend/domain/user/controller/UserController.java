@@ -1,27 +1,24 @@
 package com.foureyes.moai.backend.domain.user.controller;
 
-import com.foureyes.moai.backend.domain.user.dto.request.UserSignupRequestDto;
-import com.foureyes.moai.backend.domain.user.entity.User;
+import com.foureyes.moai.backend.domain.user.dto.request.UserSignupRequest;
+import com.foureyes.moai.backend.domain.user.dto.response.UserSignupResponse;
 import com.foureyes.moai.backend.domain.user.service.UserService;
-import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/users")
-@RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @PostMapping("/signup")
-    public ResponseEntity<String> signup(@RequestBody UserSignupRequestDto dto) {
-        userService.signup(dto);
-        return ResponseEntity.ok("회원가입 완료!");
-    }
-
-    @GetMapping("/{email}")
-    public ResponseEntity<User> getUser(@PathVariable String email) {
-        return ResponseEntity.ok(userService.findByEmail(email));
+    public ResponseEntity<UserSignupResponse> signup(@Valid @RequestBody UserSignupRequest request) {
+        return ResponseEntity.ok(userService.signup(request));
     }
 }
+

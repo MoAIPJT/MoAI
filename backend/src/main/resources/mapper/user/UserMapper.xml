@@ -3,17 +3,14 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.foureyes.moai.backend.domain.user.repository.UserMapper">
+<mapper namespace="com.foureyes.moai.backend.domain.user.mapper.UserMapper">
 
-    <select id="selectByEmail" parameterType="string" resultType="com.foureyes.moai.backend.domain.user.entity.User">
-        SELECT id, email, password, name
-        FROM user
-        WHERE email = #{email}
-    </select>
-
-    <insert id="insertUser" parameterType="com.foureyes.moai.backend.domain.user.entity.User">
-        INSERT INTO user(email, password, name)
-        VALUES (#{email}, #{password}, #{name});
+    <insert id="insertUser" parameterType="User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user (email, password, name, provider, provider_id, profile_image_url, is_verified, is_deleted)
+        VALUES (#{email}, #{password}, #{name}, #{provider}, #{providerId}, #{profileImageUrl}, #{isVerified}, #{isDeleted})
     </insert>
 
+    <select id="findByEmail" resultType="User">
+        SELECT * FROM user WHERE email = #{email}
+    </select>
 </mapper>
