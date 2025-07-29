@@ -8,4 +8,5 @@ export interface ButtonProps {
   fullWidth?: boolean // 가로 너비
   onClick?: () => void // 이벤트 핸들러
   type?: 'button' | 'submit' | 'reset' // 버튼 타입
+  disabled?: boolean // 비활성화 상태
 }

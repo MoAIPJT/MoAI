@@ -10,7 +10,7 @@ interface SocialSignupFormProps {
 
 const providerIcon: Record<string, string> = {
   google: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg',
-  kakao: '/kakao-icon.png', // 필요시 추가
+  kakao: '/kakao-icon.png', 
 };
 
 const SocialSignupForm: React.FC<SocialSignupFormProps> = ({ email, provider }) => {
