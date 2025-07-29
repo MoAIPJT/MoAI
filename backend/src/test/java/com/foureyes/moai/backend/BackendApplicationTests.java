@@ -1,4 +1,4 @@
-package com.foureeyes.moai.backend;
+package com.foureyes.moai.backend;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

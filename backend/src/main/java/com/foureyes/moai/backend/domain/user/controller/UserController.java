@@ -1,8 +1,8 @@
-package com.foureeyes.moai.backend.domain.user.controller;
+package com.foureyes.moai.backend.domain.user.controller;
 
-import com.foureeyes.moai.backend.domain.user.dto.request.UserSignupRequestDto;
-import com.foureeyes.moai.backend.domain.user.entity.User;
-import com.foureeyes.moai.backend.domain.user.service.UserService;
+import com.foureyes.moai.backend.domain.user.dto.request.UserSignupRequestDto;
+import com.foureyes.moai.backend.domain.user.entity.User;
+import com.foureyes.moai.backend.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

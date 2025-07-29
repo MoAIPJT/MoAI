@@ -1,4 +1,4 @@
-package com.foureeyes.moai.backend.domain.user.entity;
+package com.foureyes.moai.backend.domain.user.entity;
 
 import lombok.*;
 
