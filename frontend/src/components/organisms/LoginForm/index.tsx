@@ -8,7 +8,9 @@ import WelcomeText from '@/components/molecules/WelcomeText'
 const LoginForm: React.FC<LoginFormProps> = ({
   onLogin,
   onKakaoLogin,
-  onGoogleLogin
+  onGoogleLogin,
+  loading = false,
+  error = null
 }) => {
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
@@ -76,6 +78,13 @@ const LoginForm: React.FC<LoginFormProps> = ({
           </LinkText>
         </div>
 
+        {/* 에러 메시지 */}
+        {error && (
+          <div className="text-red-500 text-sm text-center">
+            {error}
+          </div>
+        )}
+
         {/* 버튼 묶음: 딱 붙게 설정 */}
         <div className="flex flex-col gap-2">
           <Button
@@ -83,8 +92,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
             size="lg"
             fullWidth
             onClick={() => onLogin?.(formData)}
+            disabled={loading}
           >
-            로그인하기
+            {loading ? '로그인 중...' : '로그인하기'}
           </Button>
 
           <Button

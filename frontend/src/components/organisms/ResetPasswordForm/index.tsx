@@ -2,13 +2,18 @@ import React, { useState } from 'react';
 import LabeledInput from '@/components/molecules/LabeledInput';
 import Button from '@/components/atoms/Button';
 import LinkText from '@/components/atoms/LinkText';
+import type { ResetPasswordFormProps } from './types';
 
-const ResetPasswordForm: React.FC = () => {
+const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
+  onResetPassword,
+  loading = false,
+  error = null
+}) => {
   const [email, setEmail] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // 비밀번호 재설정 링크 전송 처리
+    onResetPassword?.(email);
   };
 
   return (
@@ -19,6 +24,13 @@ const ResetPasswordForm: React.FC = () => {
           <span className="text-purple-600 font-semibold">MoAI</span> 비밀번호 재설정하세요.
         </p>
       </div>
+      {/* 에러 메시지 */}
+      {error && (
+        <div className="text-red-500 text-sm text-center mb-4">
+          {error}
+        </div>
+      )}
+
       <form className="space-y-6" onSubmit={handleSubmit}>
         <LabeledInput
           id="email"
@@ -34,12 +46,13 @@ const ResetPasswordForm: React.FC = () => {
           size="lg"
           fullWidth
           type="submit"
+          disabled={loading}
         >
           <span className="flex items-center justify-center gap-2">
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
               <path d="M3 12h15M15 6l6 6-6 6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            비밀번호 재설정 링크 보내기
+            {loading ? '전송 중...' : '비밀번호 재설정 링크 보내기'}
           </span>
         </Button>
       </form>
