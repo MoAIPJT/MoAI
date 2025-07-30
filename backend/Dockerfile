@@ -29,7 +29,7 @@ ENV TZ=Asia/Seoul \
 WORKDIR /.
 
 # Copy only the jar file from the builder stage
-COPY --from=builder /target/backend-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=builder /target/*.jar app.jar
 
 # Expose the application port
 EXPOSE 8080
