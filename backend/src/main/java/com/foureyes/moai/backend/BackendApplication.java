@@ -1,4 +1,4 @@
-package com.foureeyes.moai.backend;
+package com.foureyes.moai.backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
