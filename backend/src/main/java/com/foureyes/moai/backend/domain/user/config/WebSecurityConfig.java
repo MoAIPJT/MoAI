@@ -28,7 +28,6 @@ public class WebSecurityConfig {
     @Bean
     public WebSecurityCustomizer configure() {
         return (web) -> web.ignoring()
-            .requestMatchers(PathRequest.toH2Console())
             .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }
 
@@ -36,10 +35,19 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
+            .formLogin(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT라서 세션 사용 X
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/users/signup", "/users/login", "/users/oauth/**")
+                .requestMatchers(
+                    "/users/signup",
+                    "/users/login",
+                    "/users/hello",
+                    "/users/oauth/**",
+                    "/swagger-ui.html",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/v3/api-docs/swagger-config")
                 .permitAll() // 회원가입, 로그인, 소셜로그인 API는 인증 없이 접근 가능
                 .anyRequest().authenticated() // 나머지는 인증 필요
             );
