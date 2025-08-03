@@ -2,9 +2,9 @@
 
 -- 1. Users Table
 INSERT INTO users (id, name, email, password, provider_type, profile_image_url, created_at, refresh_token) VALUES
-(1, 'Alice Smith', 'alice.smith@example.com', 'hashed_pass_alice', 'email', 'https://placehold.co/100x100/FF5733/FFFFFF?text=AS', NOW(), 'refresh_token_alice'),
-(2, 'Bob Johnson', 'bob.johnson@example.com', 'hashed_pass_bob', 'google', 'https://placehold.co/100x100/33FF57/000000?text=BJ', NOW(), 'refresh_token_bob'),
-(3, 'Charlie Brown', 'charlie.brown@example.com', 'hashed_pass_charlie', 'email', 'https://placehold.co/100x100/3357FF/FFFFFF?text=CB', NOW(), 'refresh_token_charlie');
+(1, 'Alice Smith', 'alice.smith@example.com', '$2a$12$dsCAfIheorNo.7hmfx.4B.1jjAZ8HTYUMk7vyJf7zmONSyMZOvV.S', 'email', 'https://placehold.co/100x100/FF5733/FFFFFF?text=AS', NOW(), 'refresh_token_alice'), -- orginal_password : hased_pass_alice
+(2, 'Bob Johnson', 'bob.johnson@example.com', '$2a$12$voS7nCUTyrDQW6nBFeYD5.xk3c3N/gIRVNPMNPwvoJ8E4zoLHXgN6', 'google', 'https://placehold.co/100x100/33FF57/000000?text=BJ', NOW(), 'refresh_token_bob'), -- original password : hashed_pass_bob
+(3, 'Charlie Brown', 'charlie.brown@example.com', '$2a$12$orbtHx6TIlKn8pkvMLnfvOWpk7Sw4tbdjcHjLa1Km0fbv3VllgL/a', 'email', 'https://placehold.co/100x100/3357FF/FFFFFF?text=CB', NOW(), 'refresh_token_charlie'); -- original password : hashed_pass_charlie
 
 -- 2. Study Groups Table
 INSERT INTO study_groups (id, name, description, image_url, created_by, created_at, invite_url) VALUES
