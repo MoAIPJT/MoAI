@@ -6,6 +6,7 @@ import com.foureyes.moai.backend.domain.user.entity.User;
 import com.foureyes.moai.backend.domain.user.exception.CustomException;
 import com.foureyes.moai.backend.domain.user.exception.ErrorCode;
 import com.foureyes.moai.backend.domain.user.mapper.UserMapper;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,12 +23,21 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserSignupResponse signup(UserSignupRequest request) {
-        if (userMapper.findByEmail(request.email()) != null) {
+        // 이메일 중복 확인
+        if (userMapper.findByEmail(request.getEmail()) != null) {
             throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
-        String encodedPw = passwordEncoder.encode(request.password());
-        User user = new User(request.email(), encodedPw, request.name());
+        // 비밀번호 암호화
+        String encodedPw = passwordEncoder.encode(request.getPassword());
+
+        // User 객체 생성 및 값 세팅
+        User user = new User();
+        user.setEmail(request.getEmail());
+        user.setPassword(encodedPw);
+        user.setName(request.getName());
+        user.setIsVerified(false); // 처음 가입 시 인증 안됨
+        user.setIsDeleted(false);
 
         userMapper.insertUser(user);
 

@@ -1,6 +1,13 @@
 package com.foureyes.moai.backend.domain.user.dto.response;
 
-public record UserSignupResponse(
-    int userId,
-    String message
-) {}
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class UserSignupResponse {
+    int userId;
+    String message;
+}
