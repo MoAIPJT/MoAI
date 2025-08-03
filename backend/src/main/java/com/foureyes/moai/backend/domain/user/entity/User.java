@@ -20,4 +20,6 @@ public class User {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String profileImageUrl;  // 필드명 수정
+
+    private String refreshToken; // 임시
 }

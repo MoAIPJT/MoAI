@@ -36,9 +36,10 @@ public class UserServiceImpl implements UserService {
         user.setEmail(request.getEmail());
         user.setPassword(encodedPw);
         user.setName(request.getName());
-        user.setIsVerified(false); // 처음 가입 시 인증 안됨
-        user.setIsDeleted(false);
-
+        user.setProvider("LOCAL");
+//        user.setIsVerified(false); // 처음 가입 시 인증 안됨
+//        user.setIsDeleted(false);
+        user.setRefreshToken("temp_refresh_token");
         userMapper.insertUser(user);
 
         return new UserSignupResponse(user.getId(), "회원가입 성공! 이메일 인증을 완료해주세요.");
