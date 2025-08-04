@@ -1,0 +1,29 @@
+# <jira-issue-number> <type> : <content>
+# No more than 50 chars. #### 50 chars is here:  #
+
+# Remember blank line between title and body.
+
+
+# At the end: Include Co-authored-by for all contributors.
+# Include at least one empty line before it. Format:
+# Co-authored-by: name <user@users.noreply.github.com>
+
+#############################
+# Example
+# S13P11B201-45 feat : Add login function
+# S13P11B201-102 fix : Resolve token refresh issue
+# S13P11B201-210 chore : Update MR template
+
+#############################
+#     타입      |    설명
+#  feat         |  새로운 기능 추가
+#  fix          |  버그 수정
+#  build        |  빌드 관련 파일 수정, 모듈 설치/삭제
+#  chore        |  기타 자잘한 수정
+#  ci           |  CI 관련 설정 변경
+#  docs         |  문서 수정
+#  style        |  코드 스타일/포맷 수정(로직 영향 없음)
+#  refactor     |  코드 리팩토링
+#  test         |  테스트 코드 추가/수정
+#  perf         |  성능 개선
+#################################

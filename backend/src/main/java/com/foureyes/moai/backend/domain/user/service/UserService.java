@@ -8,9 +8,9 @@ import com.foureyes.moai.backend.domain.user.dto.response.UserSignupResponse;
 
 
 public interface UserService {
+
     UserSignupResponse signup(UserSignupRequest request);
     UserLoginResponse login(UserLoginRequest request);
     void logout(String token);
     UserProfileResponse getProfile(int userId);
-
 }

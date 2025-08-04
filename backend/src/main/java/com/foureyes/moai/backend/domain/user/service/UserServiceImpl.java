@@ -63,8 +63,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserLoginResponse login(UserLoginRequest request) {
         try {
-
-
             User user = userMapper.findByEmail(request.getEmail());
 
             if (user == null) {

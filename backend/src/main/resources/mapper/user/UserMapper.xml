@@ -12,6 +12,7 @@
 
     <select id="findByEmail" resultType="User">
         SELECT * FROM users WHERE email = #{email}
+<<<<<<< HEAD
     </select>
 
     <update id="updateRefreshToken">
@@ -22,5 +23,7 @@
 
     <select id="findById" resultType="User">
         SELECT * FROM users WHERE id = #{id}
+=======
+>>>>>>> dev
     </select>
 </mapper>

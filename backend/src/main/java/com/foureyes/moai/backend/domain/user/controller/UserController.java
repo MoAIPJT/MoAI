@@ -58,7 +58,6 @@ public class UserController {
         return ResponseEntity.ok(userService.getProfile(userId));
     }
 
-
     @Operation(summary = "Swagger 테스트용 API",
         description = "Swagger가 정상 동작하는지 확인용 API")
     @GetMapping("/hello")
