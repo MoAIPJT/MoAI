@@ -9,6 +9,12 @@
 # Co-authored-by: name <user@users.noreply.github.com>
 
 #############################
+# Example
+# S13P11B201-45 feat : Add login function
+# S13P11B201-102 fix : Resolve token refresh issue
+# S13P11B201-210 chore : Update MR template
+
+#############################
 #     타입      |    설명
 #  feat         |  새로운 기능 추가
 #  fix          |  버그 수정
