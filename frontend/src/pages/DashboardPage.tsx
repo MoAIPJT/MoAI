@@ -1,5 +1,6 @@
 import React from 'react'
 import DashboardSidebar from '../components/organisms/DashboardSidebar'
+import TopBar from '../components/molecules/TopBar'
 
 const DashboardPage: React.FC = () => {
   const handleItemClick = (itemId: string) => {
@@ -23,10 +24,9 @@ const DashboardPage: React.FC = () => {
         onItemClick={handleItemClick}
         onLogout={handleLogout}
       />
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">MoAI 대시보드</h1>
-          <p className="text-gray-600 mb-8">왼쪽 사이드바에서 원하는 기능을 선택하세요.</p>
+      <div className="flex-1 flex flex-col">
+        <TopBar userName="user"/>
+        <div className="flex-1 p-6">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-md">
             <h2 className="text-lg font-semibold mb-4">빠른 가이드</h2>
             <div className="space-y-3 text-left">
