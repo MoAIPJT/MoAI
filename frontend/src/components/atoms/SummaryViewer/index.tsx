@@ -28,7 +28,6 @@ const SummaryViewer: React.FC<SummaryViewerProps> = ({
             onClick={onViewOriginal}
             className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200 flex items-center gap-2"
           >
-            <span>📖</span>
             원본 문서 보기
           </button>
         )}

@@ -7,6 +7,7 @@ import PasswordSentPage from '@/pages/PasswordSentPage'
 import SocialSignupPage from '@/pages/SocialSignupPage'
 import ResetPasswordPage from '@/pages/ResetPasswordPage'
 import ResetPasswordConfirmPage from '@/pages/ResetPasswordConfirmPage'
+import AiSummaryPage from '@/pages/AiSummaryPage'
 
 const Router: React.FC = () => {
   return (
@@ -19,6 +20,7 @@ const Router: React.FC = () => {
       <Route path="/social-signup" element={<SocialSignupPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/reset-password/confirm" element={<ResetPasswordConfirmPage />} />
+      <Route path="/ai-summary" element={<AiSummaryPage />} />
     </Routes>
   )
 }
