@@ -44,7 +44,7 @@ public class UserController {
     public ResponseEntity<String> logout(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");
         userService.logout(token);
-        return ResponseEntity.ok("로그아웃 성공!");
+        return ResponseEntity.ok("로그아웃 성공");
     }
 
     @Operation(summary = "프로필 조회",
@@ -59,10 +59,11 @@ public class UserController {
     }
 
 
-    @Operation(summary = "Swagger 테스트용 API", description = "Swagger가 정상 동작하는지 확인용 API")
+    @Operation(summary = "Swagger 테스트용 API",
+        description = "Swagger가 정상 동작하는지 확인용 API")
     @GetMapping("/hello")
     public ResponseEntity<String> hello() {
-        return ResponseEntity.ok("Swagger 테스트 성공!");
+        return ResponseEntity.ok("Swagger 테스트 성공");
     }
 }
 

@@ -12,14 +12,8 @@ public class User {
     private String email;
     private String password;
     private String name;
-    private String provider;
-    private String providerId;
-    private String profileImage;
-    private Boolean isVerified;
-    private Boolean isDeleted;
+    private String providerType;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private String profileImageUrl;  // 필드명 수정
-
-    private String refreshToken; // 임시
+    private String profileImageUrl;
+    private String refreshToken;
 }

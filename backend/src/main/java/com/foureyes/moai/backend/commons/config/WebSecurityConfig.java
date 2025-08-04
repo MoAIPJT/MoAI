@@ -1,6 +1,6 @@
-package com.foureyes.moai.backend.domain.user.config;
+package com.foureyes.moai.backend.commons.config;
 
-import com.foureyes.moai.backend.domain.user.config.jwt.JwtAuthenticationFilter;
+import com.foureyes.moai.backend.auth.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
