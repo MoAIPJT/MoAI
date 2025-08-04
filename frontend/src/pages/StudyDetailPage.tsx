@@ -115,6 +115,18 @@ const StudyDetailPage: React.FC = () => {
     console.log('Settings clicked')
   }
 
+  // 화상회의 더미 참여자 데이터
+  const dummyParticipants = [
+    { id: '1', name: 'Kuromi', avatar: '👻' },
+    // { id: '2', name: 'Heo', avatar: '👨' },
+    // { id: '3', name: 'Hazel', avatar: '👩' },
+    // { id: '4', name: 'Alice', avatar: '👧' },
+    // { id: '5', name: 'Bob', avatar: '👦' },
+    // { id: '6', name: 'Charlie', avatar: '🧑' },
+    // { id: '7', name: 'Diana', avatar: '👱‍♀️' },
+    // { id: '8', name: 'Eve', avatar: '👱‍♂️' },
+  ]
+
     return (
     <StudyDetailTemplate
       studies={studies}
@@ -135,6 +147,7 @@ const StudyDetailPage: React.FC = () => {
       onSearchQueryChange={setSearchQuery}
       onAddFilter={handleAddFilter}
       onSettingsClick={handleSettingsClick}
+      participants={dummyParticipants}
     />
   )
 }

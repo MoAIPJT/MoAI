@@ -11,6 +11,7 @@ import AISummaryPage from '@/pages/AISummaryPage'
 import DashboardPage from '@/pages/DashboardPage'
 import StudyDetailPage from '@/pages/StudyDetailPage'
 
+
 const Router: React.FC = () => {
   return (
     <Routes>
@@ -24,6 +25,7 @@ const Router: React.FC = () => {
       <Route path="/reset-password/confirm" element={<ResetPasswordConfirmPage />} />
       <Route path="/ai-summary" element={<AISummaryPage />} />
       <Route path="/dashboard" element={<DashboardPage />} />
+
       <Route path="/study-detail" element={<StudyDetailPage />} />
       <Route path="/study/:studyId" element={<StudyDetailPage />} />
     </Routes>

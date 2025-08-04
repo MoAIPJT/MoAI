@@ -33,6 +33,8 @@ const DashboardPage: React.FC = () => {
     if (itemId === 'study') {
       navigate('/study/study-1')
     }
+
+
   }
 
   const handleLogout = () => {

@@ -3,6 +3,11 @@ import { Calendar } from '@/components/ui/calendar'
 import { Button } from '@/components/ui/button'
 import type { StudyCalendarProps } from './types'
 import { customLocale } from '@/lib/locales/en-custom'
+import { X } from 'lucide-react'
+import FullCalendarTemplate from '../../templates/FullCalendarTemplate'
+import EventModal from '../EventModal'
+import type { Event } from '../../atoms/CalendarEvent/types'
+import type { Calendar as CalendarType } from '../../molecules/CalendarList/types'
 
 const getMonthName = (month: number): string => {
   const months = [
@@ -16,6 +21,169 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
   onAddEvent,
 }) => {
   const [date, setDate] = useState<Date | undefined>(new Date())
+  const [showEventModal, setShowEventModal] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+
+  // Modal specific states
+  const [modalCurrentView, setModalCurrentView] = useState("week")
+  const [modalCurrentDate, setModalCurrentDate] = useState(new Date())
+  const [selectedEvent, setSelectedEvent] = useState<any>(null)
+  const [events, setEvents] = useState<Event[]>([])
+  const [modalCreateModal, setModalCreateModal] = useState(false)
+
+  const handleCreateEvent = () => {
+    setShowEventModal(true)
+  }
+
+  const handleModalCreateEvent = () => {
+    setModalCreateModal(true)
+  }
+
+  const handleCloseModal = () => {
+    setShowEventModal(false)
+  }
+
+  const handleCloseCreateModal = () => {
+    setShowCreateModal(false)
+  }
+
+  const handleCloseModalCreateModal = () => {
+    setModalCreateModal(false)
+  }
+
+  const handleEventClick = (event: any) => {
+    setSelectedEvent(event)
+  }
+
+  const handleSaveEvent = (newEvent: any) => {
+    if (selectedEvent) {
+      // Edit existing event
+      setEvents(events.map(e => e.id === selectedEvent.id ? newEvent : e))
+      setSelectedEvent(null)
+    } else {
+      // Create new event
+      setEvents([...events, newEvent])
+    }
+  }
+
+  const handleDeleteEvent = (eventId: number) => {
+    setEvents(events.filter(e => e.id !== eventId))
+    setSelectedEvent(null)
+  }
+
+  // Get current date info for modal
+  const getModalCurrentMonth = () => {
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ]
+    return `${months[modalCurrentDate.getMonth()]} ${modalCurrentDate.getFullYear()}`
+  }
+
+  const getModalCurrentDateString = () => {
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ]
+    return `${months[modalCurrentDate.getMonth()]} ${modalCurrentDate.getDate()}`
+  }
+
+  // Get week dates based on modal current date
+  const getModalWeekDates = () => {
+    const startOfWeek = new Date(modalCurrentDate)
+    const day = startOfWeek.getDay()
+    startOfWeek.setDate(startOfWeek.getDate() - day)
+    
+    const weekDates = []
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(startOfWeek)
+      date.setDate(startOfWeek.getDate() + i)
+      weekDates.push(date.getDate())
+    }
+    return weekDates
+  }
+
+  // Get mini calendar days for modal
+  const getModalMiniCalendarDays = () => {
+    const year = modalCurrentDate.getFullYear()
+    const month = modalCurrentDate.getMonth()
+    const firstDay = new Date(year, month, 1)
+    const lastDay = new Date(year, month + 1, 0)
+    const daysInMonth = lastDay.getDate()
+    const firstDayOffset = firstDay.getDay()
+    
+    const days = []
+    for (let i = 0; i < firstDayOffset; i++) {
+      days.push(null)
+    }
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(i)
+    }
+    return days
+  }
+
+  // Modal navigation handlers
+  const handleModalPrevious = () => {
+    const newDate = new Date(modalCurrentDate)
+    if (modalCurrentView === "day") {
+      newDate.setDate(newDate.getDate() - 1)
+    } else if (modalCurrentView === "week") {
+      newDate.setDate(newDate.getDate() - 7)
+    } else if (modalCurrentView === "month") {
+      newDate.setMonth(newDate.getMonth() - 1)
+    }
+    setModalCurrentDate(newDate)
+  }
+
+  const handleModalNext = () => {
+    const newDate = new Date(modalCurrentDate)
+    if (modalCurrentView === "day") {
+      newDate.setDate(newDate.getDate() + 1)
+    } else if (modalCurrentView === "week") {
+      newDate.setDate(newDate.getDate() + 7)
+    } else if (modalCurrentView === "month") {
+      newDate.setMonth(newDate.getMonth() + 1)
+    }
+    setModalCurrentDate(newDate)
+  }
+
+  const handleModalPreviousMonth = () => {
+    const newDate = new Date(modalCurrentDate)
+    newDate.setMonth(newDate.getMonth() - 1)
+    setModalCurrentDate(newDate)
+  }
+
+  const handleModalNextMonth = () => {
+    const newDate = new Date(modalCurrentDate)
+    newDate.setMonth(newDate.getMonth() + 1)
+    setModalCurrentDate(newDate)
+  }
+
+  const handleModalViewChange = (view: string) => {
+    setModalCurrentView(view)
+  }
+
+  const handleModalToday = () => {
+    setModalCurrentDate(new Date())
+  }
+
+  const handleModalDateClick = (date: Date) => {
+    setModalCurrentDate(date)
+  }
+
+  // Calendar data for modal
+  const modalWeekDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
+  const modalWeekDates = getModalWeekDates()
+  const modalTimeSlots = Array.from({ length: 9 }, (_, i) => i + 8) // 8 AM to 4 PM
+  const modalMiniCalendarDays = getModalMiniCalendarDays()
+
+  // Sample my calendars
+  const calendars: CalendarType[] = [
+    { name: "My Calendar", color: "bg-blue-500" },
+    { name: "Work", color: "bg-green-500" },
+    { name: "Personal", color: "bg-purple-500" },
+    { name: "Family", color: "bg-orange-500" },
+  ]
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
@@ -51,7 +219,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
           </Button>
         </div>
         <Button
-          onClick={onAddEvent}
+          onClick={handleCreateEvent}
           className="w-8 h-8 p-0 rounded-full"
           variant="ghost"
         >
@@ -67,6 +235,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
           onSelect={setDate}
           month={date}
           locale={customLocale}
+          required={true}
           className="w-fit"
 
           classNames={{
@@ -97,7 +266,69 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
         />
       </div>
 
+      {/* Full Calendar Modal */}
+      {showEventModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl h-[90vh] overflow-hidden relative">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-2xl font-bold text-gray-800">일정 관리</h2>
+              <button
+                onClick={handleCloseModal}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="h-6 w-6 text-gray-600" />
+              </button>
+            </div>
 
+            {/* Modal Content - Full Calendar */}
+            <div className="flex-1 overflow-hidden">
+              <FullCalendarTemplate
+                currentMonth={getModalCurrentMonth()}
+                currentDate={getModalCurrentDateString()}
+                currentView={modalCurrentView}
+                weekDays={modalWeekDays}
+                weekDates={modalWeekDates}
+                timeSlots={modalTimeSlots}
+                events={events}
+                miniCalendarDays={modalMiniCalendarDays}
+                calendars={calendars}
+                onViewChange={handleModalViewChange}
+                onPrevious={handleModalPrevious}
+                onNext={handleModalNext}
+                onPreviousMonth={handleModalPreviousMonth}
+                onNextMonth={handleModalNextMonth}
+                onEventClick={handleEventClick}
+                onToday={handleModalToday}
+                onDateClick={handleModalDateClick}
+                onCreateEvent={handleModalCreateEvent}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Event Modal */}
+      {showCreateModal && (
+        <EventModal
+          isOpen={showCreateModal}
+          onClose={handleCloseCreateModal}
+          onSave={handleSaveEvent}
+          selectedDate={date}
+          event={selectedEvent}
+        />
+      )}
+
+      {/* Modal Event Modal */}
+      {modalCreateModal && (
+        <EventModal
+          isOpen={modalCreateModal}
+          onClose={handleCloseModalCreateModal}
+          onSave={handleSaveEvent}
+          selectedDate={modalCurrentDate}
+          event={selectedEvent}
+        />
+      )}
     </div>
   )
 }

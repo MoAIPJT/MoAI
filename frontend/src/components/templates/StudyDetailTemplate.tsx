@@ -17,6 +17,7 @@ interface StudyDetailTemplateProps {
   currentStudy: StudyItem | null
   selectedFilters: string[]
   searchQuery: string
+  participants?: any[]
   onItemClick: (itemId: string) => void
   onStudyClick: (studyId: string) => void
   onFilterClick: (filter: string) => void
@@ -38,6 +39,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   currentStudy,
   selectedFilters,
   searchQuery,
+  participants = [],
   onItemClick,
   onStudyClick,
   onFilterClick,
@@ -77,9 +79,13 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
                     {/* 상단 섹션: 공지사항/화상회의 (6) + 캘린더 (4) */}
           <div className="grid grid-cols-10 gap-6">
             {/* 왼쪽: 공지사항과 화상회의 (6/10) */}
-            <div className="col-span-6 space-y-6">
-              <StudyNoticeBox onEdit={onEditNotice} />
-              <StudyVideoConference onCreateRoom={onCreateRoom} />
+            <div className="col-span-6 flex flex-col h-full">
+              <div className="mb-6">
+                <StudyNoticeBox onEdit={onEditNotice} />
+              </div>
+              <div className="flex-1">
+                <StudyVideoConference onCreateRoom={onCreateRoom} participants={participants} />
+              </div>
             </div>
 
             {/* 오른쪽: 캘린더 (4/10) */}
