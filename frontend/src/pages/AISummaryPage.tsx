@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import AISummaryTemplate from '../components/templates/AISummaryTemplate'
 import SummaryViewer from '../components/atoms/SummaryViewer'
 import PDFViewer from '../components/atoms/PDFViewer'
 import SplitResizer from '../components/atoms/SplitResizer'
+import { fetchSummaryList, type StudyWithSummaries } from '../services/summaryService'
 import { dummySummaryData } from '../types/summary'
 
 const AISummaryPage: React.FC = () => {
@@ -10,6 +11,71 @@ const AISummaryPage: React.FC = () => {
   const [expandedStudies, setExpandedStudies] = useState<string[]>([])
   const [showOriginal, setShowOriginal] = useState(false)
   const [leftPanelWidth, setLeftPanelWidth] = useState(500)
+  const [studiesWithSummaries, setStudiesWithSummaries] = useState<StudyWithSummaries[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // AI 요약본 목록 조회
+  const fetchSummaries = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      // 실제 API 호출
+      const userId = localStorage.getItem('userId') || '1' // 실제로는 로그인된 유저 ID를 사용
+      const response = await fetchSummaryList(userId)
+      setStudiesWithSummaries(response.studies)
+    } catch (error) {
+      console.error('AI 요약본 목록 조회 실패:', error)
+      setError('AI 요약본 목록을 불러오는데 실패했습니다.')
+      
+      // 에러 시 더미 데이터 사용 (개발용)
+      const dummyStudiesWithSummaries: StudyWithSummaries[] = [
+        {
+          study_id: 'ssafy-algorithm',
+          study_name: '싸피 알고리즘',
+          study_image_url: '/src/assets/MoAI/thinking.png',
+          summaries: [
+            {
+              summary_id: 'cats-dogs',
+              title: 'Cats and Dogs',
+              description: 'Fine-grained categorization of pet breeds (37 breeds of cats and dogs).',
+              model_type: 'Gemini',
+              prompt_type: '요약'
+            },
+            {
+              summary_id: 'i-love-duck',
+              title: 'I Love Duck',
+              description: 'Duck Duck Duck',
+              model_type: 'Gemini',
+              prompt_type: '요약'
+            }
+          ]
+        },
+        {
+          study_id: 'daejeon-restaurants',
+          study_name: '대전 맛집 탐방',
+          study_image_url: '/src/assets/MoAI/traveling.png',
+          summaries: [
+            {
+              summary_id: 'hamburger',
+              title: '햄버거 맛있겠다',
+              description: '햄버거에 대한 상세한 분석과 레시피',
+              model_type: 'Gemini',
+              prompt_type: '요약'
+            }
+          ]
+        }
+      ]
+      setStudiesWithSummaries(dummyStudiesWithSummaries)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchSummaries()
+  }, [])
 
   const handleItemClick = (itemId: string) => {
     setActiveItem(itemId)
@@ -113,6 +179,8 @@ const AISummaryPage: React.FC = () => {
     <AISummaryTemplate
       activeItem={activeItem}
       expandedStudies={expandedStudies}
+      studiesWithSummaries={studiesWithSummaries}
+      isLoading={isLoading}
       onItemClick={handleItemClick}
       onStudyToggle={handleStudyToggle}
     >

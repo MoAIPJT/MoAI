@@ -5,12 +5,17 @@ import StudyList from '../components/organisms/StudyList'
 import AISummaryList from '../components/organisms/AISummaryList'
 import type { Study } from '../components/organisms/StudyList/types'
 import type { AISummary } from '../components/molecules/AISummaryCard/types'
+import type { CreateStudyData } from '../components/organisms/CreateStudyModal/types'
+import InviteLinkModal from '../components/organisms/InviteLinkModal'
+import { fetchSummaryList, type SummaryItem } from '../services/summaryService'
 
 const DashboardPage: React.FC = () => {
   const [studies, setStudies] = useState<Study[]>([])
   const [summaries, setSummaries] = useState<AISummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSummaryLoading, setIsSummaryLoading] = useState(true)
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
+  const [currentInviteUrl, setCurrentInviteUrl] = useState('')
 
   // 스터디 목록을 가져오는 함수 (실제 API 호출)
   const fetchStudies = async () => {
@@ -78,42 +83,49 @@ const DashboardPage: React.FC = () => {
     try {
       setIsSummaryLoading(true)
       
-      // 실제 API 호출 (현재는 주석 처리)
-      // const response = await fetch('/api/summaries')
-      // const data = await response.json()
-      // setSummaries(data)
+      // 실제 API 호출
+      const userId = localStorage.getItem('userId') || '1' // 실제로는 로그인된 유저 ID를 사용
+      const response = await fetchSummaryList(userId)
       
-      // 임시로 로딩 시뮬레이션
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // API 응답을 기존 AISummary 타입에 맞게 변환
+      const convertedSummaries: AISummary[] = response.summaries.map(summary => ({
+        id: parseInt(summary.summary_id) || Date.now(), // summary_id를 숫자로 변환
+        title: summary.title,
+        description: summary.description,
+        createdAt: new Date().toISOString().split('T')[0], // 임시 날짜
+        pdfUrl: `/pdfs/${summary.summary_id}.pdf` // 임시 PDF 경로
+      }))
       
-      // 더미 데이터 설정
-      // const dummySummaries = [
-      //   {
-      //     id: 1,
-      //     title: 'Cats and Dogs',
-      //     description: 'Fine-grained categorization of pet breeds (37 breeds of cats and dogs).',
-      //     createdAt: '2025-07-24',
-      //     pdfUrl: '/pdfs/cats-and-dogs.pdf'
-      //   },
-      //   {
-      //     id: 2,
-      //     title: 'I Love Duck',
-      //     description: 'Duck Duck Duck',
-      //     createdAt: '2025-07-24',
-      //     pdfUrl: '/pdfs/i-love-duck.pdf'
-      //   },
-      //   {
-      //     id: 3,
-      //     title: '햄버거 마이게다',
-      //     description: '햄버거에 대한 상세한 분석과 레시피',
-      //     createdAt: '2025-07-23',
-      //     pdfUrl: '/pdfs/hamburger.pdf'
-      //   }
-      // ]
-      
-      // setSummaries(dummySummaries)
+      setSummaries(convertedSummaries)
     } catch (error) {
-      setSummaries([]) // 에러 시에는 빈 배열
+      console.error('AI 요약본 목록 조회 실패:', error)
+      
+      // 에러 시 더미 데이터 사용 (개발용)
+      const dummySummaries: AISummary[] = [
+        {
+          id: 1,
+          title: 'Cats and Dogs',
+          description: 'Fine-grained categorization of pet breeds (37 breeds of cats and dogs).',
+          createdAt: '2025-07-24',
+          pdfUrl: '/pdfs/cats-and-dogs.pdf'
+        },
+        {
+          id: 2,
+          title: 'I Love Duck',
+          description: 'Duck Duck Duck',
+          createdAt: '2025-07-24',
+          pdfUrl: '/pdfs/i-love-duck.pdf'
+        },
+        {
+          id: 3,
+          title: '햄버거 마이게다',
+          description: '햄버거에 대한 상세한 분석과 레시피',
+          createdAt: '2025-07-23',
+          pdfUrl: '/pdfs/hamburger.pdf'
+        }
+      ]
+      
+      setSummaries(dummySummaries)
     } finally {
       setIsSummaryLoading(false)
     }
@@ -137,9 +149,84 @@ const DashboardPage: React.FC = () => {
     // TODO: 로그아웃 로직 구현
   }
 
-  const handleCreateStudy = () => {
-    // 스터디 생성 페이지로 이동
-    // navigate('/create-study')
+  const handleCreateStudy = async (data: CreateStudyData) => {
+    try {
+      // 스터디 생성 로직
+      console.log('새 스터디 생성:', data)
+      
+      // API 스펙에 맞는 Request Body 구성
+      const requestBody = {
+        id: 1, // 실제로는 현재 로그인한 유저의 ID를 사용해야 함
+        name: data.name,
+        description: data.description,
+        image_url: data.image ? await convertImageToBase64(data.image) : null
+      }
+      
+      // 실제 API 호출 (현재는 주석 처리)
+      // const response = await fetch('/register', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'Authorization': `Bearer ${accessToken}` // 실제 access token 사용
+      //   },
+      //   body: JSON.stringify(requestBody)
+      // })
+      
+      // if (response.status === 201) {
+      //   const responseData = await response.json()
+      //   const newStudy: Study = {
+      //     id: responseData.study_id,
+      //     name: responseData.name,
+      //     description: responseData.description,
+      //     imageUrl: responseData.image_url || '',
+      //     createdBy: responseData.created_by,
+      //     createdAt: responseData.created_at,
+      //     inviteUrl: responseData.invite_url || `https://duckfac.com/B201-nice-team`
+      //   }
+      //   setStudies(prevStudies => [newStudy, ...prevStudies])
+      //   
+      //   // 초대 링크 모달 표시
+      //   setCurrentInviteUrl(newStudy.inviteUrl)
+      //   setIsInviteModalOpen(true)
+      // } else {
+      //   throw new Error('스터디 생성에 실패했습니다.')
+      // }
+      
+      // 임시로 프론트엔드에서 즉시 스터디 목록에 추가
+      const newStudy: Study = {
+        id: Date.now(), // 임시 ID 생성
+        name: data.name,
+        description: data.description,
+        imageUrl: data.image ? URL.createObjectURL(data.image) : '',
+        createdBy: 1, // 임시 사용자 ID
+        createdAt: new Date().toISOString().split('T')[0],
+        inviteUrl: `https://duckfac.com/B201-nice-team` // 임시 초대 링크
+      }
+      
+      setStudies(prevStudies => [newStudy, ...prevStudies])
+      
+      // 초대 링크 모달 표시
+      setCurrentInviteUrl(newStudy.inviteUrl || '')
+      setIsInviteModalOpen(true)
+    } catch (error) {
+      console.error('스터디 생성 오류:', error)
+      alert('스터디 생성에 실패했습니다.')
+    }
+  }
+
+  // 이미지를 Base64로 변환하는 헬퍼 함수
+  const convertImageToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const result = reader.result as string
+        // Base64 문자열에서 data:image/...;base64, 부분 제거
+        const base64 = result.split(',')[1]
+        resolve(base64)
+      }
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
   }
 
   const handleStudyClick = (studyId: number) => {
@@ -188,6 +275,13 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* 초대 링크 모달 */}
+      <InviteLinkModal
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+        inviteUrl={currentInviteUrl}
+      />
     </div>
   )
 }
