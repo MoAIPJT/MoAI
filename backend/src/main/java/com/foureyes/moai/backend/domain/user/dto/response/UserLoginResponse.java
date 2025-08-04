@@ -7,6 +7,12 @@ import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
-public class UserSignupResponse {
+@NoArgsConstructor
+public class UserLoginResponse {
 
+    @Schema(description = "Access Token")
+    private String accessToken;
+
+    @Schema(description = "Refresh Token")
+    private String refreshToken;
 }

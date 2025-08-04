@@ -1,4 +1,4 @@
-package com.foureyes.moai.backend.domain.user.exception;
+package com.foureyes.moai.backend.commons.exception;
 
 public class CustomException extends RuntimeException {
     private final ErrorCode errorCode;
