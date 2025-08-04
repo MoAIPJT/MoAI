@@ -18,4 +18,14 @@
     <select id="findByEmail" resultType="User">
         SELECT * FROM users WHERE email = #{email}
     </select>
+
+    <update id="updateRefreshToken">
+        UPDATE users
+        SET refresh_token = #{refreshToken}
+        WHERE id = #{userId}
+    </update>
+
+    <select id="findById" resultType="User">
+        SELECT * FROM users WHERE id = #{id}
+    </select>
 </mapper>
