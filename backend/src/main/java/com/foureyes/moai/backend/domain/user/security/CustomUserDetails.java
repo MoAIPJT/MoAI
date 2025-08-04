@@ -39,20 +39,10 @@ public class CustomUserDetails implements UserDetails {
         return true; // 계정 만료 여부 (true = 만료되지 않음)
     }
 
-    @Override // 계정 잠금 여부 반환
-    public boolean isAccountNonLocked() {
-        return !Boolean.TRUE.equals(user.getIsDeleted()); // 탈퇴된 유저는 잠금 처리
-    }
-
     @Override // 패스워드의 만료 여부 반환
     public boolean isCredentialsNonExpired() {
         // 패스워드가 만료되었는지 확인하는 로직
         return true; // 비밀번호 만료 여부
     }
 
-    @Override // 계정 사용 가능 여부 반환
-    public boolean isEnabled() {
-        // 계정이 사용 가능한지 확인하는 로직
-        return Boolean.TRUE.equals(user.getIsVerified()); // 이메일 인증된 유저만 활성화
-    }
 }

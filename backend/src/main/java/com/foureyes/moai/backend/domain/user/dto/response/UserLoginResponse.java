@@ -15,7 +15,4 @@ public class UserLoginResponse {
 
     @Schema(description = "Refresh Token")
     private String refreshToken;
-
-    @Schema(description = "응답 메시지", example = "로그인 성공!")
-    private String message;
 }

@@ -10,9 +10,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class UserProfileResponse {
 
-    @Schema(description = "회원 ID", example = "1")
-    private int id;
-
     @Schema(description = "이름", example = "홍길동")
     private String name;
 

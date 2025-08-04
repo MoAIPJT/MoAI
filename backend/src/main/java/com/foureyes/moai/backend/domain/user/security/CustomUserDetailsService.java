@@ -1,7 +1,7 @@
 package com.foureyes.moai.backend.domain.user.security;
 
 import com.foureyes.moai.backend.domain.user.entity.User;
-import com.foureyes.moai.backend.domain.user.mapper.UserMapper;
+import com.foureyes.moai.backend.domain.user.repository.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

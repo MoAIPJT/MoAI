@@ -1,4 +1,4 @@
-package com.foureyes.moai.backend.domain.user.config.jwt;
+package com.foureyes.moai.backend.auth.jwt;
 
 import com.foureyes.moai.backend.domain.user.entity.User;
 import io.jsonwebtoken.Claims;
@@ -6,6 +6,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -21,6 +22,7 @@ import java.util.Set;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class JwtTokenProvider {
 
     private final JwtProperties jwtProperties;
@@ -29,11 +31,6 @@ public class JwtTokenProvider {
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8));
     }
-
-//    public String generateToken(User user, Duration expiredAt) {
-//        Date now = new Date();
-//        return makeToken(new Date(now.getTime() + expiredAt.toMillis()), user);
-//    }
 
     // AccessToken 발급 (60분)
     public String generateAccessToken(User user) {
@@ -70,11 +67,11 @@ public class JwtTokenProvider {
                 .parseSignedClaims(token); // JWT를 파싱 및 검증
             return true; // 검증 성공
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
-            System.out.println("JWT 토큰이 만료됨");
+            log.warn("JWT 토큰이 만료됨");
         } catch (io.jsonwebtoken.security.SignatureException e) {
-            System.out.println("JWT 서명 검증 실패");
+            log.warn("JWT 서명 검증 실패");
         } catch (Exception e) {
-            System.out.println("JWT 검증 실패");
+            log.error("JWT 검증 실패");
         }
         return false;
     }
@@ -83,7 +80,7 @@ public class JwtTokenProvider {
     public Authentication getAuthentication(String token) {
         Claims claims = getClaims(token);
         Set<SimpleGrantedAuthority> authorities = Collections.singleton(
-            new SimpleGrantedAuthority("ROLE_USER")
+            new SimpleGrantedAuthority("ROLE_USER") // <- 여기도 생각해봐야함 ㅇㅇ
         );
 
         // Spring Security의 UserDetails 객체 생성

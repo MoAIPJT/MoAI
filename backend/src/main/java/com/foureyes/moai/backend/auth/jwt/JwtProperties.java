@@ -1,4 +1,4 @@
-package com.foureyes.moai.backend.domain.user.config.jwt;
+package com.foureyes.moai.backend.auth.jwt;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
