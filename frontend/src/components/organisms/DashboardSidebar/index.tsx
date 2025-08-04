@@ -8,7 +8,11 @@ import type { UserActionItem } from '../../molecules/SidebarUserActions/types'
 
 const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   activeItem = 'mypage',
+  expandedStudy = false,
+  studies = [],
+  activeStudyId,
   onItemClick,
+  onStudyClick,
   onLogout,
 }) => {
   const navigationItems: NavigationItem[] = [
@@ -50,6 +54,10 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
     }
   }
 
+  const handleStudyClick = (studyId: string) => {
+    onStudyClick?.(studyId)
+  }
+
   return (
     <div className="w-64 h-full bg-white border-r border-gray-200 flex flex-col">
       <SidebarLogo useImage={true} />
@@ -57,7 +65,12 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         items={navigationItems}
         activeItem={activeItem}
         onItemClick={handleItemClick}
+        expandedStudy={expandedStudy}
+        studies={studies}
+        activeStudyId={activeStudyId}
+        onStudyClick={handleStudyClick}
       />
+
       <SidebarUserActions
         items={userActions}
         onItemClick={handleItemClick}

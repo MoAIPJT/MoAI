@@ -1,13 +1,37 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import DashboardSidebar from '../components/organisms/DashboardSidebar'
+import type { StudyItem } from '../components/organisms/DashboardSidebar/types'
+import { getStudies } from '../services/studyService'
 
 const DashboardPage: React.FC = () => {
+  const navigate = useNavigate()
+  const [studies, setStudies] = useState<StudyItem[]>([])
+
+  // 스터디 목록 로드
+  useEffect(() => {
+    const loadStudies = async () => {
+      try {
+        const studiesData = await getStudies()
+        setStudies(studiesData)
+      } catch (error) {
+        console.error('Failed to load studies:', error)
+      }
+    }
+    loadStudies()
+  }, [])
+
   const handleItemClick = (itemId: string) => {
     console.log('Navigation clicked:', itemId)
 
     // AI 요약본 클릭 시 새 탭에서 AI 요약본 페이지 열기
     if (itemId === 'ai-summary') {
       window.open('/ai-summary', '_blank')
+    }
+
+    // Study 클릭 시 Study 상세페이지로 이동 (기본 스터디)
+    if (itemId === 'study') {
+      navigate('/study/study-1')
     }
   }
 
