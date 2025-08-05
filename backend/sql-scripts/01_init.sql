@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
     provider_type VARCHAR(255) NOT NULL,
     profile_image_url VARCHAR(500),
     password VARCHAR(255) NOT NULL,
-    refresh_token VARCHAR(255) NOT NULL,
+    refresh_token VARCHAR(255),
     created_at DATETIME
 );
 
