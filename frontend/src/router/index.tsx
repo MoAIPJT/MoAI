@@ -9,6 +9,7 @@ import ResetPasswordPage from '@/pages/ResetPasswordPage'
 import ResetPasswordConfirmPage from '@/pages/ResetPasswordConfirmPage'
 import AISummaryPage from '@/pages/AISummaryPage'
 import DashboardPage from '@/pages/DashboardPage'
+import TestPage from '@/pages/TestPage'
 
 const Router: React.FC = () => {
   return (
@@ -23,6 +24,7 @@ const Router: React.FC = () => {
       <Route path="/reset-password/confirm" element={<ResetPasswordConfirmPage />} />
       <Route path="/ai-summary" element={<AISummaryPage />} />
       <Route path="/dashboard" element={<DashboardPage />} />
+      <Route path="/test" element={<TestPage />} />
     </Routes>
   )
 }
