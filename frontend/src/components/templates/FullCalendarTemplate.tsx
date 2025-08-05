@@ -54,7 +54,7 @@ const FullCalendarTemplate: React.FC<FullCalendarTemplateProps> = ({
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: "url('/src/assets/제목 없는 디자인.png')",
+          backgroundImage: "url('/src/assets/calendar-background1.png')",
         }}
       />
 
@@ -96,6 +96,15 @@ const FullCalendarTemplate: React.FC<FullCalendarTemplateProps> = ({
           </div>
         </div>
       </main>
+
+      {/* Calendar Moai Image - Outside sidebar */}
+      <div className="absolute bottom-4 left-4 z-10">
+        <img
+          src="/src/assets/calendar-moai.png"
+          alt="Calendar Moai"
+          className="w-24 h-24 object-contain opacity-80"
+        />
+      </div>
     </div>
   )
 }

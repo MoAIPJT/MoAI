@@ -93,7 +93,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
     const startOfWeek = new Date(modalCurrentDate)
     const day = startOfWeek.getDay()
     startOfWeek.setDate(startOfWeek.getDate() - day)
-    
+
     const weekDates = []
     for (let i = 0; i < 7; i++) {
       const date = new Date(startOfWeek)
@@ -111,7 +111,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
     const lastDay = new Date(year, month + 1, 0)
     const daysInMonth = lastDay.getDate()
     const firstDayOffset = firstDay.getDay()
-    
+
     const days = []
     for (let i = 0; i < firstDayOffset; i++) {
       days.push(null)

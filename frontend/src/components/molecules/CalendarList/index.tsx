@@ -17,4 +17,4 @@ const CalendarList: React.FC<CalendarListProps> = ({ calendars }) => {
   )
 }
 
-export default CalendarList 
+export default CalendarList

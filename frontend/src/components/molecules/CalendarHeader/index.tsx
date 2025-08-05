@@ -21,22 +21,22 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   return (
     <div className="flex items-center justify-between p-4 border-b border-white/20">
       <div className="flex items-center gap-4">
-        <button 
+        <button
           onClick={onToday}
-          className="px-4 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-colors"
+          className="px-4 py-2 text-white bg-[#795AA1] rounded-md hover:bg-[#795AA1]/80 transition-colors"
         >
           Today
         </button>
         <div className="flex">
-          <button 
+          <button
             onClick={onPrevious}
-            className="p-2 text-white hover:bg-white/10 rounded-l-md"
+            className="p-2 text-white hover:bg-[#DABAFF]/20 rounded-l-md transition-colors"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <button 
+          <button
             onClick={onNext}
-            className="p-2 text-white hover:bg-white/10 rounded-r-md"
+            className="p-2 text-white hover:bg-[#DABAFF]/20 rounded-r-md transition-colors"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -47,19 +47,25 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
       <div className="flex items-center gap-2 rounded-md p-1">
         <button
           onClick={() => onViewChange("day")}
-          className={`px-3 py-1 rounded ${currentView === "day" ? "bg-white/20" : ""} text-white text-sm`}
+          className={`px-3 py-1 rounded transition-colors ${
+            currentView === "day" ? "bg-[#795AA1] text-white" : "text-white hover:bg-[#795AA1]/20"
+          } text-sm`}
         >
           Day
         </button>
         <button
           onClick={() => onViewChange("week")}
-          className={`px-3 py-1 rounded ${currentView === "week" ? "bg-white/20" : ""} text-white text-sm`}
+          className={`px-3 py-1 rounded transition-colors ${
+            currentView === "week" ? "bg-[#795AA1] text-white" : "text-white hover:bg-[#795AA1]/20"
+          } text-sm`}
         >
           Week
         </button>
         <button
           onClick={() => onViewChange("month")}
-          className={`px-3 py-1 rounded ${currentView === "month" ? "bg-white/20" : ""} text-white text-sm`}
+          className={`px-3 py-1 rounded transition-colors ${
+            currentView === "month" ? "bg-[#795AA1] text-white" : "text-white hover:bg-[#795AA1]/20"
+          } text-sm`}
         >
           Month
         </button>
@@ -68,4 +74,4 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   )
 }
 
-export default CalendarHeader 
+export default CalendarHeader

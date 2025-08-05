@@ -36,15 +36,15 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-white font-medium">{currentMonth}</h3>
         <div className="flex gap-1">
-          <button 
+          <button
             onClick={onPreviousMonth}
-            className="p-1 rounded-full hover:bg-white/20"
+            className="p-1 rounded-full hover:bg-[#DABAFF]/20 transition-colors"
           >
             <ChevronLeft className="h-4 w-4 text-white" />
           </button>
-          <button 
+          <button
             onClick={onNextMonth}
-            className="p-1 rounded-full hover:bg-white/20"
+            className="p-1 rounded-full hover:bg-[#DABAFF]/20 transition-colors"
           >
             <ChevronRight className="h-4 w-4 text-white" />
           </button>
@@ -53,7 +53,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({
 
       <div className="grid grid-cols-7 gap-1 text-center">
         {["S", "M", "T", "W", "T", "F", "S"].map((day: string, i: number) => (
-          <div key={i} className="text-xs text-white/70 font-medium py-1">
+          <div key={i} className="text-xs text-white font-medium py-1">
             {day}
           </div>
         ))}
@@ -64,10 +64,10 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({
             onClick={() => handleDateClick(day || 0)}
             disabled={!day}
             className={`text-xs rounded-full w-7 h-7 flex items-center justify-center transition-colors ${
-              isCurrentDate(day) 
-                ? "bg-blue-500 text-white" 
-                : day 
-                  ? "text-white hover:bg-white/20" 
+              isCurrentDate(day)
+                ? "bg-[#795AA1] text-white"
+                : day
+                  ? "text-white hover:bg-[#795AA1]/20"
                   : "invisible"
             }`}
           >
@@ -79,4 +79,4 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({
   )
 }
 
-export default MiniCalendar 
+export default MiniCalendar

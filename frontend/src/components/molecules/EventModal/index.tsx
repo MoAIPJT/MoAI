@@ -51,7 +51,7 @@ const EventModal: React.FC<EventModalProps> = ({
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-800">
+          <h2 className="text-xl font-bold text-[#AA64FF]">
             {event ? '일정 편집' : '새 일정 만들기'}
           </h2>
           <button
@@ -66,7 +66,7 @@ const EventModal: React.FC<EventModalProps> = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[#AA64FF] mb-2">
               제목
             </label>
             <Input
@@ -80,18 +80,18 @@ const EventModal: React.FC<EventModalProps> = ({
           {/* Date and Time */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[#AA64FF] mb-2">
                 날짜
               </label>
               <div className="flex items-center gap-2 p-3 border border-gray-300 rounded-md">
-                <Calendar className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-700">
+                <Calendar className="h-4 w-4 text-[#AA64FF]" />
+                <span className="text-sm text-[#AA64FF]">
                   {selectedDate?.toLocaleDateString('ko-KR')}
                 </span>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[#AA64FF] mb-2">
                 시간
               </label>
               <div className="flex items-center gap-2">
@@ -101,7 +101,7 @@ const EventModal: React.FC<EventModalProps> = ({
                   onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
                   className="text-sm"
                 />
-                <span className="text-gray-500">~</span>
+                <span className="text-[#AA64FF]">~</span>
                 <Input
                   type="time"
                   value={formData.endTime}
@@ -114,11 +114,11 @@ const EventModal: React.FC<EventModalProps> = ({
 
           {/* Location */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[#AA64FF] mb-2">
               장소
             </label>
             <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-gray-500" />
+              <MapPin className="h-4 w-4 text-[#AA64FF]" />
               <Input
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
@@ -129,11 +129,11 @@ const EventModal: React.FC<EventModalProps> = ({
 
           {/* Attendees */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[#AA64FF] mb-2">
               참석자
             </label>
             <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-gray-500" />
+              <Users className="h-4 w-4 text-[#AA64FF]" />
               <Input
                 value={formData.attendees}
                 onChange={(e) => setFormData({ ...formData, attendees: e.target.value })}
@@ -144,7 +144,7 @@ const EventModal: React.FC<EventModalProps> = ({
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[#AA64FF] mb-2">
               설명
             </label>
             <Textarea
@@ -157,7 +157,7 @@ const EventModal: React.FC<EventModalProps> = ({
 
           {/* Color */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[#AA64FF] mb-2">
               색상
             </label>
             <div className="flex gap-2">
@@ -204,4 +204,4 @@ const EventModal: React.FC<EventModalProps> = ({
   )
 }
 
-export default EventModal 
+export default EventModal

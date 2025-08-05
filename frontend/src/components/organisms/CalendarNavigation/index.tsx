@@ -11,7 +11,7 @@ const CalendarNavigation: React.FC = () => {
 
       <div className="flex items-center gap-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/70" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white" />
           <input
             type="text"
             placeholder="Search"
@@ -19,7 +19,7 @@ const CalendarNavigation: React.FC = () => {
           />
         </div>
         <Settings className="h-6 w-6 text-white drop-shadow-md" />
-        <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold shadow-md">
+        <div className="h-10 w-10 rounded-full bg-[#795AA1] flex items-center justify-center text-white font-bold shadow-md">
           U
         </div>
       </div>
@@ -27,4 +27,4 @@ const CalendarNavigation: React.FC = () => {
   )
 }
 
-export default CalendarNavigation 
+export default CalendarNavigation

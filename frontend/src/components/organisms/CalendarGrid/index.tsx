@@ -24,7 +24,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     <div className="bg-white/20 backdrop-blur-lg rounded-xl border border-white/20 shadow-xl h-full">
       {/* Week Header */}
       <div className="grid grid-cols-8 border-b border-white/20">
-        <div className="p-2 text-center text-white/50 text-xs"></div>
+        <div className="p-2 text-center text-white text-xs"></div>
         {weekDays.map((day, i) => (
           <WeekDay
             key={i}
@@ -38,7 +38,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       {/* Time Grid */}
       <div className="grid grid-cols-8">
         {/* Time Labels */}
-        <div className="text-white/70">
+        <div className="text-white">
           {timeSlots.map((time, i) => (
             <TimeSlot key={i} time={time} />
           ))}
@@ -76,4 +76,4 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   )
 }
 
-export default CalendarGrid 
+export default CalendarGrid
