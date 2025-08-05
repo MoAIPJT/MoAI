@@ -1,45 +1,42 @@
 package com.foureyes.moai.backend.domain.user.entity;
 
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDateTime;
 
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Entity
+@Table(name = "users")
 public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+
+    @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(nullable = false)
     private String password;
+
+    @Column(nullable = false)
     private String name;
-    private String provider;
-    private String providerId;
-    private String profileImage;
-    private Boolean isVerified;
-    private Boolean isDeleted;
+
+    @Column(name = "provider_type", nullable = false)
+    private String providerType;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private String profileImageUrl;  // 필드명 수정
 
+    @Column(name = "profile_image_url")
+    private String profileImageUrl;
 
-    public User() {} // MyBatis 매핑용 기본 생성자
-
-    public User(String email, String password, String name) {
-        this.email = email;
-        this.password = password;
-        this.name = name;
-        this.provider = "LOCAL";
-        this.isVerified = false;
-        this.isDeleted = false;
-    }
-
-    // Getter (setter는 필요한 경우만 추가)
-    public int getId() { return id; }
-    public String getEmail() { return email; }
-    public String getPassword() { return password; }
-    public String getName() { return name; }
-    public String getProvider() { return provider; }
-    public String getProviderId() { return providerId; }
-    public String getProfileImage() { return profileImage; }
-    public Boolean getIsVerified() { return isVerified; }
-    public Boolean getIsDeleted() { return isDeleted; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-
-    public void setId(int id) { this.id = id; }
+    @Column(name = "refresh_token")
+    private String refreshToken;
 }
