@@ -9,7 +9,8 @@ services:
       - SPRING_DATASOURCE_USERNAME=backend_user
       - SPRING_DATASOURCE_PASSWORD=backend_pass
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     networks:
       - backend-network
 
@@ -46,6 +47,11 @@ services:
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
     networks:
       - backend-network
