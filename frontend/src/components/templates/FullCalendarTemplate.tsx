@@ -51,10 +51,10 @@ const FullCalendarTemplate: React.FC<FullCalendarTemplateProps> = ({
   return (
     <div className="relative h-full w-full overflow-hidden">
       {/* Background Image */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: "url('/src/assets/calendar-image2.jpg')"
+          backgroundImage: "url('/src/assets/제목 없는 디자인.png')",
         }}
       />
 
@@ -100,4 +100,4 @@ const FullCalendarTemplate: React.FC<FullCalendarTemplateProps> = ({
   )
 }
 
-export default FullCalendarTemplate 
+export default FullCalendarTemplate
