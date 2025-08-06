@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import DashboardSidebar from '../components/organisms/DashboardSidebar'
 import TopBar from '../components/molecules/TopBar'
 import StudyList from '../components/organisms/StudyList'
@@ -8,8 +9,10 @@ import type { AISummary } from '../components/molecules/AISummaryCard/types'
 import type { CreateStudyData } from '../components/organisms/CreateStudyModal/types'
 import InviteLinkModal from '../components/organisms/InviteLinkModal'
 import { fetchSummaryList, type SummaryItem } from '../services/summaryService'
+import { getStudies } from '../services/studyService'
 
 const DashboardPage: React.FC = () => {
+  const navigate = useNavigate()
   const [studies, setStudies] = useState<Study[]>([])
   const [summaries, setSummaries] = useState<AISummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -137,12 +140,15 @@ const DashboardPage: React.FC = () => {
   }, [])
 
   const handleItemClick = (itemId: string) => {
-
     // AI 요약본 클릭 시 새 탭에서 AI 요약본 페이지 열기
     if (itemId === 'ai-summary') {
       window.open('/ai-summary', '_blank')
     }
-    
+
+    // Study 클릭 시 Study 상세페이지로 이동 (기본 스터디)
+    if (itemId === 'study') {
+      navigate('/study/study-1')
+    }
   }
 
   const handleLogout = () => {

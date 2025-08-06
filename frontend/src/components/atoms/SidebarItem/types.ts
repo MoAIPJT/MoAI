@@ -3,5 +3,7 @@ export interface SidebarItemProps {
   label: string
   icon: string
   isActive?: boolean
+  isExpanded?: boolean
+  hasSubItems?: boolean
   onClick: (id: string) => void
 }

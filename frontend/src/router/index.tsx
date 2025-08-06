@@ -10,6 +10,7 @@ import ResetPasswordConfirmPage from '@/pages/ResetPasswordConfirmPage'
 import AISummaryPage from '@/pages/AISummaryPage'
 import DashboardPage from '@/pages/DashboardPage'
 import TestPage from '@/pages/TestPage'
+import StudyDetailPage from '@/pages/StudyDetailPage'
 
 const Router: React.FC = () => {
   return (
@@ -25,6 +26,8 @@ const Router: React.FC = () => {
       <Route path="/ai-summary" element={<AISummaryPage />} />
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/test" element={<TestPage />} />
+      <Route path="/study-detail" element={<StudyDetailPage />} />
+      <Route path="/study/:studyId" element={<StudyDetailPage />} />
     </Routes>
   )
 }
