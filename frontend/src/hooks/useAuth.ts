@@ -13,21 +13,21 @@ export const useAuth = () => {
   const login = async (data: LoginFormData) => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const response = await authService.login(data)
-      
+
       // 토큰 저장
       localStorage.setItem('accessToken', response.access_token)
       localStorage.setItem('refreshToken', response.refresh_token)
-      
+
       // 이메일 기억하기 옵션
       if (data.rememberEmail) {
         localStorage.setItem('rememberedEmail', data.email)
       } else {
         localStorage.removeItem('rememberedEmail')
       }
-      
+
       // 로그인 성공 후 리다이렉트
       navigate('/dashboard')
       return response
@@ -42,11 +42,11 @@ export const useAuth = () => {
   const signup = async (data: SignupRequest) => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const response = await authService.signup(data)
-      navigate('/email-sent', { 
-        state: { 
+      navigate('/email-sent', {
+        state: {
           message: '회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료해주세요.',
           email: data.email
         }
@@ -55,18 +55,18 @@ export const useAuth = () => {
     } catch (err: unknown) {
       const errorMessage = extractAxiosErrorMessage(err, '회원가입에 실패했습니다.')
       setError(errorMessage)
-      
+
       // 백엔드 연결 실패 시에도 테스트용으로 페이지 이동
       if (errorMessage.includes('Network Error') || errorMessage.includes('ECONNREFUSED')) {
         console.log('백엔드 서버 연결 실패. 테스트용으로 페이지 이동합니다.')
-        navigate('/email-sent', { 
-          state: { 
+        navigate('/email-sent', {
+          state: {
             message: '회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료해주세요.',
             email: data.email
           }
         })
       }
-      
+
       throw err
     } finally {
       setLoading(false)
@@ -76,11 +76,11 @@ export const useAuth = () => {
   const requestResetPassword = async (email: string) => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const response = await authService.requestResetPassword({ email })
-      navigate('/password-sent', { 
-        state: { 
+      navigate('/password-sent', {
+        state: {
           message: '비밀번호 재설정 메일이 전송되었습니다.',
           email: email
         }
@@ -97,7 +97,7 @@ export const useAuth = () => {
   const kakaoLogin = async (code: string) => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const response = await authService.kakaoLogin(code)
       localStorage.setItem('accessToken', response.access_token)
@@ -115,7 +115,7 @@ export const useAuth = () => {
   const googleLogin = async (code: string) => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const response = await authService.googleLogin(code)
       localStorage.setItem('accessToken', response.access_token)
@@ -133,10 +133,10 @@ export const useAuth = () => {
   const socialSignup = async (data: SocialSignupRequest) => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const response = await authService.socialSignup(data)
-      navigate('/login', { 
+      navigate('/login', {
         state: { message: '소셜 회원가입이 완료되었습니다. 로그인해주세요.' }
       })
       return response
@@ -151,7 +151,7 @@ export const useAuth = () => {
   const socialLogin = async (data: SocialLoginRequest) => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const response = await authService.socialLogin(data)
       // 소셜 로그인 응답에는 access_token이 없고 refresh_token만 있음
@@ -171,10 +171,10 @@ export const useAuth = () => {
   const confirmResetPassword = async (data: ResetPasswordConfirmRequest) => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const response = await authService.confirmResetPassword(data)
-      navigate('/login', { 
+      navigate('/login', {
         state: { message: '비밀번호가 성공적으로 변경되었습니다. 새로운 비밀번호로 로그인해주세요.' }
       })
       return response
@@ -211,4 +211,4 @@ export const useAuth = () => {
     error,
     clearError: () => setError(null)
   }
-} 
+}
