@@ -10,4 +10,5 @@ export interface InputTextProps {
   size?: InputSize // 사이즈
   fullWidth?: boolean // 전체화면
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
+  className?: string // 추가 CSS 클래스
 }

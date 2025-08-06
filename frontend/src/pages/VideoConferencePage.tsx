@@ -147,8 +147,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
             action: 'enter',
             pdfUrl: pdfUrl,
             pdfName: material.name
-          }),
-          to: undefined // 모든 참가자에게 전송
+          })
         });
       } else if (isDemoMode) {
         // 데모 모드에서는 로컬 스토리지를 통해 시뮬레이션
@@ -178,10 +177,9 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
     if (session && !isDemoMode) {
       session.signal({
         data: JSON.stringify({
+          type: 'pdf-viewer-mode',
           action: 'exit'
-        }),
-        to: [],
-        type: 'pdf-viewer-mode'
+        })
       });
     } else if (isDemoMode) {
       // 데모 모드에서는 localStorage에서 제거
@@ -341,7 +339,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
 
       // 다른 참가자 구독 (제공된 예시와 일치)
       newSession.on('streamCreated', (event: any) => {
-        const subscriber = newSession.subscribe(event.stream, undefined);
+        const subscriber = newSession.subscribe(event.stream);
         setSubscribers((prev) => [...prev, subscriber]);
       });
 
@@ -463,7 +461,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
       console.log('토큰 생성 완료:', tokenData);
 
       // 3. 세션 연결 (제공된 예시와 일치)
-      await session.connect(tokenData.token, { clientData: "TemporaryUser" });
+      await session.connect(tokenData.token);
       console.log('세션 연결 완료');
 
       // 4. 퍼블리셔 생성
@@ -613,21 +611,21 @@ API 시크릿: ${OPENVIDU_API_SECRET}
   };
 
   // 데모 모드에서 참가자 토글
-  const toggleDemoParticipantAudio = (participantId: string) => {
-    setDemoParticipants(prev => 
-      prev.map(p => 
-        p.id === participantId ? { ...p, hasAudio: !p.hasAudio } : p
-      )
-    );
-  };
+  // const toggleDemoParticipantAudio = (participantId: string) => {
+  //   setDemoParticipants(prev => 
+  //     prev.map(p => 
+  //       p.id === participantId ? { ...p, hasAudio: !p.hasAudio } : p
+  //     )
+  //   );
+  // };
 
-  const toggleDemoParticipantVideo = (participantId: string) => {
-    setDemoParticipants(prev => 
-      prev.map(p => 
-        p.id === participantId ? { ...p, hasVideo: !p.hasVideo } : p
-      )
-    );
-  };
+  // const toggleDemoParticipantVideo = (participantId: string) => {
+  //   setDemoParticipants(prev => 
+  //     prev.map(p => 
+  //       p.id === participantId ? { ...p, hasVideo: !p.hasVideo } : p
+  //     )
+  //   );
+  // };
 
   const allParticipants = publisher ? [publisher, ...subscribers] : subscribers;
   const { cols, rows } = getGridLayout(isDemoMode ? demoParticipants.length + 1 : allParticipants.length);
@@ -728,7 +726,7 @@ API 시크릿: ${OPENVIDU_API_SECRET}
                 ))}
                 
                 {/* 실제 참가자들 */}
-                {!isDemoMode && subscribers.map((subscriber, index) => (
+                {!isDemoMode && subscribers.map((_, index) => (
                   <div key={index} className="flex items-center space-x-2 p-2 bg-gray-700 rounded">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                     <span className="text-white text-sm">참가자 {index + 1}</span>
@@ -917,7 +915,7 @@ API 시크릿: ${OPENVIDU_API_SECRET}
                           </div>
                           
                           {/* 데모 참가자들 */}
-                          {demoParticipants.map((participant, index) => (
+                          {demoParticipants.map((participant) => (
                             <div key={participant.id} className="relative bg-gray-800 rounded-lg overflow-hidden flex-1 min-h-[120px]">
                               <video
                                 ref={(el) => { demoVideoRefs.current[participant.id] = el; }}
@@ -933,7 +931,7 @@ API 시크릿: ${OPENVIDU_API_SECRET}
                           ))}
                         </>
                       ) : (
-                        allParticipants.map((participant, index) => (
+                        allParticipants.map((_, index) => (
                           <div key={index} className="relative bg-gray-800 rounded-lg overflow-hidden flex-1 min-h-[120px]">
                             <video
                               ref={index === 0 ? videoRef : undefined}
@@ -1017,7 +1015,7 @@ API 시크릿: ${OPENVIDU_API_SECRET}
                       </div>
                       
                       {/* 데모 참가자들 */}
-                      {demoParticipants.map((participant, index) => (
+                      {demoParticipants.map((participant) => (
                         <div key={participant.id} className="relative bg-gray-800 rounded-lg overflow-hidden w-full h-full">
                           <video
                             ref={(el) => { demoVideoRefs.current[participant.id] = el; }}
@@ -1033,7 +1031,7 @@ API 시크릿: ${OPENVIDU_API_SECRET}
                       ))}
                     </>
                   ) : (
-                    allParticipants.map((participant, index) => (
+                    allParticipants.map((_, index) => (
                       <div key={index} className="relative bg-gray-800 rounded-lg overflow-hidden w-full h-full">
                         <video
                           ref={index === 0 ? videoRef : undefined}

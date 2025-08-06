@@ -1,4 +1,4 @@
-import { Study } from '../../organisms/StudyList/types'
+import type { Study } from '../../organisms/StudyList/types'
 
 export interface StudyCardProps {
   study: Study

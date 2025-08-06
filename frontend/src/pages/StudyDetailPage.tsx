@@ -197,9 +197,9 @@ const StudyDetailPage: React.FC = () => {
     console.log('Create room clicked')
   }
 
-  const handleAddEvent = () => {
-    console.log('Add event clicked')
-  }
+  // const handleAddEvent = () => {
+  //   console.log('Add event clicked')
+  // }
 
   const handleEditNotice = () => {
     console.log('Edit notice clicked')

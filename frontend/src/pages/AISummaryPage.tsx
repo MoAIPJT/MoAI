@@ -13,21 +13,21 @@ const AISummaryPage: React.FC = () => {
   const [leftPanelWidth, setLeftPanelWidth] = useState(500)
   const [studiesWithSummaries, setStudiesWithSummaries] = useState<StudyWithSummaries[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  // const [error, setError] = useState<string | null>(null)
 
   // AI 요약본 목록 조회
   const fetchSummaries = async () => {
     try {
       setIsLoading(true)
-      setError(null)
+      // setError(null)
       
       // 실제 API 호출
       const userId = localStorage.getItem('userId') || '1' // 실제로는 로그인된 유저 ID를 사용
       const response = await fetchSummaryList(userId)
-      setStudiesWithSummaries(response.studies)
+      setStudiesWithSummaries(response.studies || [])
     } catch (error) {
       console.error('AI 요약본 목록 조회 실패:', error)
-      setError('AI 요약본 목록을 불러오는데 실패했습니다.')
+      // setError('AI 요약본 목록을 불러오는데 실패했습니다.')
       
       // 에러 시 더미 데이터 사용 (개발용)
       const dummyStudiesWithSummaries: StudyWithSummaries[] = [
@@ -148,7 +148,6 @@ const AISummaryPage: React.FC = () => {
             onResize={handleResize}
             minLeftWidth={300}
             maxLeftWidth={800}
-            initialLeftWidth={500}
           />
 
           {/* 오른쪽 패널 - 원본 PDF */}

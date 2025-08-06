@@ -1,4 +1,4 @@
-export type ButtonVariant = 'primary' | 'secondary' | 'gray'
+export type ButtonVariant = 'primary' | 'secondary' | 'gray' | 'outline'
 export type ButtonSize = 'sm' | 'md' | 'lg'
 
 export interface ButtonProps {
@@ -9,4 +9,5 @@ export interface ButtonProps {
   onClick?: () => void // 이벤트 핸들러
   type?: 'button' | 'submit' | 'reset' // 버튼 타입
   disabled?: boolean // 비활성화 상태
+  className?: string // 추가 CSS 클래스
 }

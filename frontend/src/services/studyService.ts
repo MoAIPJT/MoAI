@@ -15,24 +15,28 @@ export const getStudies = async (): Promise<StudyItem[]> => {
         id: 'study-1',
         name: '싸피 알고리즘',
         description: '알고리즘 문제 풀이와 코드 리뷰를 통해 실력을 향상시키는 스터디입니다.',
+        image: '/api/images/algorithm.jpg',
         image_url: '/api/images/algorithm.jpg',
       },
       {
         id: 'study-2',
         name: 'CS 모여라',
         description: '컴퓨터 과학 기초 지식을 함께 학습하고 토론하는 스터디입니다.',
+        image: '/api/images/cs.jpg',
         image_url: '/api/images/cs.jpg',
       },
       {
         id: 'study-3',
         name: '면접 화상 스터디',
         description: '실전 면접 연습과 피드백을 통해 면접 실력을 키우는 스터디입니다.',
+        image: '/api/images/interview.jpg',
         image_url: '/api/images/interview.jpg',
       },
       {
         id: 'study-4',
         name: '대전맛집탐방',
         description: '대전 지역 맛집을 함께 탐방하고 리뷰를 공유하는 스터디입니다.',
+        image: '/api/images/food.jpg',
         image_url: '/api/images/food.jpg',
       },
     ]
@@ -74,6 +78,7 @@ export const getStudyById = async (studyId: string): Promise<StudyItem> => {
       id: studyId,
       name: defaultStudy?.name || '알 수 없는 스터디',
       description: defaultStudy?.description || '스터디 설명이 없습니다.',
+      image: defaultStudy?.image_url || '/api/images/default.jpg',
       image_url: defaultStudy?.image_url || '/api/images/default.jpg',
     }
   }

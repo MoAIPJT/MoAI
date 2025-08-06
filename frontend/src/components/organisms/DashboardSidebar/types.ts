@@ -3,6 +3,8 @@ export interface StudyItem {
   name: string
   description: string
   image: string
+  image_url?: string
+  icon?: string
   memberCount?: number
   isActive?: boolean
 }

@@ -10,6 +10,14 @@ export interface SummaryItem {
 
 export interface SummaryListResponse {
   summaries: SummaryItem[]
+  studies?: StudyWithSummaries[]
+}
+
+export interface StudyWithSummaries {
+  study_id: string
+  study_name: string
+  study_image_url?: string
+  summaries: SummaryItem[]
 }
 
 export interface SummaryListRequest {

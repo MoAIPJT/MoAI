@@ -20,7 +20,6 @@ const StudyManagementModal: React.FC<StudyManagementModalProps> = ({
   onSave,
 }) => {
   const [newCategory, setNewCategory] = useState('')
-  const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(studyImage || null)
 
   if (!isOpen) return null
@@ -41,7 +40,6 @@ const StudyManagementModal: React.FC<StudyManagementModalProps> = ({
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      setSelectedImage(file)
       const reader = new FileReader()
       reader.onload = (e) => {
         setImagePreview(e.target?.result as string)
@@ -52,7 +50,6 @@ const StudyManagementModal: React.FC<StudyManagementModalProps> = ({
   }
 
   const handleImageRemove = () => {
-    setSelectedImage(null)
     setImagePreview(null)
     onStudyImageChange(null)
   }

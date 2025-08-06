@@ -5,10 +5,8 @@ const Resizer: React.FC<ResizerProps> = ({
   onResize,
   minWidth = 200,
   maxWidth = 500,
-  initialWidth = 256,
 }) => {
   const [isDragging, setIsDragging] = useState(false)
-  const [width, setWidth] = useState(initialWidth)
   const resizerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -18,7 +16,6 @@ const Resizer: React.FC<ResizerProps> = ({
       const newWidth = e.clientX
       const clampedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth))
       
-      setWidth(clampedWidth)
       onResize(clampedWidth)
     }
 

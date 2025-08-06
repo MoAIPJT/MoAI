@@ -10,13 +10,15 @@ const InputText: React.FC<InputTextProps> = ({
   size = 'md',
   fullWidth = false,
   onChange,
+  className = '',
   ...rest
 }) => {
-  const className = `
+  const baseClassName = `
     ${variantClasses[variant]}
     ${sizeClasses[size]}
     ${fullWidth ? 'w-full' : ''}
   `.trim()
+  const finalClassName = `${baseClassName} ${className}`.trim()
 
   return (
     <input
@@ -24,7 +26,7 @@ const InputText: React.FC<InputTextProps> = ({
       value={value}
       placeholder={placeholder}
       onChange={onChange}
-      className={className}
+      className={finalClassName}
       {...rest}
     />
   )

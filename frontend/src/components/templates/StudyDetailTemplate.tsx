@@ -80,7 +80,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   onCreateRoom,
 
   onEditNotice,
-  onSettingsClick,
+  // onSettingsClick,
   // Content Management 관련 핸들러들
   onCategoryToggle,
   onAddCategory,
@@ -198,13 +198,13 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
          maxMembers={currentStudy?.memberCount || 10}
          members={studyParticipants?.participants || []}
          categories={categories.map(c => c.name)}
-         onStudyNameChange={onStudyNameChange}
-         onStudyDescriptionChange={onStudyDescriptionChange}
-         onStudyImageChange={onStudyImageChange}
-         onMaxMembersChange={onMaxMembersChange}
-         onCategoryRemove={onCategoryRemove}
-         onCategoryAdd={onCategoryAdd}
-         onMemberRemove={onMemberRemove}
+                   onStudyNameChange={onStudyNameChange || (() => {})}
+          onStudyDescriptionChange={onStudyDescriptionChange || (() => {})}
+          onStudyImageChange={onStudyImageChange || (() => {})}
+          onMaxMembersChange={onMaxMembersChange || (() => {})}
+          onCategoryRemove={onCategoryRemove || (() => {})}
+          onCategoryAdd={onCategoryAdd || (() => {})}
+          onMemberRemove={onMemberRemove || (() => {})}
          onSave={() => {
            console.log('Study management saved')
            handleCloseManagementModal()

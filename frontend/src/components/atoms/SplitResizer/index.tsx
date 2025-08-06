@@ -5,10 +5,8 @@ const SplitResizer: React.FC<SplitResizerProps> = ({
   onResize,
   minLeftWidth = 300,
   maxLeftWidth = 800,
-  initialLeftWidth = 500,
 }) => {
   const [isDragging, setIsDragging] = useState(false)
-  const [leftWidth, setLeftWidth] = useState(initialLeftWidth)
   const resizerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -18,7 +16,6 @@ const SplitResizer: React.FC<SplitResizerProps> = ({
       const newLeftWidth = e.clientX
       const clampedWidth = Math.max(minLeftWidth, Math.min(maxLeftWidth, newLeftWidth))
       
-      setLeftWidth(clampedWidth)
       onResize(clampedWidth)
     }
 

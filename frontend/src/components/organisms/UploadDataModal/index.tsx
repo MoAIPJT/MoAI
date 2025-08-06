@@ -41,7 +41,7 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
     setSelectedFile(file)
   }
 
-  const handleCategoryToggle = (categoryId: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCategoryToggle = (categoryId: string) => (_e: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedCategories(prev => {
       if (prev.includes(categoryId)) {
         return prev.filter(id => id !== categoryId)

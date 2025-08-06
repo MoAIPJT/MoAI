@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DashboardSidebar from '../components/organisms/DashboardSidebar'
 import TopBar from '../components/molecules/TopBar'
@@ -8,8 +8,7 @@ import type { Study } from '../components/organisms/StudyList/types'
 import type { AISummary } from '../components/molecules/AISummaryCard/types'
 import type { CreateStudyData } from '../components/organisms/CreateStudyModal/types'
 import InviteLinkModal from '../components/organisms/InviteLinkModal'
-import { fetchSummaryList, type SummaryItem } from '../services/summaryService'
-import { getStudies } from '../services/studyService'
+import { fetchSummaryList } from '../services/summaryService'
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate()
@@ -161,12 +160,12 @@ const DashboardPage: React.FC = () => {
       console.log('새 스터디 생성:', data)
       
       // API 스펙에 맞는 Request Body 구성
-      const requestBody = {
-        id: 1, // 실제로는 현재 로그인한 유저의 ID를 사용해야 함
-        name: data.name,
-        description: data.description,
-        image_url: data.image ? await convertImageToBase64(data.image) : null
-      }
+      // const requestBody = {
+      //   id: 1, // 실제로는 현재 로그인한 유저의 ID를 사용해야 함
+      //   name: data.name,
+      //   description: data.description,
+      //   image_url: data.image ? await convertImageToBase64(data.image) : null
+      // }
       
       // 실제 API 호출 (현재는 주석 처리)
       // const response = await fetch('/register', {
@@ -221,29 +220,29 @@ const DashboardPage: React.FC = () => {
   }
 
   // 이미지를 Base64로 변환하는 헬퍼 함수
-  const convertImageToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        const result = reader.result as string
-        // Base64 문자열에서 data:image/...;base64, 부분 제거
-        const base64 = result.split(',')[1]
-        resolve(base64)
-      }
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
-  }
+  // const convertImageToBase64 = (file: File): Promise<string> => {
+  //   return new Promise((resolve, reject) => {
+  //     const reader = new FileReader()
+  //     reader.onload = () => {
+  //       const result = reader.result as string
+  //       // Base64 문자열에서 data:image/...;base64, 부분 제거
+  //       const base64 = result.split(',')[1]
+  //       resolve(base64)
+  //     }
+  //     reader.onerror = reject
+  //     reader.readAsDataURL(file)
+  //   })
+  // }
 
-  const handleStudyClick = (studyId: number) => {
-    // 스터디 상세 페이지로 이동
-   // navigate(`/study/${studyId}`)
-  }
+  // const handleStudyClick = (studyId: number) => {
+  //   // 스터디 상세 페이지로 이동
+  //   navigate(`/study/${studyId}`)
+  // }
 
-  const handleSummaryClick = (summaryId: number) => {
-    // AI 요약본 상세 페이지로 이동
-    // navigate(`/ai-summary/${summaryId}`)
-  }
+  // const handleSummaryClick = (summaryId: number) => {
+  //   // AI 요약본 상세 페이지로 이동
+  //   // navigate(`/ai-summary/${summaryId}`)
+  // }
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -262,12 +261,12 @@ const DashboardPage: React.FC = () => {
                 studies={studies}
                 isLoading={isLoading}
                 onCreateStudy={handleCreateStudy}
-                onStudyClick={handleStudyClick}
+                onStudyClick={() => {}}
               />
               <AISummaryList
                 summaries={summaries}
                 isLoading={isSummaryLoading}
-                onSummaryClick={handleSummaryClick}
+                onSummaryClick={() => {}}
               />
             </div>
             

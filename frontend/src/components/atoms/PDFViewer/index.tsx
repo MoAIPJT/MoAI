@@ -77,6 +77,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, title, onLoad, onError })
         renderTask = page.render({
           canvasContext: context,
           viewport,
+          canvas: canvas,
         })
 
         await renderTask.promise
