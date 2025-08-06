@@ -2,7 +2,7 @@ import React from 'react'
 import CalendarSidebar from '../organisms/CalendarSidebar'
 import CalendarHeader from '../molecules/CalendarHeader'
 import CalendarGrid from '../organisms/CalendarGrid'
-import type { FullCalendarTemplateProps } from './types'
+import type { Event as CalendarEvent } from '../atoms/CalendarEvent/types'
 
 export interface FullCalendarTemplateProps {
   currentMonth: string
@@ -11,18 +11,20 @@ export interface FullCalendarTemplateProps {
   weekDays: string[]
   weekDates: number[]
   timeSlots: number[]
-  events: Event[]
+  events: CalendarEvent[]
   miniCalendarDays: (number | null)[]
-  calendars: CalendarType[]
+  calendars: { name: string; color: string }[]
   onViewChange: (view: string) => void
   onPrevious: () => void
   onNext: () => void
   onPreviousMonth: () => void
   onNextMonth: () => void
-  onEventClick: (event: Event) => void
+  onEventClick: (event: CalendarEvent) => void
   onToday?: () => void
   onDateClick?: (date: Date) => void
   onCreateEvent?: () => void
+  selectedDate?: Date // 사용자가 선택한 날짜
+  weekDateObjects?: Date[] // 현재 주의 전체 Date 객체들
 }
 
 const FullCalendarTemplate: React.FC<FullCalendarTemplateProps> = ({
@@ -44,9 +46,12 @@ const FullCalendarTemplate: React.FC<FullCalendarTemplateProps> = ({
   onToday,
   onDateClick,
   onCreateEvent,
+  selectedDate,
+  weekDateObjects,
 }) => {
-  // Convert string date to Date object for sidebar
+  // Convert string date to Date object for sidebar and selected date
   const currentDateObj = new Date(currentDate)
+  const selectedDateObj = selectedDate || currentDateObj
 
   return (
     <div className="relative h-full w-full overflow-hidden">
@@ -54,7 +59,7 @@ const FullCalendarTemplate: React.FC<FullCalendarTemplateProps> = ({
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: "url('/src/assets/제목 없는 디자인.png')",
+          backgroundImage: "url('/src/assets/calendar-background1.png')",
         }}
       />
 
@@ -85,17 +90,22 @@ const FullCalendarTemplate: React.FC<FullCalendarTemplateProps> = ({
           />
 
           {/* Week View */}
-          <div className="flex-1 overflow-auto p-4">
+          <div className="flex-1 p-4 min-h-0">
             <CalendarGrid
               weekDays={weekDays}
               weekDates={weekDates}
               timeSlots={timeSlots}
               events={events}
               onEventClick={onEventClick}
+              onDateClick={onDateClick}
+              selectedDate={selectedDateObj}
+              weekDateObjects={weekDateObjects}
             />
           </div>
         </div>
       </main>
+
+
     </div>
   )
 }

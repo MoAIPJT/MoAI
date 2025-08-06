@@ -22,13 +22,10 @@ const LoginPage: React.FC = () => {
     window.location.href = kakaoAuthUrl;
   };
 
-  const handleGoogleLogin = async () => {
-    // 구글 로그인 URL로 리다이렉트
-    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    const redirectUri = `${window.location.origin}/auth/google/callback`;
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=code&scope=email profile`;
-    window.location.href = googleAuthUrl;
-  };
+const handleGoogleLogin = () => {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  window.location.href = `${backendUrl}/oauth2/authorization/google`;
+}
 
   return (
     <LoginTemplate
@@ -41,4 +38,4 @@ const LoginPage: React.FC = () => {
   );
 };
 
-export default LoginPage; 
+export default LoginPage;

@@ -1,35 +1,82 @@
 import React, { useState } from 'react'
 import { Calendar } from '@/components/ui/calendar'
-import { Button } from '@/components/ui/button'
 import type { StudyCalendarProps } from './types'
-import { customLocale } from '@/lib/locales/en-custom'
 import { X } from 'lucide-react'
 import FullCalendarTemplate from '../../templates/FullCalendarTemplate'
 import EventModal from '../EventModal'
 import type { Event } from '../../atoms/CalendarEvent/types'
 import type { Calendar as CalendarType } from '../../molecules/CalendarList/types'
 
-const getMonthName = (month: number): string => {
-  const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ]
-  return months[month]
+// StudyCalendar용 이벤트 타입 (date 속성 포함)
+interface StudyEvent extends Event {
+  date: Date
 }
 
-const StudyCalendar: React.FC<StudyCalendarProps> = ({
-  onAddEvent,
-}) => {
+const StudyCalendar: React.FC<StudyCalendarProps> = () => {
   const [date, setDate] = useState<Date | undefined>(new Date())
   const [showEventModal, setShowEventModal] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
 
   // Modal specific states
   const [modalCurrentView, setModalCurrentView] = useState("week")
-  const [modalCurrentDate, setModalCurrentDate] = useState(new Date())
-  const [selectedEvent, setSelectedEvent] = useState<any>(null)
-  const [events, setEvents] = useState<Event[]>([])
+  const [modalCurrentDate, setModalCurrentDate] = useState(() => {
+    // 현재 날짜만 포함하도록 설정 (시간 제거)
+    const now = new Date()
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  })
+  const [selectedEvent, setSelectedEvent] = useState<StudyEvent | null>(null)
+
+  // 공유 이벤트 데이터 - FullCalendar와 StudyCalendar에서 모두 사용
+  const [events, setEvents] = useState<StudyEvent[]>([
+    // 테스트용 샘플 이벤트 데이터 (현재 연도 기준)
+    {
+      id: 1,
+      title: "팀 미팅",
+      date: new Date(new Date().getFullYear(), new Date().getMonth(), 9), // 현재 월 9일
+      startTime: "14:00",
+      endTime: "15:00",
+      color: "bg-blue-500",
+      day: 9,
+      description: "주간 팀 미팅",
+      location: "회의실 A",
+      attendees: ["김철수", "이영희"],
+      organizer: "박민수"
+    },
+    {
+      id: 2,
+      title: "프로젝트 발표",
+      date: new Date(new Date().getFullYear(), new Date().getMonth(), 16), // 현재 월 16일
+      startTime: "10:00",
+      endTime: "12:00",
+      color: "bg-green-500",
+      day: 16,
+      description: "최종 프로젝트 발표",
+      location: "발표실",
+      attendees: ["전체 팀원"],
+      organizer: "팀장"
+    },
+    {
+      id: 3,
+      title: "스터디 세션",
+      date: new Date(new Date().getFullYear(), new Date().getMonth(), 25), // 현재 월 25일
+      startTime: "19:00",
+      endTime: "21:00",
+      color: "bg-purple-500",
+      day: 25,
+      description: "알고리즘 스터디",
+      location: "온라인",
+      attendees: ["스터디원들"],
+      organizer: "스터디장"
+    }
+  ])
+
+  // 디버깅용: 이벤트 데이터 확인
+  console.log('Current events:', events);
+  console.log('Current year:', new Date().getFullYear());
+  console.log('Current month:', new Date().getMonth());
   const [modalCreateModal, setModalCreateModal] = useState(false)
+
+  // 특정 날짜에 이벤트가 있는지 확인하는 함수는 이제 필요 없음 (직접 렌더링 방식으로 변경)
 
   const handleCreateEvent = () => {
     setShowEventModal(true)
@@ -51,25 +98,67 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
     setModalCreateModal(false)
   }
 
-  const handleEventClick = (event: any) => {
+  const handleEventClick = (event: StudyEvent) => {
     setSelectedEvent(event)
   }
 
-  const handleSaveEvent = (newEvent: any) => {
+  // 공유 이벤트 저장 함수 - FullCalendar와 StudyCalendar에서 모두 사용
+  const handleSaveEvent = (newEvent: StudyEvent) => {
+    // 날짜를 정확하게 생성하기 위한 함수
+    const createExactDate = (year: number, month: number, day: number) => {
+      // 로컬 시간대를 고려하여 정확한 날짜 생성
+      const date = new Date(year, month, day)
+      // 시간을 12시로 설정하여 시간대 문제 방지
+      date.setHours(12, 0, 0, 0)
+      return date
+    }
+
+    // 새 이벤트에 date 속성이 없으면 추가
+    let eventWithDate
+    if (newEvent.date) {
+      // 이미 date가 있으면 시간을 12시로 설정
+      const adjustedDate = new Date(newEvent.date)
+      adjustedDate.setHours(12, 0, 0, 0)
+      eventWithDate = {
+        ...newEvent,
+        date: adjustedDate
+      }
+    } else {
+      // date가 없으면 modalCurrentDate나 day를 기준으로 생성
+      const targetDate = newEvent.day
+        ? createExactDate(modalCurrentDate.getFullYear(), modalCurrentDate.getMonth(), newEvent.day)
+        : createExactDate(modalCurrentDate.getFullYear(), modalCurrentDate.getMonth(), modalCurrentDate.getDate())
+
+      eventWithDate = {
+        ...newEvent,
+        date: targetDate
+      }
+    }
+
+    console.log('Original event:', newEvent)
+    console.log('Modal current date:', modalCurrentDate)
+    console.log('Target day:', newEvent.day)
+    console.log('Saving event with date:', eventWithDate)
+    console.log('Date string:', eventWithDate.date.toDateString())
+
     if (selectedEvent) {
       // Edit existing event
-      setEvents(events.map(e => e.id === selectedEvent.id ? newEvent : e))
+      setEvents(events.map(e => e.id === selectedEvent.id ? eventWithDate : e))
       setSelectedEvent(null)
     } else {
       // Create new event
-      setEvents([...events, newEvent])
+      setEvents(prevEvents => {
+        const updatedEvents = [...prevEvents, eventWithDate]
+        console.log('Updated events:', updatedEvents) // 디버깅용
+        return updatedEvents
+      })
     }
   }
 
-  const handleDeleteEvent = (eventId: number) => {
-    setEvents(events.filter(e => e.id !== eventId))
-    setSelectedEvent(null)
-  }
+  // const handleDeleteEvent = (eventId: number) => {
+  //   setEvents(events.filter(e => e.id !== eventId))
+  //   setSelectedEvent(null)
+  // }
 
   // Get current date info for modal
   const getModalCurrentMonth = () => {
@@ -93,7 +182,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
     const startOfWeek = new Date(modalCurrentDate)
     const day = startOfWeek.getDay()
     startOfWeek.setDate(startOfWeek.getDate() - day)
-    
+
     const weekDates = []
     for (let i = 0; i < 7; i++) {
       const date = new Date(startOfWeek)
@@ -101,6 +190,21 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
       weekDates.push(date.getDate())
     }
     return weekDates
+  }
+
+  // Get week date objects for accurate date handling
+  const getModalWeekDateObjects = () => {
+    const startOfWeek = new Date(modalCurrentDate)
+    const day = startOfWeek.getDay()
+    startOfWeek.setDate(startOfWeek.getDate() - day)
+
+    const weekDateObjects = []
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(startOfWeek)
+      date.setDate(startOfWeek.getDate() + i)
+      weekDateObjects.push(new Date(date))
+    }
+    return weekDateObjects
   }
 
   // Get mini calendar days for modal
@@ -111,7 +215,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
     const lastDay = new Date(year, month + 1, 0)
     const daysInMonth = lastDay.getDate()
     const firstDayOffset = firstDay.getDay()
-    
+
     const days = []
     for (let i = 0; i < firstDayOffset; i++) {
       days.push(null)
@@ -164,17 +268,19 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
   }
 
   const handleModalToday = () => {
-    setModalCurrentDate(new Date())
+    const today = new Date()
+    setModalCurrentDate(new Date(today.getFullYear(), today.getMonth(), today.getDate()))
   }
 
   const handleModalDateClick = (date: Date) => {
-    setModalCurrentDate(date)
+    setModalCurrentDate(new Date(date.getFullYear(), date.getMonth(), date.getDate()))
   }
 
   // Calendar data for modal
   const modalWeekDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
   const modalWeekDates = getModalWeekDates()
-  const modalTimeSlots = Array.from({ length: 9 }, (_, i) => i + 8) // 8 AM to 4 PM
+  const modalWeekDateObjects = getModalWeekDateObjects()
+  const modalTimeSlots = Array.from({ length: 16 }, (_, i) => i + 8) // 8 AM to 11 PM (24시까지)
   const modalMiniCalendarDays = getModalMiniCalendarDays()
 
   // Sample my calendars
@@ -185,94 +291,63 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
     { name: "Family", color: "bg-orange-500" },
   ]
 
+  // 이벤트 데이터를 커스텀 캘린더 형식으로 변환
+  const getColorValue = (colorClass: string) => {
+    switch (colorClass) {
+      case 'bg-blue-500': return '#3b82f6';
+      case 'bg-green-500': return '#10b981';
+      case 'bg-purple-500': return '#8b5cf6';
+      case 'bg-red-500': return '#ef4444';
+      case 'bg-yellow-500': return '#eab308';
+      case 'bg-pink-500': return '#ec4899';
+      case 'bg-orange-500': return '#f97316';
+      default: return '#8b5cf6';
+    }
+  };
+
+  const calendarEvents = events.map(event => ({
+    date: event.date,
+    color: getColorValue(event.color),
+    title: event.title,
+    startTime: event.startTime,
+    endTime: event.endTime
+  }))
+
+  const handleDateSelect = (selectedDate: Date) => {
+    setDate(selectedDate)
+  }
+
+  const handleAddEvent = () => {
+    handleCreateEvent()
+  }
+
   return (
     <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
-      {/* 헤더 */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              const newDate = new Date(date || new Date())
-              newDate.setMonth(newDate.getMonth() - 1)
-              setDate(newDate)
-            }}
-            className="text-gray-400 -mt-3 hover:bg-transparent hover:text-gray-400"
-          >
-            <span className="text-5xl">‹</span>
-          </Button>
-          <h3 className="text-2xl font-bold">
-            {date ? `${getMonthName(date.getMonth())} ${date.getFullYear()}` : `${getMonthName(new Date().getMonth())} ${new Date().getFullYear()}`}
-          </h3>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              const newDate = new Date(date || new Date())
-              newDate.setMonth(newDate.getMonth() + 1)
-              setDate(newDate)
-            }}
-            className="text-gray-400 -mt-2 hover:bg-transparent hover:text-gray-400"
-          >
-            <span className="text-5xl">›</span>
-          </Button>
-        </div>
-        <Button
-          onClick={handleCreateEvent}
-          className="w-8 h-8 p-0 rounded-full"
-          variant="ghost"
-        >
-          <span className="text-xl">+</span>
-        </Button>
-      </div>
-
       {/* 달력 */}
-      <div className="flex-1 px-4 pb-4 pt-0 flex justify-center">
+      <div className="flex-1 p-4 flex justify-center">
         <Calendar
-          mode="single"
-          selected={date}
-          onSelect={setDate}
-          month={date}
-          locale={customLocale}
-          required={true}
+          events={calendarEvents}
+          selectedDate={date}
+          onDateSelect={handleDateSelect}
+          onAddEvent={handleAddEvent}
           className="w-fit"
-
-          classNames={{
-            months: "w-full",
-            month: "w-full",
-            caption: "hidden m-0 p-0 h-0",
-            caption_label: "hidden",
-            nav: "hidden m-0 p-0",
-            nav_button: "hidden",
-            nav_button_previous: "hidden",
-            nav_button_next: "hidden",
-            table: "w-full border-collapse",
-            head_row: "flex m-0 p-0",
-            weekday: "size-14 p-0 text-xs font-medium text-muted-foreground/80 [&:nth-child(1)]:text-red-500 [&:nth-child(7)]:text-blue-500 [&:nth-child(1)]:before:content-['Sun'] [&:nth-child(2)]:before:content-['Mon'] [&:nth-child(3)]:before:content-['Tue'] [&:nth-child(4)]:before:content-['Wed'] [&:nth-child(5)]:before:content-['Thu'] [&:nth-child(6)]:before:content-['Fri'] [&:nth-child(7)]:before:content-['Sat'] [&:nth-child(1)]:before:text-red-500 [&:nth-child(7)]:before:text-blue-500 [&>*]:hidden [&:before]:block [&:before]:text-center [&>*]:opacity-0 [&>*]:text-transparent [&>*]:font-size-0 [&>*]:text-[0px]",
-            head_cell: "text-muted-foreground rounded-md w-14 font-normal text-[0.8rem] [&:nth-child(1)]:text-red-500 [&:nth-child(7)]:text-blue-500",
-            row: "flex w-full mt-2",
-            cell: "h-9 w-14 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-            day: "h-9 w-14 p-0 font-normal aria-selected:opacity-100",
-            day_range_end: "day-range-end",
-            day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-            day_today: "bg-accent text-accent-foreground",
-            day_outside: "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
-            day_disabled: "text-muted-foreground opacity-50",
-            day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
-            day_hidden: "invisible",
-          }}
-
         />
       </div>
 
       {/* Full Calendar Modal */}
       {showEventModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl h-[90vh] overflow-hidden relative">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-800">일정 관리</h2>
+            <div className="flex items-center justify-between px-6 py-2 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <img
+                  src="/src/assets/calendar-moai.png"
+                  alt="Calendar Moai"
+                  className="w-24 h-24 object-contain"
+                />
+                <h2 className="text-2xl font-bold text-gray-800">일정 관리</h2>
+              </div>
               <button
                 onClick={handleCloseModal}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -290,7 +365,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
                 weekDays={modalWeekDays}
                 weekDates={modalWeekDates}
                 timeSlots={modalTimeSlots}
-                events={events}
+                events={events} // 공유 이벤트 데이터 전달
                 miniCalendarDays={modalMiniCalendarDays}
                 calendars={calendars}
                 onViewChange={handleModalViewChange}
@@ -298,10 +373,12 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
                 onNext={handleModalNext}
                 onPreviousMonth={handleModalPreviousMonth}
                 onNextMonth={handleModalNextMonth}
-                onEventClick={handleEventClick}
+                onEventClick={(event) => handleEventClick(event as StudyEvent)}
                 onToday={handleModalToday}
                 onDateClick={handleModalDateClick}
                 onCreateEvent={handleModalCreateEvent}
+                selectedDate={modalCurrentDate}
+                weekDateObjects={modalWeekDateObjects}
               />
             </div>
           </div>
@@ -313,9 +390,20 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
         <EventModal
           isOpen={showCreateModal}
           onClose={handleCloseCreateModal}
-          onSave={handleSaveEvent}
+          onSave={(event) => handleSaveEvent(event as StudyEvent)}
           selectedDate={date}
-          event={selectedEvent}
+          event={selectedEvent ? {
+            id: selectedEvent.id,
+            title: selectedEvent.title,
+            startTime: selectedEvent.startTime,
+            endTime: selectedEvent.endTime,
+            color: selectedEvent.color,
+            day: selectedEvent.day,
+            description: selectedEvent.description,
+            location: selectedEvent.location,
+            attendees: selectedEvent.attendees,
+            organizer: selectedEvent.organizer
+          } as Event : undefined}
         />
       )}
 
@@ -324,9 +412,20 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
         <EventModal
           isOpen={modalCreateModal}
           onClose={handleCloseModalCreateModal}
-          onSave={handleSaveEvent}
+          onSave={(event) => handleSaveEvent(event as StudyEvent)}
           selectedDate={modalCurrentDate}
-          event={selectedEvent}
+          event={selectedEvent ? {
+            id: selectedEvent.id,
+            title: selectedEvent.title,
+            startTime: selectedEvent.startTime,
+            endTime: selectedEvent.endTime,
+            color: selectedEvent.color,
+            day: selectedEvent.day,
+            description: selectedEvent.description,
+            location: selectedEvent.location,
+            attendees: selectedEvent.attendees,
+            organizer: selectedEvent.organizer
+          } as Event : undefined}
         />
       )}
     </div>

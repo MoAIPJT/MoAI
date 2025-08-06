@@ -59,7 +59,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   }
 
   return (
-    <div className="w-64 h-full bg-white border-r border-gray-200 flex flex-col">
+    <div className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col fixed top-0 left-0 z-30">
       <SidebarLogo useImage={true} />
       <SidebarNavigation
         items={navigationItems}

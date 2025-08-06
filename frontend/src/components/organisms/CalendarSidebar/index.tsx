@@ -27,9 +27,9 @@ const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   return (
     <div className="w-64 h-full bg-white/10 backdrop-blur-lg p-4 shadow-xl border-r border-white/20 rounded-tr-3xl flex flex-col justify-between">
       <div>
-        <button 
+        <button
           onClick={onCreateEvent}
-          className="mb-6 flex items-center justify-center gap-2 rounded-full bg-blue-500 px-4 py-3 text-white w-full hover:bg-blue-600 transition-colors"
+          className="mb-6 flex items-center justify-center gap-2 rounded-full bg-[#795AA1] px-4 py-3 text-white w-full hover:bg-[#795AA1]/80 transition-colors"
         >
           <Plus className="h-5 w-5" />
           <span>Create</span>
@@ -47,15 +47,8 @@ const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
         <CalendarList calendars={calendars} />
       </div>
 
-      {/* Big plus button */}
-      <button 
-        onClick={onCreateEvent}
-        className="mt-6 flex items-center justify-center gap-2 rounded-full bg-blue-500 p-4 text-white w-14 h-14 self-start hover:bg-blue-600 transition-colors"
-      >
-        <Plus className="h-6 w-6" />
-      </button>
     </div>
   )
 }
 
-export default CalendarSidebar 
+export default CalendarSidebar

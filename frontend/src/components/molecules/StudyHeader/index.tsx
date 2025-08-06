@@ -8,6 +8,7 @@ const StudyHeader: React.FC<StudyHeaderProps> = ({
   loading = false,
   userCount = 7,
   onSettingsClick,
+  onUserCountClick,
 }) => {
   return (
     <div className="bg-white border-b border-gray-200 p-6">
@@ -17,7 +18,7 @@ const StudyHeader: React.FC<StudyHeaderProps> = ({
             <h1 className="text-2xl font-bold text-gray-800">
               {loading ? '로딩 중...' : studyName || '스터디'}
             </h1>
-            {studyImageUrl && (
+            {studyImageUrl && studyImageUrl.trim() !== '' && (
               <img
                 src={studyImageUrl}
                 alt="스터디 이미지"
@@ -34,12 +35,15 @@ const StudyHeader: React.FC<StudyHeaderProps> = ({
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
+          <button 
+            onClick={onUserCountClick}
+            className="flex items-center gap-2 hover:bg-gray-100 p-2 rounded-lg transition-colors cursor-pointer"
+          >
             <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
               <span className="text-sm">👤</span>
             </div>
             <span className="text-sm font-medium">{userCount}</span>
-          </div>
+          </button>
           <button
             onClick={onSettingsClick}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
