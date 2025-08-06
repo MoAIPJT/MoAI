@@ -5,7 +5,8 @@ import CategoryAddModal from '../components/organisms/CategoryAddModal'
 import type { StudyItem } from '../components/organisms/DashboardSidebar/types'
 import type { Category, ContentItem } from '../types/content'
 import type { UploadData } from '../components/organisms/UploadDataModal/types'
-import { getStudies, getStudyById } from '../services/studyService'
+import { getStudies, getStudyById, getStudyParticipants } from '../services/studyService'
+import type { StudyParticipantsResponse } from '../types/study'
 
 const StudyDetailPage: React.FC = () => {
   const navigate = useNavigate()
@@ -23,6 +24,8 @@ const StudyDetailPage: React.FC = () => {
     { id: 'frontend', name: '프론트', isActive: true },
     { id: 'backend', name: '백엔드', isActive: false },
     { id: 'ai', name: 'AI', isActive: false },
+    { id: 'os', name: '운영체제', isActive: false },
+    { id: 'network', name: '네트워크', isActive: false },
   ])
 
   const [showCategoryModal, setShowCategoryModal] = useState(false)
@@ -32,6 +35,9 @@ const StudyDetailPage: React.FC = () => {
 
   // Upload Modal 관련 상태
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
+
+  // 참여자 관련 상태
+  const [participants, setParticipants] = useState<StudyParticipantsResponse | null>(null)
 
   const [contents, setContents] = useState<ContentItem[]>([
     {
@@ -109,6 +115,10 @@ const StudyDetailPage: React.FC = () => {
           setError(null)
           const studyData = await getStudyById(activeStudyId)
           setCurrentStudy(studyData)
+          
+          // 참여자 정보도 함께 로드
+          const participantsData = await getStudyParticipants(activeStudyId)
+          setParticipants(participantsData)
         } catch (error) {
           console.error('Failed to load current study:', error)
           setError('스터디 정보를 불러오는데 실패했습니다.')
@@ -199,6 +209,56 @@ const StudyDetailPage: React.FC = () => {
 
   const handleSettingsClick = () => {
     console.log('Settings clicked')
+  }
+
+  // 스터디 관리 모달 관련 핸들러들
+  const handleStudyNameChange = (name: string) => {
+    setCurrentStudy(prev => prev ? { ...prev, name } : null)
+  }
+
+  const handleStudyDescriptionChange = (description: string) => {
+    setCurrentStudy(prev => prev ? { ...prev, description } : null)
+  }
+
+  const handleCategoryRemove = (categoryName: string) => {
+    setCategories(prev => prev.filter(cat => cat.name !== categoryName))
+  }
+
+  const handleCategoryAdd = (categoryName: string) => {
+    const newCategory: Category = {
+      id: `category-${Date.now()}`,
+      name: categoryName,
+      isActive: false,
+    }
+    setCategories(prev => [...prev, newCategory])
+  }
+
+  const handleMemberRemove = (memberName: string) => {
+    setParticipants(prev => prev ? {
+      ...prev,
+      participants: prev.participants.filter(member => member.member !== memberName)
+    } : null)
+  }
+
+  const handleStudyImageChange = (image: File | null) => {
+    console.log('Study image changed:', image)
+    if (image) {
+      // File을 Data URL로 변환하여 즉시 미리보기 가능하게 함
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const imageUrl = e.target?.result as string
+        setCurrentStudy(prev => prev ? { ...prev, image: imageUrl } : null)
+      }
+      reader.readAsDataURL(image)
+    } else {
+      // 이미지 제거 시
+      setCurrentStudy(prev => prev ? { ...prev, image: '' } : null)
+    }
+    // 실제로는 API 호출로 이미지 업로드
+  }
+
+  const handleMaxMembersChange = (maxMembers: number) => {
+    setCurrentStudy(prev => prev ? { ...prev, memberCount: maxMembers } : null)
   }
 
   // Content Management 관련 핸들러들
@@ -315,10 +375,10 @@ const StudyDetailPage: React.FC = () => {
         onSearch={handleSearch}
         onUploadData={handleUploadData}
         onCreateRoom={handleCreateRoom}
-        onAddEvent={handleAddEvent}
         onEditNotice={handleEditNotice}
         onSettingsClick={handleSettingsClick}
         participants={dummyParticipants}
+        studyParticipants={participants}
         // Content Management 관련 props
         categories={categories}
         selectedCategories={selectedCategories}
@@ -334,8 +394,16 @@ const StudyDetailPage: React.FC = () => {
         onContentSelect={handleContentSelect}
         onContentPreview={handleContentPreview}
         // Upload Modal 관련 핸들러들
-        onUploadModalClose={handleUploadModalClose}
-        onUploadSubmit={handleUploadSubmit}
+                 onUploadModalClose={handleUploadModalClose}
+         onUploadSubmit={handleUploadSubmit}
+         // Study Management 관련 핸들러들
+                   onStudyNameChange={handleStudyNameChange}
+          onStudyDescriptionChange={handleStudyDescriptionChange}
+          onStudyImageChange={handleStudyImageChange}
+          onMaxMembersChange={handleMaxMembersChange}
+          onCategoryRemove={handleCategoryRemove}
+          onCategoryAdd={handleCategoryAdd}
+          onMemberRemove={handleMemberRemove}
       />
 
       {/* Category Add Modal */}

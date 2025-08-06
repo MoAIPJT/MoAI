@@ -5,4 +5,5 @@ export interface StudyHeaderProps {
   loading?: boolean
   userCount?: number
   onSettingsClick?: () => void
+  onUserCountClick?: () => void
 }

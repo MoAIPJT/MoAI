@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import DashboardSidebar from '../organisms/DashboardSidebar'
 import StudyHeader from '../molecules/StudyHeader'
 import StudyNoticeBox from '../molecules/StudyNoticeBox'
@@ -9,6 +9,9 @@ import UploadDataModal from '../organisms/UploadDataModal'
 import type { StudyItem } from '../organisms/DashboardSidebar/types'
 import type { Category, ContentItem } from '../../types/content'
 import type { UploadData } from '../organisms/UploadDataModal/types'
+import type { StudyParticipantsResponse } from '../../types/study'
+import StudyMembersModal from '../molecules/StudyMembersModal'
+import StudyManagementModal from '../molecules/StudyManagementModal'
 
 interface StudyDetailTemplateProps {
   studies: StudyItem[]
@@ -17,6 +20,7 @@ interface StudyDetailTemplateProps {
   loading: boolean
   currentStudy: StudyItem | null
   participants?: Array<{ id: string; name: string; avatar: string }>
+  studyParticipants?: StudyParticipantsResponse | null
   // Content Management 관련 props
   categories: Category[]
   selectedCategories: string[]
@@ -43,6 +47,14 @@ interface StudyDetailTemplateProps {
   // Upload Modal 관련 핸들러들
   onUploadModalClose: () => void
   onUploadSubmit: (data: UploadData) => void
+  // Study Management 관련 핸들러들
+  onStudyNameChange?: (name: string) => void
+  onStudyDescriptionChange?: (description: string) => void
+  onStudyImageChange?: (image: File | null) => void
+  onMaxMembersChange?: (maxMembers: number) => void
+  onCategoryRemove?: (category: string) => void
+  onCategoryAdd?: (category: string) => void
+  onMemberRemove?: (memberId: string) => void
 }
 
 const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
@@ -52,6 +64,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   loading,
   currentStudy,
   participants = [],
+  studyParticipants,
   // Content Management 관련 props
   categories,
   selectedCategories,
@@ -78,7 +91,22 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   // Upload Modal 관련 핸들러들
   onUploadModalClose,
   onUploadSubmit,
+  // Study Management 관련 핸들러들
+  onStudyNameChange,
+  onStudyDescriptionChange,
+  onStudyImageChange,
+  onMaxMembersChange,
+  onCategoryRemove,
+  onCategoryAdd,
+  onMemberRemove,
 }) => {
+  const [isMembersModalOpen, setIsMembersModalOpen] = useState(false)
+  const [isManagementModalOpen, setIsManagementModalOpen] = useState(false)
+
+  const handleOpenMembersModal = () => setIsMembersModalOpen(true)
+  const handleCloseMembersModal = () => setIsMembersModalOpen(false)
+  const handleOpenManagementModal = () => setIsManagementModalOpen(true)
+  const handleCloseManagementModal = () => setIsManagementModalOpen(false)
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardSidebar
@@ -93,12 +121,13 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
       <div className="ml-64 flex flex-col">
         {/* 상단 헤더 */}
         <StudyHeader
-          studyName={currentStudy?.name}
-          studyDescription={currentStudy?.description}
-          studyImageUrl={currentStudy?.image_url}
+                   studyName={currentStudy?.name}
+         studyDescription={currentStudy?.description}
+         studyImageUrl={currentStudy?.image}
           loading={loading}
-          userCount={7}
-          onSettingsClick={onSettingsClick}
+          userCount={studyParticipants?.participants?.length || 0}
+          onSettingsClick={handleOpenManagementModal}
+          onUserCountClick={handleOpenMembersModal}
         />
 
         {/* 메인 콘텐츠 */}
@@ -111,7 +140,10 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
                 <StudyNoticeBox onEdit={onEditNotice} />
               </div>
               <div className="flex-1">
-                <StudyVideoConference onCreateRoom={onCreateRoom} participants={participants} />
+                <StudyVideoConference 
+                  onCreateRoom={onCreateRoom} 
+                  participants={participants} // 화상채팅은 별도 참여자 목록 사용
+                />
               </div>
             </div>
 
@@ -147,6 +179,37 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
         onUpload={onUploadSubmit}
         categories={categories}
       />
+
+      {/* Members Modal */}
+      <StudyMembersModal
+        isOpen={isMembersModalOpen}
+        onClose={handleCloseMembersModal}
+        members={studyParticipants?.participants || []}
+        studyName={currentStudy?.name || 'Study'}
+      />
+
+             {/* Study Management Modal */}
+       <StudyManagementModal
+         isOpen={isManagementModalOpen}
+         onClose={handleCloseManagementModal}
+         studyName={currentStudy?.name || ''}
+         studyDescription={currentStudy?.description || ''}
+         studyImage={currentStudy?.image}
+         maxMembers={currentStudy?.memberCount || 10}
+         members={studyParticipants?.participants || []}
+         categories={categories.map(c => c.name)}
+         onStudyNameChange={onStudyNameChange}
+         onStudyDescriptionChange={onStudyDescriptionChange}
+         onStudyImageChange={onStudyImageChange}
+         onMaxMembersChange={onMaxMembersChange}
+         onCategoryRemove={onCategoryRemove}
+         onCategoryAdd={onCategoryAdd}
+         onMemberRemove={onMemberRemove}
+         onSave={() => {
+           console.log('Study management saved')
+           handleCloseManagementModal()
+         }}
+       />
     </div>
   )
 }

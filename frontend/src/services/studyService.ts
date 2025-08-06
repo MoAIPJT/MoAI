@@ -1,5 +1,6 @@
 import api from './api'
 import type { StudyItem } from '../components/organisms/DashboardSidebar/types'
+import type { StudyParticipantsResponse } from '../types/study'
 
 // 스터디 목록 조회
 export const getStudies = async (): Promise<StudyItem[]> => {
@@ -93,4 +94,24 @@ export const updateStudy = async (studyId: string, studyData: Partial<StudyItem>
 // 스터디 삭제
 export const deleteStudy = async (studyId: string): Promise<void> => {
   await api.delete(`/studies/${studyId}`)
+}
+
+// 스터디 참여자 조회
+export const getStudyParticipants = async (studyId: string): Promise<StudyParticipantsResponse> => {
+  try {
+    const response = await api.get(`/studies/${studyId}/participants`)
+    return response.data
+  } catch (error) {
+    console.error('Failed to fetch study participants:', error)
+    // 에러 시 더미 데이터 반환 (개발용)
+    return {
+      id: studyId,
+      study_id: studyId,
+      participants: [
+        { member: 'Kuromi', role: 'Owner', email: 'dksejrgus2@naver.com', avatar: '👻' },
+        { member: 'Heo', role: 'Member', email: 'Timmy@naver.com', avatar: '👨' },
+        { member: 'Hazel', role: 'Developer', email: 'lhy2829@naver.com', avatar: '👩' },
+      ]
+    }
+  }
 }

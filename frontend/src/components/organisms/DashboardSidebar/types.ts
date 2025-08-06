@@ -2,7 +2,7 @@ export interface StudyItem {
   id: string
   name: string
   description: string
-  image_url: string
+  image: string
   memberCount?: number
   isActive?: boolean
 }
