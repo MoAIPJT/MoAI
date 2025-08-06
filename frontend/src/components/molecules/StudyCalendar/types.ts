@@ -1,3 +1,3 @@
 export interface StudyCalendarProps {
-  onAddEvent?: () => void
+  // 현재는 props가 필요하지 않음
 }

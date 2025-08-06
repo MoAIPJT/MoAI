@@ -20,6 +20,23 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({
 }) => {
   const handleDateClick = (day: number) => {
     if (onDateClick && day) {
+      // currentMonth 문자열을 파싱해서 올바른 년도와 월을 얻어옴
+      const monthMatch = currentMonth.match(/^(\w+) (\d+)$/)
+      if (monthMatch) {
+        const [, monthName, year] = monthMatch
+        const monthNames = [
+          'January', 'February', 'March', 'April', 'May', 'June',
+          'July', 'August', 'September', 'October', 'November', 'December'
+        ]
+        const monthIndex = monthNames.indexOf(monthName)
+        if (monthIndex !== -1) {
+          const clickedDate = new Date(parseInt(year), monthIndex, day)
+          onDateClick(clickedDate)
+          return
+        }
+      }
+
+      // 백업: currentDate가 있으면 사용하고, 없으면 현재 날짜 사용
       const clickedDate = new Date(currentDate || new Date())
       clickedDate.setDate(day)
       onDateClick(clickedDate)

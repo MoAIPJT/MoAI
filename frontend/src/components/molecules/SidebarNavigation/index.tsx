@@ -33,7 +33,7 @@ const SidebarNavigation: React.FC<ExtendedSidebarNavigationProps> = ({
             onClick={onItemClick}
           />
           {/* 스터디 아이템 바로 아래에 스터디 목록 표시 */}
-          {item.id === 'study' && expandedStudy && studies.length > 0 && (
+          {item.id === 'study' && expandedStudy && Array.isArray(studies) && studies.length > 0 && (
             <div className="mt-1 ml-4 space-y-1">
               {studies.map((study: StudyItem) => (
                 <div
@@ -46,7 +46,7 @@ const SidebarNavigation: React.FC<ExtendedSidebarNavigationProps> = ({
                   }`}
                 >
                   <div className="flex items-center justify-center w-6 h-6">
-                    <span className="text-sm">{study.icon}</span>
+                    <span className="text-sm">{study.icon || '📚'}</span>
                   </div>
                   <span className={`text-sm truncate ${
                     activeStudyId === study.id ? 'font-medium' : 'text-gray-700'

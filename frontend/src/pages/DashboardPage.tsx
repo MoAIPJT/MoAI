@@ -1,25 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { memo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DashboardSidebar from '../components/organisms/DashboardSidebar'
-import type { StudyItem } from '../components/organisms/DashboardSidebar/types'
-import { getStudies } from '../services/studyService'
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate()
-  const [studies, setStudies] = useState<StudyItem[]>([])
-
-  // 스터디 목록 로드
-  useEffect(() => {
-    const loadStudies = async () => {
-      try {
-        const studiesData = await getStudies()
-        setStudies(studiesData)
-      } catch (error) {
-        console.error('Failed to load studies:', error)
-      }
-    }
-    loadStudies()
-  }, [])
+  // 스터디 목록 로드는 필요시 구현
 
   const handleItemClick = (itemId: string) => {
     console.log('Navigation clicked:', itemId)

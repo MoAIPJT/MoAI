@@ -1,13 +1,14 @@
 import React from 'react'
 import DashboardSidebar from '../organisms/DashboardSidebar'
 import StudyHeader from '../molecules/StudyHeader'
-import StudyFilters from '../molecules/StudyFilters'
 import StudyNoticeBox from '../molecules/StudyNoticeBox'
 import StudyVideoConference from '../molecules/StudyVideoConference'
 import StudyCalendar from '../molecules/StudyCalendar'
-import StudySearch from '../molecules/StudySearch'
-import UploadButton from '../atoms/UploadButton'
+import ContentManagementTemplate from './ContentManagementTemplate'
+import UploadDataModal from '../organisms/UploadDataModal'
 import type { StudyItem } from '../organisms/DashboardSidebar/types'
+import type { Category, ContentItem } from '../../types/content'
+import type { UploadData } from '../organisms/UploadDataModal/types'
 
 interface StudyDetailTemplateProps {
   studies: StudyItem[]
@@ -15,20 +16,33 @@ interface StudyDetailTemplateProps {
   expandedStudy: boolean
   loading: boolean
   currentStudy: StudyItem | null
-  selectedFilters: string[]
-  searchQuery: string
-  participants?: any[]
+  participants?: Array<{ id: string; name: string; avatar: string }>
+  // Content Management 관련 props
+  categories: Category[]
+  selectedCategories: string[]
+  contents: ContentItem[]
+  searchTerm: string
+  sortOrder: 'newest' | 'oldest'
+  // Upload Modal 관련 props
+  isUploadModalOpen: boolean
   onItemClick: (itemId: string) => void
   onStudyClick: (studyId: string) => void
-  onFilterClick: (filter: string) => void
   onSearch: () => void
   onUploadData: () => void
   onCreateRoom: () => void
-  onAddEvent: () => void
+
   onEditNotice: () => void
-  onSearchQueryChange: (query: string) => void
-  onAddFilter: () => void
   onSettingsClick: () => void
+  // Content Management 관련 핸들러들
+  onCategoryToggle: (categoryId: string) => void
+  onAddCategory: () => void
+  onSearchChange: (term: string) => void
+  onSortChange: (order: 'newest' | 'oldest') => void
+  onContentSelect: (contentId: string) => void
+  onContentPreview: (contentId: string) => void
+  // Upload Modal 관련 핸들러들
+  onUploadModalClose: () => void
+  onUploadSubmit: (data: UploadData) => void
 }
 
 const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
@@ -37,23 +51,36 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   expandedStudy,
   loading,
   currentStudy,
-  selectedFilters,
-  searchQuery,
   participants = [],
+  // Content Management 관련 props
+  categories,
+  selectedCategories,
+  contents,
+  searchTerm,
+  sortOrder,
+  // Upload Modal 관련 props
+  isUploadModalOpen,
   onItemClick,
   onStudyClick,
-  onFilterClick,
   onSearch,
   onUploadData,
   onCreateRoom,
-  onAddEvent,
+
   onEditNotice,
-  onSearchQueryChange,
-  onAddFilter,
   onSettingsClick,
+  // Content Management 관련 핸들러들
+  onCategoryToggle,
+  onAddCategory,
+  onSearchChange,
+  onSortChange,
+  onContentSelect,
+  onContentPreview,
+  // Upload Modal 관련 핸들러들
+  onUploadModalClose,
+  onUploadSubmit,
 }) => {
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <DashboardSidebar
         activeItem="study"
         expandedStudy={expandedStudy}
@@ -63,7 +90,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
         onStudyClick={onStudyClick}
       />
 
-      <div className="flex-1 flex flex-col">
+      <div className="ml-64 flex flex-col">
         {/* 상단 헤더 */}
         <StudyHeader
           studyName={currentStudy?.name}
@@ -76,7 +103,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
 
         {/* 메인 콘텐츠 */}
         <div className="flex-1 p-6 space-y-6">
-                    {/* 상단 섹션: 공지사항/화상회의 (6) + 캘린더 (4) */}
+          {/* 상단 섹션: 공지사항/화상회의 (6) + 캘린더 (4) */}
           <div className="grid grid-cols-10 gap-6">
             {/* 왼쪽: 공지사항과 화상회의 (6/10) */}
             <div className="col-span-6 flex flex-col h-full">
@@ -90,31 +117,36 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
 
             {/* 오른쪽: 캘린더 (4/10) */}
             <div className="col-span-4">
-              <StudyCalendar onAddEvent={onAddEvent} />
+              <StudyCalendar />
             </div>
           </div>
 
-          {/* 필터 및 검색 섹션 */}
-          <div className="flex items-center gap-4">
-            {/* 필터 버튼들 */}
-            <StudyFilters
-              selectedFilters={selectedFilters}
-              onFilterClick={onFilterClick}
-              onAddFilter={onAddFilter}
-            />
-
-            {/* 검색바 */}
-            <StudySearch
-              searchQuery={searchQuery}
-              onSearch={onSearch}
-              onSearchQueryChange={onSearchQueryChange}
-            />
-
-            {/* 자료 올리기 버튼 */}
-            <UploadButton onClick={onUploadData} />
-          </div>
+          {/* Content Management 섹션 */}
+          <ContentManagementTemplate
+            categories={categories}
+            selectedCategories={selectedCategories}
+            contents={contents}
+            searchTerm={searchTerm}
+            sortOrder={sortOrder}
+            onCategoryToggle={onCategoryToggle}
+            onAddCategory={onAddCategory}
+            onSearchChange={onSearchChange}
+            onSearch={onSearch}
+            onSortChange={onSortChange}
+            onContentSelect={onContentSelect}
+            onContentPreview={onContentPreview}
+            onUploadData={onUploadData}
+          />
         </div>
       </div>
+
+      {/* Upload Data Modal */}
+      <UploadDataModal
+        isOpen={isUploadModalOpen}
+        onClose={onUploadModalClose}
+        onUpload={onUploadSubmit}
+        categories={categories}
+      />
     </div>
   )
 }
