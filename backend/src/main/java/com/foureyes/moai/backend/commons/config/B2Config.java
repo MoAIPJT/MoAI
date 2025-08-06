@@ -22,18 +22,15 @@ public class B2Config {
     @Bean
     public S3Client s3Client() throws Exception {
         return S3Client.builder()
-            // 1) 자격 증명
+
             .credentialsProvider(StaticCredentialsProvider.create(
                 AwsBasicCredentials.create(
                     props.getAccessKey(),
                     props.getSecretKey()
                 )
             ))
-            // 2) 리전
             .region(Region.of(props.getRegion()))
-            // 3) Backblaze B2 엔드포인트
             .endpointOverride(new URI(props.getEndpoint()))
-            // 4) path-style 액세스 활성화
             .serviceConfiguration(S3Configuration.builder()
                 .pathStyleAccessEnabled(true)
                 .build())

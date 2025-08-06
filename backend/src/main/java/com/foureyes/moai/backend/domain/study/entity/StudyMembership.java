@@ -35,36 +35,14 @@ public class StudyMembership {
     private LocalDateTime joinedAt;
 
     public enum Role {
-        ADMIN("관리자"),
-        DELEGATE("대리자"),
-        MEMBER("일반");
-
-        private final String label;
-
-        Role(String label) {
-            this.label = label;
-        }
-
-        public String getLabel() {
-            return label;
-        }
+        ADMIN,
+        DELEGATE,
+        MEMBER
     }
-
 
     public enum Status {
-        PENDING("대기중"),
-        APPROVED("승인"),
-        LEFT("탈퇴");
-
-        private final String label;
-
-        Status(String label) {
-            this.label = label;
-        }
-
-        public String getLabel() {
-            return label;
-        }
+        PENDING,
+        APPROVED,
+        LEFT
     }
-
 }
