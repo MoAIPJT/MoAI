@@ -11,6 +11,7 @@ import AISummaryPage from '@/pages/AISummaryPage'
 import DashboardPage from '@/pages/DashboardPage'
 import TestPage from '@/pages/TestPage'
 import StudyDetailPage from '@/pages/StudyDetailPage'
+import VideoConferencePage from '@/pages/VideoConferencePage'
 
 const Router: React.FC = () => {
   return (
@@ -28,6 +29,8 @@ const Router: React.FC = () => {
       <Route path="/test" element={<TestPage />} />
       <Route path="/study-detail" element={<StudyDetailPage />} />
       <Route path="/study/:studyId" element={<StudyDetailPage />} />
+      <Route path="/video-conference" element={<VideoConferencePage />} />
+      <Route path="/video-conference/:studyId" element={<VideoConferencePage />} />
     </Routes>
   )
 }

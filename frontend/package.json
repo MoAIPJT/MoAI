@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "proxy": "https://localhost:7443",
   "scripts": {
     "dev": "vite",
     "build": "npx tsc -b && vite build",
@@ -16,6 +17,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.536.0",
+    "openvidu-browser": "^2.31.0",
     "pdfjs-dist": "^5.4.54",
     "react": "^19.1.0",
     "react-day-picker": "^9.8.1",
