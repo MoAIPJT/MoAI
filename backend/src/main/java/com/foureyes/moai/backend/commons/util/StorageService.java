@@ -13,7 +13,6 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.UUID;
 
 @Service
@@ -23,19 +22,15 @@ public class StorageService {
     private final S3Client s3Client;
     private final B2Properties props;
 
-
     public String uploadFile(MultipartFile file) throws IOException {
 
-        // 원본 파일명과 확장자 분리
         String originalName = file.getOriginalFilename();
         String ext = "";
         if (originalName != null && originalName.contains(".")) {
             ext = originalName.substring(originalName.lastIndexOf("."));
         }
-
         // 중복 방지를 위한 UUID 키 생성
         String key = UUID.randomUUID().toString() + ext;
-
         // 업로드 요청 빌드 (contentType, contentLength 포함)
         PutObjectRequest request = PutObjectRequest.builder()
             .bucket(props.getBucketName())

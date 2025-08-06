@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,4 +37,27 @@ public class StudyController {
         StudyResponseDto response = studyService.createStudy(userId, request);
         return ResponseEntity.status(201).body(response);
     }
+
+    //TODO 리펙토링 필요
+    @Operation(
+        summary = "스터디 가입 요청 전송",
+        description = "사용자가 특정 스터디에 가입 요청을 전송합니다. 관리자는 요청을 확인하여 승인할 수 있습니다",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @GetMapping("/request")
+    public ResponseEntity<Void> sendJoinRequest(
+        @RequestHeader("Authorization") String bearerToken,
+        @RequestParam("study_id") int studyId
+    ) {
+        String token = bearerToken.replaceFirst("^Bearer ", "").trim();
+        int userId = jwtTokenProvider.getUserId(token);
+
+        try {
+            studyService.sendJoinRequest(userId, studyId);
+        } catch (BadRequestException e) {
+            throw new RuntimeException(e);
+        }
+        return ResponseEntity.ok().build();
+    }
+
 }
