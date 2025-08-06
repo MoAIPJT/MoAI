@@ -4,6 +4,21 @@ import WeekDay from '../../atoms/WeekDay'
 import CalendarEvent from '../../atoms/CalendarEvent'
 import type { CalendarGridProps } from './types'
 
+// StudyEvent 타입 정의 (StudyCalendar와 동일)
+interface StudyEvent {
+  id: number
+  title: string
+  startTime: string
+  endTime: string
+  color: string
+  day: number
+  description: string
+  location: string
+  attendees: string[]
+  organizer: string
+  date?: Date // 선택적 date 속성
+}
+
 const CalendarGrid: React.FC<CalendarGridProps> = ({
   weekDays,
   weekDates,
@@ -102,7 +117,25 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
               {/* Events */}
               {events
-                .filter((event) => event.day === dayIndex + 1)
+                .filter((event) => {
+                  // StudyEvent 타입으로 캐스팅하여 date 속성 확인
+                  const studyEvent = event as StudyEvent
+
+                  // event.date가 있는 경우 date 기반으로 필터링
+                  if (studyEvent.date) {
+                    const eventDate = new Date(studyEvent.date)
+                    const dayDate = weekDateObjects && weekDateObjects[dayIndex]
+                      ? weekDateObjects[dayIndex]
+                      : new Date(selectedDate || new Date())
+
+                    return eventDate.getFullYear() === dayDate.getFullYear() &&
+                           eventDate.getMonth() === dayDate.getMonth() &&
+                           eventDate.getDate() === dayDate.getDate()
+                  }
+
+                  // event.day가 있는 경우 기존 로직 사용
+                  return event.day === dayIndex + 1
+                })
                 .map((event, i) => {
                   const eventStyle = calculateEventStyle(event.startTime, event.endTime)
                   return (

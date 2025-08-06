@@ -53,7 +53,9 @@ const EventModal: React.FC<EventModalProps> = ({
   // selectedDate가 변경되면 currentSelectedDate 업데이트
   useEffect(() => {
     if (selectedDate) {
-      setCurrentSelectedDate(selectedDate)
+      // 시간을 제거하고 날짜만 사용
+      const dateOnly = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate())
+      setCurrentSelectedDate(dateOnly)
     }
   }, [selectedDate])
 
@@ -87,8 +89,8 @@ const EventModal: React.FC<EventModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // 모달에서 변경된 날짜를 사용 (currentSelectedDate)
-    const eventDate = currentSelectedDate
+    // 모달에서 변경된 날짜를 사용 (currentSelectedDate) - 시간 제거
+    const eventDate = new Date(currentSelectedDate.getFullYear(), currentSelectedDate.getMonth(), currentSelectedDate.getDate())
     const newEvent = {
       id: event?.id || Date.now(),
       ...formData,
@@ -98,6 +100,8 @@ const EventModal: React.FC<EventModalProps> = ({
       color: formData.color,
       organizer: "현재 사용자" // 기본 주최자 설정
     }
+    console.log('EventModal - Creating event with date:', eventDate)
+    console.log('EventModal - Event date string:', eventDate.toDateString())
     onSave(newEvent)
     onClose()
   }
