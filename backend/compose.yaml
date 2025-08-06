@@ -12,24 +12,7 @@ services:
       mysql:
         condition: service_healthy
     networks:
-      - backend-network
-
-#  nginx:
-#    image: nginx:latest
-#    container_name: nginx
-#    ports:
-#      - "80:80"
-#      - "443:443"
-#    volumes:
-#      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-#      - ./nginx/certs/:/etc/nginx/certs/:ro
-#      - ./certbox/www:/var/www/certbot/:ro
-#      - ./certbox/conf:/etc/letsencrypt/:rw
-#    depends_on:
-#      - backend
-#    networks:
-#      - backend-network
-#    restart: unless-stopped
+      - shared-network
 
   mysql:
     image: 'mysql:8.0'
@@ -52,13 +35,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
     networks:
-      - backend-network
+      - shared-network
 
 volumes:
   mysql_data:
 
 networks:
-  backend-network:
-    driver: bridge
+  shared-network:
+    external: true

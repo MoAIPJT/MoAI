@@ -12,6 +12,19 @@
 
     <select id="findByEmail" resultType="User">
         SELECT * FROM users WHERE email = #{email}
+<<<<<<< HEAD
+    </select>
+
+    <update id="updateRefreshToken">
+        UPDATE users
+        SET refresh_token = #{refreshToken}
+        WHERE id = #{userId}
+    </update>
+
+    <select id="findById" resultType="User">
+        SELECT * FROM users WHERE id = #{id}
+=======
+>>>>>>> dev
     </select>
 
     <update id="updateRefreshToken">

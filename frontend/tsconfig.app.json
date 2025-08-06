@@ -24,7 +24,7 @@
     "noUncheckedSideEffectImports": true,
     "baseUrl": "src",
     "paths": {
-      "@/*": ["./*"],
+      "@/*": ["*"],
       "@LoginComponents/*": ["components/LoginComponents/*"]
     }
   },
