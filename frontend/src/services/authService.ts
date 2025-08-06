@@ -85,7 +85,7 @@ export interface RefreshTokenResponse {
 
 // 일반 로그인 API
 export const login = async (data: LoginFormData): Promise<LoginResponse> => {
-  const response = await apiClient.post('/login', {
+  const response = await apiClient.post('/users/login', {
     email: data.email,
     password: data.password,
   })
@@ -153,4 +153,4 @@ export const logout = async (): Promise<void> => {
   await apiClient.post('/auth/logout')
   localStorage.removeItem('accessToken')
   localStorage.removeItem('refreshToken')
-} 
+}
