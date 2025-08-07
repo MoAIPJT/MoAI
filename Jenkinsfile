@@ -56,7 +56,7 @@ pipeline {
 
         stage('Deploy to EC2') {
             steps {
-                withCredentials([sshUserPrivateKey(credentialsId: 'EC2_SSH', keyFileVariable: 'SSH_KEY')]) {
+                withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY')]) {
                     script {
                         sh """
                             ssh -o StrictHostKeyChecking=no -i \$SSH_KEY $EC2_HOST '
