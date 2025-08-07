@@ -2,6 +2,7 @@ package com.foureyes.moai.backend.domain.study.controller;
 
 import com.foureyes.moai.backend.auth.jwt.JwtTokenProvider;
 import com.foureyes.moai.backend.domain.study.dto.request.CreateStudyRequest;
+import com.foureyes.moai.backend.domain.study.dto.response.StudyListResponseDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyMemberListResponseDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyResponseDto;
 import com.foureyes.moai.backend.domain.study.service.StudyService;
@@ -79,4 +80,22 @@ public class StudyController {
 
         return ResponseEntity.ok(members);
     }
+    @Operation(
+        summary = "참여/승인 대기 중인 스터디 조회",
+        description = "유저가 가입 혹은 신청한 스터디 목록을 반환합니다",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @GetMapping("/list")
+    public ResponseEntity<List<StudyListResponseDto>> listUserStudies(
+        @Parameter(hidden = true)
+        @RequestHeader("Authorization") String bearerToken
+    ) {
+        String token = bearerToken.replaceFirst("^Bearer ", "").trim();
+        int userId = jwtTokenProvider.getUserId(token);
+
+        List<StudyListResponseDto> studies = studyService.getUserStudies(userId);
+        return ResponseEntity.ok(studies);
+    }
+
+
 }

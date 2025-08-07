@@ -16,4 +16,10 @@ public interface StudyMembershipRepository extends JpaRepository<StudyMembership
     // 해당 스터디에 APPROVED 상태인 멤버 전부 조회
     List<StudyMembership> findAllByStudyGroup_IdAndStatus(
         int studyGroupId, StudyMembership.Status status);
+
+    //특정 유저에 대한 멤버십 전부를 조회
+    List<StudyMembership> findAllByUserIdAndStatusIn(
+        int userId,
+        List<StudyMembership.Status> statuses
+    );
 }
