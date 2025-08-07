@@ -42,7 +42,7 @@ pipeline {
             steps {
                 script {
                     sh """
-                        echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+                        echo \$DOCKERHUB_CREDENTIALS_PSW | docker login -u \$DOCKERHUB_CREDENTIALS_USR --password-stdin
 
                         docker build -t $DOCKER_IMAGE_BACKEND:latest backend/
                         docker push $DOCKER_IMAGE_BACKEND:latest
@@ -59,7 +59,7 @@ pipeline {
                 script {
                     sh """
                         ssh -o StrictHostKeyChecking=no -i $EC2_SSH $EC2_HOST '
-                          docker login -u $DOCKERHUB_CREDENTIALS_USR -p $DOCKERHUB_CREDENTIALS_PSW &&
+                          echo \$DOCKERHUB_CREDENTIALS_PSW | docker login -u \$DOCKERHUB_CREDENTIALS_USR --password-stdin &&
                           docker network create $DOCKER_NETWORK || true &&
 
                           docker pull $DOCKER_IMAGE_BACKEND:latest &&
