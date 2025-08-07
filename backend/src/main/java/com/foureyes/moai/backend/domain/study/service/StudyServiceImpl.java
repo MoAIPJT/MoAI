@@ -1,21 +1,25 @@
 package com.foureyes.moai.backend.domain.study.service;
 
+import com.foureyes.moai.backend.commons.exception.CustomException;
+import com.foureyes.moai.backend.commons.exception.ErrorCode;
 import com.foureyes.moai.backend.commons.util.StorageService;
 import com.foureyes.moai.backend.domain.study.dto.request.CreateStudyRequest;
+import com.foureyes.moai.backend.domain.study.dto.response.StudyMemberListResponseDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyResponseDto;
 import com.foureyes.moai.backend.domain.study.entity.StudyGroup;
 import com.foureyes.moai.backend.domain.study.entity.StudyMembership;
 import com.foureyes.moai.backend.domain.study.repository.StudyGroupRepository;
 import com.foureyes.moai.backend.domain.study.repository.StudyMembershipRepository;
+import com.foureyes.moai.backend.domain.user.entity.User;
+import com.foureyes.moai.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +28,7 @@ public class StudyServiceImpl implements StudyService {
     private final StudyGroupRepository studyGroupRepository;
     private final StudyMembershipRepository studyMembershipRepository;
     private final StorageService storageService;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -33,7 +38,7 @@ public class StudyServiceImpl implements StudyService {
         try {
             imageUrl = storageService.uploadFile(request.getImage());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new CustomException(ErrorCode.FILE_UPLOAD_FAILED);
         }
         StudyGroup studyGroup = StudyGroup.builder()
             .name(request.getName())
@@ -66,22 +71,43 @@ public class StudyServiceImpl implements StudyService {
 
     @Override
     @Transactional
-    public void sendJoinRequest(int userId, int studyGroupId) throws BadRequestException {
+    public void sendJoinRequest(int userId, int studyGroupId) {
         StudyGroup group = studyGroupRepository.findById(studyGroupId)
-            .orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND,
-                "NOT_FOUND_STUDYGROUP_ID=" + studyGroupId));
+            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_GROUP_NOT_FOUND));
 
         if (studyMembershipRepository.existsByUserIdAndStudyGroup(userId, group)) {
-            throw new BadRequestException("이미 가입 요청중 입니다");
+            throw new CustomException(ErrorCode.ALREADY_JOINED_STUDY);
         }
         StudyMembership req = StudyMembership.builder()
             .userId(userId)
             .studyGroup(group)
-            .role(StudyMembership.Role.MEMBER)       // 기본 권한
-            .status(StudyMembership.Status.PENDING) // 대기 상태
+            .role(StudyMembership.Role.MEMBER)
+            .status(StudyMembership.Status.PENDING)
             .joinedAt(LocalDateTime.now())
             .build();
         studyMembershipRepository.save(req);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<StudyMemberListResponseDto> getStudyMembers(int userId, int studyId) {
+        boolean joined = studyMembershipRepository
+            .existsByUserIdAndStudyGroup_IdAndStatus(userId,studyId,StudyMembership.Status.APPROVED);
+        if (!joined){
+            throw new CustomException(ErrorCode.STUDY_NOT_MEMBER);
+        }
+        return studyMembershipRepository
+            .findAllByStudyGroup_IdAndStatus(studyId, StudyMembership.Status.APPROVED)
+            .stream()
+            .map(membership -> {
+                User user = userRepository.findById(membership.getUserId())
+                    .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+                return StudyMemberListResponseDto.builder()
+                    .member(user.getName())
+                    .role(membership.getRole().name())
+                    .build();
+            })
+            .collect(Collectors.toList());
     }
 }

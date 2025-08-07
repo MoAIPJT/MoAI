@@ -2,6 +2,7 @@ package com.foureyes.moai.backend.domain.study.controller;
 
 import com.foureyes.moai.backend.auth.jwt.JwtTokenProvider;
 import com.foureyes.moai.backend.domain.study.dto.request.CreateStudyRequest;
+import com.foureyes.moai.backend.domain.study.dto.response.StudyMemberListResponseDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyResponseDto;
 import com.foureyes.moai.backend.domain.study.service.StudyService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,6 +14,8 @@ import org.apache.coyote.BadRequestException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "Study API", description = "스터디 관리 기능")
 @RestController
@@ -30,34 +33,50 @@ public class StudyController {
     )
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<StudyResponseDto> createStudy(
-        @Parameter(hidden = true) @RequestHeader("Authorization") String token,
+        @Parameter(hidden = true)
+        @RequestHeader("Authorization") String bearerToken,
         @ModelAttribute CreateStudyRequest request) {
-        String pureToken = token.replace("Bearer ", "").trim();
-        int userId = jwtTokenProvider.getUserId(pureToken);
+        String token = bearerToken.replaceFirst("^Bearer ", "").trim();
+        int userId = jwtTokenProvider.getUserId(token);
         StudyResponseDto response = studyService.createStudy(userId, request);
         return ResponseEntity.status(201).body(response);
     }
 
-    //TODO 리펙토링 필요
     @Operation(
         summary = "스터디 가입 요청 전송",
-        description = "사용자가 특정 스터디에 가입 요청을 전송합니다. 관리자는 요청을 확인하여 승인할 수 있습니다",
+        description = "사용자가 특정 스터디에 가입 요청을 전송합니다",
         security = @SecurityRequirement(name = "bearerAuth")
     )
-    @GetMapping("/request")
-    public ResponseEntity<Void> sendJoinRequest(
+    @GetMapping("/join")
+    public ResponseEntity<String> sendJoinRequest(
+        @Parameter(hidden = true)
         @RequestHeader("Authorization") String bearerToken,
         @RequestParam("study_id") int studyId
+    ) throws BadRequestException {
+        String token = bearerToken.replaceFirst("^Bearer ", "").trim();
+        int userId = jwtTokenProvider.getUserId(token);
+
+        studyService.sendJoinRequest(userId, studyId);
+        return ResponseEntity.ok("OK");
+    }
+
+    @Operation(
+        summary = "스터디 멤버 목록 조회",
+        description = "유저가 참여 중인 스터디의 모든 멤버 이름과 역할을 반환합니다.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @GetMapping("/{study_id}/members")
+    public ResponseEntity<List<StudyMemberListResponseDto>> getMembers(
+        @Parameter(hidden = true)
+        @RequestHeader("Authorization") String bearerToken,
+        @PathVariable("study_id") int studyId
     ) {
         String token = bearerToken.replaceFirst("^Bearer ", "").trim();
         int userId = jwtTokenProvider.getUserId(token);
 
-        try {
-            studyService.sendJoinRequest(userId, studyId);
-        } catch (BadRequestException e) {
-            throw new RuntimeException(e);
-        }
-        return ResponseEntity.ok().build();
-    }
+        List<StudyMemberListResponseDto> members =
+            studyService.getStudyMembers(userId, studyId);
 
+        return ResponseEntity.ok(members);
+    }
 }
