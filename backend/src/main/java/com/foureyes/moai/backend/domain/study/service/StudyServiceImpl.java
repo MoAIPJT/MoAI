@@ -4,6 +4,7 @@ import com.foureyes.moai.backend.commons.exception.CustomException;
 import com.foureyes.moai.backend.commons.exception.ErrorCode;
 import com.foureyes.moai.backend.commons.util.StorageService;
 import com.foureyes.moai.backend.domain.study.dto.request.CreateStudyRequest;
+import com.foureyes.moai.backend.domain.study.dto.response.JoinRequestResponseDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyListResponseDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyMemberListResponseDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyResponseDto;
@@ -225,5 +226,55 @@ public class StudyServiceImpl implements StudyService {
         //상태를 REJECTED로 변경
         target.setStatus(StudyMembership.Status.REJECTED);
         studyMembershipRepository.save(target);
+    }
+
+    @Override
+    @Transactional
+    public void acceptJoinRequest(int adminUserId, int studyId, int targetUserId, String newRole) {
+        StudyMembership admin = studyMembershipRepository
+            .findByUserIdAndStudyGroup_IdAndStatus(
+                adminUserId, studyId, StudyMembership.Status.APPROVED)
+            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_NOT_MEMBER));
+        if (admin.getRole() != StudyMembership.Role.ADMIN) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        StudyMembership target = studyMembershipRepository
+            .findByUserIdAndStudyGroup_IdAndStatus(
+                targetUserId, studyId, StudyMembership.Status.PENDING)
+            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_MEMBERSHIP_NOT_FOUND));
+
+        StudyMembership.Role roleEnum;
+        try {
+            roleEnum = StudyMembership.Role.valueOf(newRole);
+        } catch (IllegalArgumentException e) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
+
+        target.setStatus(StudyMembership.Status.APPROVED);
+        target.setRole(roleEnum);
+        studyMembershipRepository.save(target);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<JoinRequestResponseDto> getPendingJoinRequests(int adminUserId, int studyId) {
+        StudyMembership admin = studyMembershipRepository
+            .findByUserIdAndStudyGroup_IdAndStatus(
+                adminUserId, studyId, StudyMembership.Status.APPROVED)
+            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_NOT_MEMBER));
+        if (admin.getRole() != StudyMembership.Role.ADMIN) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        //PENDING 요청 조회
+        return studyMembershipRepository
+            .findAllByStudyGroup_IdAndStatus(studyId, StudyMembership.Status.PENDING)
+            .stream()
+            .map(m -> new JoinRequestResponseDto(
+                m.getUserId(),
+                m.getStatus().name()
+            ))
+            .collect(Collectors.toList());
     }
 }
