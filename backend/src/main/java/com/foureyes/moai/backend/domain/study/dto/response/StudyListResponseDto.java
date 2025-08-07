@@ -20,11 +20,9 @@ public class StudyListResponseDto {
     private final String description;
 
     @Schema(description = "대표 이미지 URL", example = "https://cdn.example.com/images/study_101.png")
-    @JsonProperty("image_url")
     private final String imageUrl;
 
     @Schema(description = "스터디장 이름", example = "홀길동")
-    @JsonProperty("creator_name")
     private final String creatorName;
 
     @Schema(description = "가입상태", example = "PENDING")

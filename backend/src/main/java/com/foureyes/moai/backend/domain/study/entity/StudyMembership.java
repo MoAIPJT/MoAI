@@ -43,6 +43,7 @@ public class StudyMembership {
     public enum Status {
         PENDING,
         APPROVED,
-        LEFT
+        LEFT,
+        REJECTED
     }
 }
