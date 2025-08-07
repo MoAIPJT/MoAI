@@ -4,6 +4,7 @@ import com.foureyes.moai.backend.auth.jwt.JwtTokenProvider;
 import com.foureyes.moai.backend.domain.study.dto.request.CreateStudyRequest;
 import com.foureyes.moai.backend.domain.study.dto.request.StudyIdRequestDto;
 import com.foureyes.moai.backend.domain.study.dto.request.StudyMemberDeleteRequestDto;
+import com.foureyes.moai.backend.domain.study.dto.request.StudyMemberRoleChangeRequestDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyListResponseDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyMemberListResponseDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyResponseDto;
@@ -138,5 +139,25 @@ public class StudyController {
 
         return ResponseEntity.ok().build();
     }
+    @Operation(
+        summary     = "스터디 멤버 권한 변경(관리자 지정)",
+        description = "관리자가 특정 유저의 역할을 변경합니다. ADMIN 지정 시 기존 ADMIN은 MEMBER로 변경됩니다.",
+        security    = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PatchMapping("/designate")
+    public ResponseEntity<Void> designateMember(
+        @Parameter(hidden = true)
+        @RequestHeader("Authorization") String bearerToken,
 
+        @RequestBody StudyMemberRoleChangeRequestDto request
+    ) {
+        String token        = bearerToken.replaceFirst("^Bearer ", "").trim();
+        int adminUserId     = jwtTokenProvider.getUserId(token);
+        int studyId         = request.getStudyId();
+        int targetUserId    = request.getUserId();
+        String newRole      = request.getRole();
+
+        studyService.changeMemberRole(adminUserId, studyId, targetUserId, newRole);
+        return ResponseEntity.ok().build();
+    }
 }

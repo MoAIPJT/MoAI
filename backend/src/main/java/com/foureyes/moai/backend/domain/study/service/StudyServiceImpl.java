@@ -166,4 +166,41 @@ public class StudyServiceImpl implements StudyService {
         targetMember.setStatus(StudyMembership.Status.LEFT);
         studyMembershipRepository.save(targetMember);
     }
+
+    @Override
+    @Transactional
+    public void changeMemberRole(int adminUserId, int studyId, int targetUserId, String newRole) {
+        StudyMembership adminMembership = studyMembershipRepository
+            .findByUserIdAndStudyGroup_IdAndStatus(
+                adminUserId, studyId, StudyMembership.Status.APPROVED)
+            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_NOT_MEMBER));
+
+        if (adminMembership.getRole() != StudyMembership.Role.ADMIN) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        //변경 대상 멤버 조회 (APPROVED 상태)
+        StudyMembership targetMembership = studyMembershipRepository
+            .findByUserIdAndStudyGroup_IdAndStatus(
+                targetUserId, studyId, StudyMembership.Status.APPROVED)
+            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_MEMBERSHIP_NOT_FOUND));
+
+        //새로운 역할 enum 변환
+        StudyMembership.Role roleEnum;
+        try {
+            roleEnum = StudyMembership.Role.valueOf(newRole);
+        } catch (IllegalArgumentException e) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
+
+        //만약 새 역할이 ADMIN 이면, 기존 ADMIN → MEMBER 로 강등
+        if (roleEnum == StudyMembership.Role.ADMIN) {
+            adminMembership.setRole(StudyMembership.Role.MEMBER);
+            studyMembershipRepository.save(adminMembership);
+        }
+
+        //대상 멤버 역할 변경 및 저장
+        targetMembership.setRole(roleEnum);
+        studyMembershipRepository.save(targetMembership);
+    }
 }
