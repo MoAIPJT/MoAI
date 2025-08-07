@@ -15,6 +15,7 @@ import com.foureyes.moai.backend.domain.study.repository.StudyMembershipReposito
 import com.foureyes.moai.backend.domain.user.entity.User;
 import com.foureyes.moai.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.hashids.Hashids;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,7 @@ public class StudyServiceImpl implements StudyService {
     private final StudyMembershipRepository studyMembershipRepository;
     private final StorageService storageService;
     private final UserRepository userRepository;
+    private final Hashids hashids;
 
     @Override
     @Transactional
@@ -48,7 +50,15 @@ public class StudyServiceImpl implements StudyService {
             .imageUrl(imageUrl)
             .createdBy(userId)
             .createdAt(LocalDateTime.now())
+            .maxCapacity(request.getMaxCapacity())
             .build();
+
+        StudyGroup saved = studyGroupRepository.save(studyGroup);
+
+        String encoded = hashids.encode(saved.getId());
+        saved.setHashId(encoded);
+
+        studyGroupRepository.save(saved);
 
         studyGroupRepository.save(studyGroup);
 

@@ -17,10 +17,12 @@ CREATE TABLE IF NOT EXISTS study_groups (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(200) NOT NULL,
     description TEXT,
+    hash_id VARCHAR(100) NULL UNIQUE,
+    max_capacity INT NOT NULL,
+    notice TEXT,
     image_url VARCHAR(500),
     created_by INT,
     created_at DATETIME,
-    invite_url VARCHAR(500),
     FOREIGN KEY (created_by) REFERENCES users(id)
 );
 
