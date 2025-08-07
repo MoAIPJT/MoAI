@@ -1,12 +1,8 @@
-import { useState } from 'react'
+import React from 'react'
+import Router from '@/router'
 
-const App:React.FC= () =>  {
-
-  return(
-    <div>
-
-    </div>
-  )
+const App: React.FC = () => {
+  return <Router />
 }
 
 export default App

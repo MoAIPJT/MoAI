@@ -9,9 +9,10 @@ services:
       - SPRING_DATASOURCE_USERNAME=backend_user
       - SPRING_DATASOURCE_PASSWORD=backend_pass
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     networks:
-      - backend-network
+      - shared-network
 
   mysql:
     image: 'mysql:8.0'
@@ -24,12 +25,22 @@ services:
       - '5050:3306'
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./sql-scripts/01_init.sql:/docker-entrypoint-initdb.d/01_init.sql
+      - ./sql-scripts/02_dummy.sql:/docker-entrypoint-initdb.d/02_dummy.sql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
-      - backend-network
+      - shared-network
 
 volumes:
   mysql_data:
 
 networks:
-  backend-network:
-    driver: bridge
+  shared-network:
+    external: true
