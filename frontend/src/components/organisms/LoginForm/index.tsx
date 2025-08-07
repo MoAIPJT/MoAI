@@ -91,7 +91,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             variant="primary"
             size="lg"
             fullWidth
-            onClick={() => onLogin?.(formData)}
+            type="submit"
             disabled={loading}
           >
             {loading ? '로그인 중...' : '로그인하기'}
