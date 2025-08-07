@@ -100,8 +100,6 @@ const EventModal: React.FC<EventModalProps> = ({
       color: formData.color,
       organizer: "현재 사용자" // 기본 주최자 설정
     }
-    console.log('EventModal - Creating event with date:', eventDate)
-    console.log('EventModal - Event date string:', eventDate.toDateString())
     onSave(newEvent)
     onClose()
   }
