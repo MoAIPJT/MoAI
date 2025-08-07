@@ -14,4 +14,5 @@ public interface StudyService {
     void sendJoinRequest(int userId, int studyGroupId) throws BadRequestException;
     List<StudyMemberListResponseDto> getStudyMembers(int userId, int studyId);
     List<StudyListResponseDto> getUserStudies(int userId);
+    void leaveStudy(int userId, int studyId);
 }

@@ -4,6 +4,7 @@ import com.foureyes.moai.backend.domain.study.entity.StudyGroup;
 import com.foureyes.moai.backend.domain.study.entity.StudyMembership;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
+import java.util.Optional;
 
 public interface StudyMembershipRepository extends JpaRepository<StudyMembership, Integer> {
     boolean existsByUserIdAndStudyGroup(int userId, StudyGroup studyGroup);
@@ -22,4 +23,7 @@ public interface StudyMembershipRepository extends JpaRepository<StudyMembership
         int userId,
         List<StudyMembership.Status> statuses
     );
+
+    Optional<StudyMembership> findByUserIdAndStudyGroup_IdAndStatus(
+        int userId, int studyGroupId, StudyMembership.Status status);
 }

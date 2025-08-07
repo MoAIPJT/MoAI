@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class JoinStudyRequestDto {
+public class StudyIdRequestDto {
     @Schema(description = "스터디 그룹 id", example = "1", required = true)
     private int studyGroupId;
 }
