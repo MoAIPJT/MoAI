@@ -3,6 +3,7 @@ package com.foureyes.moai.backend.domain.study.controller;
 import com.foureyes.moai.backend.auth.jwt.JwtTokenProvider;
 import com.foureyes.moai.backend.domain.study.dto.request.CreateStudyRequest;
 import com.foureyes.moai.backend.domain.study.dto.request.StudyIdRequestDto;
+import com.foureyes.moai.backend.domain.study.dto.request.StudyMemberDeleteRequestDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyListResponseDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyMemberListResponseDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyResponseDto;
@@ -27,6 +28,7 @@ public class StudyController {
 
     private final StudyService studyService;
     private final JwtTokenProvider jwtTokenProvider;
+
 
     @Operation(
         summary = "스터디 생성",
@@ -97,6 +99,7 @@ public class StudyController {
         List<StudyListResponseDto> studies = studyService.getUserStudies(userId);
         return ResponseEntity.ok(studies);
     }
+
     @Operation(
         summary     = "스터디 탈퇴",
         description = "유저가 스터디에서 탈퇴하여 상태를 LEFT 로 변경합니다.",
@@ -111,6 +114,28 @@ public class StudyController {
         String token = bearerToken.replaceFirst("^Bearer ", "").trim();
         int userId   = jwtTokenProvider.getUserId(token);
         studyService.leaveStudy(userId, request.getStudyGroupId());
+        return ResponseEntity.ok().build();
+    }
+    @Operation(
+        summary     = "스터디 멤버 삭제(강제탈퇴)",
+        description = "관리자가 특정 유저를 스터디에서 강제 탈퇴시킵니다.",
+        security    = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PatchMapping("/delete")
+    public ResponseEntity<Void> deleteMember(
+        @Parameter(hidden = true)
+        @RequestHeader("Authorization") String bearerToken,
+        @RequestBody StudyMemberDeleteRequestDto request
+    ) {
+        String token     = bearerToken.replaceFirst("^Bearer ", "").trim();
+        int adminUserId  = jwtTokenProvider.getUserId(token);
+
+        studyService.deleteMember(
+            adminUserId,
+            request.getStudyId(),
+            request.getUserId()
+        );
+
         return ResponseEntity.ok().build();
     }
 

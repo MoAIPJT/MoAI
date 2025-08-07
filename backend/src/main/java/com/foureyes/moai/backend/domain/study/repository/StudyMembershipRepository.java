@@ -26,4 +26,5 @@ public interface StudyMembershipRepository extends JpaRepository<StudyMembership
 
     Optional<StudyMembership> findByUserIdAndStudyGroup_IdAndStatus(
         int userId, int studyGroupId, StudyMembership.Status status);
+
 }
