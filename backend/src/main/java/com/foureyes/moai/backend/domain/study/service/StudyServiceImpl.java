@@ -135,4 +135,15 @@ public class StudyServiceImpl implements StudyService {
                 .build())
             .collect(Collectors.toList());
     }
+
+    @Override
+    @Transactional
+    public void leaveStudy(int userId, int studyId) {
+        StudyMembership membership = studyMembershipRepository
+            .findByUserIdAndStudyGroup_IdAndStatus(
+                userId, studyId, StudyMembership.Status.APPROVED)
+            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_NOT_MEMBER));
+        membership.setStatus(StudyMembership.Status.LEFT);
+        studyMembershipRepository.save(membership);
+    }
 }

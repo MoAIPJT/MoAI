@@ -2,6 +2,7 @@ package com.foureyes.moai.backend.domain.study.controller;
 
 import com.foureyes.moai.backend.auth.jwt.JwtTokenProvider;
 import com.foureyes.moai.backend.domain.study.dto.request.CreateStudyRequest;
+import com.foureyes.moai.backend.domain.study.dto.request.StudyIdRequestDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyListResponseDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyMemberListResponseDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyResponseDto;
@@ -96,6 +97,21 @@ public class StudyController {
         List<StudyListResponseDto> studies = studyService.getUserStudies(userId);
         return ResponseEntity.ok(studies);
     }
-
+    @Operation(
+        summary     = "스터디 탈퇴",
+        description = "유저가 스터디에서 탈퇴하여 상태를 LEFT 로 변경합니다.",
+        security    = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PatchMapping("/leave")
+    public ResponseEntity<Void> leaveStudy(
+        @Parameter(hidden = true)
+        @RequestHeader("Authorization") String bearerToken,
+        @RequestBody StudyIdRequestDto request
+    ) {
+        String token = bearerToken.replaceFirst("^Bearer ", "").trim();
+        int userId   = jwtTokenProvider.getUserId(token);
+        studyService.leaveStudy(userId, request.getStudyGroupId());
+        return ResponseEntity.ok().build();
+    }
 
 }
