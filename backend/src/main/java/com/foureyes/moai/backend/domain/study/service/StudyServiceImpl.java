@@ -4,6 +4,7 @@ import com.foureyes.moai.backend.commons.exception.CustomException;
 import com.foureyes.moai.backend.commons.exception.ErrorCode;
 import com.foureyes.moai.backend.commons.util.StorageService;
 import com.foureyes.moai.backend.domain.study.dto.request.CreateStudyRequest;
+import com.foureyes.moai.backend.domain.study.dto.response.StudyListResponseDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyMemberListResponseDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyResponseDto;
 import com.foureyes.moai.backend.domain.study.entity.StudyGroup;
@@ -108,6 +109,30 @@ public class StudyServiceImpl implements StudyService {
                     .role(membership.getRole().name())
                     .build();
             })
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<StudyListResponseDto> getUserStudies(int userId) {
+        List<StudyMembership.Status> statuses = List.of(
+            StudyMembership.Status.PENDING,
+            StudyMembership.Status.APPROVED
+        );
+
+        return studyMembershipRepository
+            .findAllByUserIdAndStatusIn(userId, statuses)
+            .stream()
+            .map(m -> StudyListResponseDto.builder()
+                .name(m.getStudyGroup().getName())
+                .description(m.getStudyGroup().getDescription())
+                .imageUrl(m.getStudyGroup().getImageUrl())
+                .creatorName(
+                    userRepository.findById(m.getStudyGroup().getCreatedBy())
+                    .map(User::getName)
+                    .orElse("Unknown"))
+                .status(m.getStatus().name())
+                .build())
             .collect(Collectors.toList());
     }
 }
