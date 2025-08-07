@@ -2,6 +2,7 @@ package com.foureyes.moai.backend.domain.study.controller;
 
 import com.foureyes.moai.backend.auth.jwt.JwtTokenProvider;
 import com.foureyes.moai.backend.domain.study.dto.request.*;
+import com.foureyes.moai.backend.domain.study.dto.response.JoinRequestResponseDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyListResponseDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyMemberListResponseDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyResponseDto;
@@ -178,5 +179,50 @@ public class StudyController {
         );
 
         return ResponseEntity.ok().build();
+    }
+    @Operation(
+        summary     = "가입 요청 승인",
+        description = "관리자가 스터디 가입 요청을 승인하고 해당 유저의 상태를 PENDING→APPROVED로 변경합니다",
+        security    = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PatchMapping("/accept")
+    public ResponseEntity<Void> acceptJoin(
+        @Parameter(hidden = true)
+        @RequestHeader("Authorization") String bearerToken,
+
+        @RequestBody AcceptJoinRequestDto request
+    ) {
+        String token       = bearerToken.replaceFirst("^Bearer ", "").trim();
+        int adminUserId    = jwtTokenProvider.getUserId(token);
+
+        studyService.acceptJoinRequest(
+            adminUserId,
+            request.getStudyId(),
+            request.getUserId(),
+            request.getRole()
+        );
+
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(
+        summary     = "가입 요청 목록 조회(관리자용)",
+        description = "관리자가 자신의 스터디에 온 모든 가입 요청을 조회합니다.",
+        security    = @SecurityRequirement(name = "bearerAuth")
+    )
+    @GetMapping("/list/management")
+    public ResponseEntity<List<JoinRequestResponseDto>> getPendingRequests(
+        @Parameter(hidden = true)
+        @RequestHeader("Authorization") String bearerToken,
+        @Parameter(description = "스터디 ID", example = "101")
+        @RequestParam("studyId") int studyId
+    ) {
+        String token      = bearerToken.replaceFirst("^Bearer ", "").trim();
+        int adminUserId   = jwtTokenProvider.getUserId(token);
+
+        List<JoinRequestResponseDto> requests =
+            studyService.getPendingJoinRequests(adminUserId, studyId);
+
+        return ResponseEntity.ok(requests);
     }
 }
