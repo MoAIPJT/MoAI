@@ -83,7 +83,6 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ pdfUrl, title, onLoad, onError })
         await renderTask.promise
       } catch (err: any) {
         if (err?.name !== 'RenderingCancelledException') {
-          console.error('페이지 렌더링 실패:', err)
           setError('페이지 렌더링 실패')
         }
       }
