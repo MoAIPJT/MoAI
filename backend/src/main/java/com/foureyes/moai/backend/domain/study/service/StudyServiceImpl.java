@@ -203,4 +203,27 @@ public class StudyServiceImpl implements StudyService {
         targetMembership.setRole(roleEnum);
         studyMembershipRepository.save(targetMembership);
     }
+
+    @Override
+    @Transactional
+    public void rejectJoinRequest(int adminUserId, int studyId, int targetUserId) {
+        StudyMembership adminMembership = studyMembershipRepository
+            .findByUserIdAndStudyGroup_IdAndStatus(
+                adminUserId, studyId, StudyMembership.Status.APPROVED)
+            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_NOT_MEMBER));
+
+        if (adminMembership.getRole() != StudyMembership.Role.ADMIN) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        //거절 대상이 PENDING 상태인지 조회
+        StudyMembership target = studyMembershipRepository
+            .findByUserIdAndStudyGroup_IdAndStatus(
+                targetUserId, studyId, StudyMembership.Status.PENDING)
+            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_MEMBERSHIP_NOT_FOUND));
+
+        //상태를 REJECTED로 변경
+        target.setStatus(StudyMembership.Status.REJECTED);
+        studyMembershipRepository.save(target);
+    }
 }

@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 public class StudyResponseDto {
 
     @Schema(description = "스터디 ID", example = "101")
-    @JsonProperty("study_id")
     private int id;
 
     @Schema(description = "스터디 이름", example = "AI 스터디")
@@ -24,14 +23,11 @@ public class StudyResponseDto {
     private String description;
 
     @Schema(description = "대표 이미지 URL", example = "https://cdn.example.com/images/study_101.png")
-    @JsonProperty("image_url")
     private String imageUrl;
 
     @Schema(description = "생성한 유저 ID", example = "5")
-    @JsonProperty("created_by")
     private int createdBy;
 
     @Schema(description = "생성 시각", example = "2025-08-05T10:00:00")
-    @JsonProperty("created_at")
     private LocalDateTime createdAt;
 }

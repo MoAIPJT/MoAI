@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS study_memberships (
     user_id INT NOT NULL,
     study_id INT NOT NULL,
     role ENUM('ADMIN','DELEGATE','MEMBER') NOT NULL,
-    status ENUM('PENDING','APPROVED','LEFT') NOT NULL,
+    status ENUM('PENDING','APPROVED','LEFT','REJECTED') NOT NULL,
     joined_at DATETIME,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (study_id) REFERENCES study_groups(id)

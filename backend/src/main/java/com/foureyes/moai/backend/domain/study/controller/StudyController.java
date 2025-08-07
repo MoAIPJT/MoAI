@@ -1,10 +1,7 @@
 package com.foureyes.moai.backend.domain.study.controller;
 
 import com.foureyes.moai.backend.auth.jwt.JwtTokenProvider;
-import com.foureyes.moai.backend.domain.study.dto.request.CreateStudyRequest;
-import com.foureyes.moai.backend.domain.study.dto.request.StudyIdRequestDto;
-import com.foureyes.moai.backend.domain.study.dto.request.StudyMemberDeleteRequestDto;
-import com.foureyes.moai.backend.domain.study.dto.request.StudyMemberRoleChangeRequestDto;
+import com.foureyes.moai.backend.domain.study.dto.request.*;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyListResponseDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyMemberListResponseDto;
 import com.foureyes.moai.backend.domain.study.dto.response.StudyResponseDto;
@@ -158,6 +155,28 @@ public class StudyController {
         String newRole      = request.getRole();
 
         studyService.changeMemberRole(adminUserId, studyId, targetUserId, newRole);
+        return ResponseEntity.ok().build();
+    }
+    @Operation(
+        summary     = "스터디 가입 요청 거절",
+        description = "관리자가 가입 요청 중인 유저를 거절하여 DB에서 멤버십을 삭제합니다.",
+        security    = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PatchMapping("/reject")
+    public ResponseEntity<Void> rejectJoin(
+        @Parameter(hidden = true)
+        @RequestHeader("Authorization") String bearerToken,
+        @RequestBody StudyMemberRejectRequestDto request
+    ) {
+        String token     = bearerToken.replaceFirst("^Bearer ", "").trim();
+        int adminUserId  = jwtTokenProvider.getUserId(token);
+
+        studyService.rejectJoinRequest(
+            adminUserId,
+            request.getStudyId(),
+            request.getUserID()
+        );
+
         return ResponseEntity.ok().build();
     }
 }

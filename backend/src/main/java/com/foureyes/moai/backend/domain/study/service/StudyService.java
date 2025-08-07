@@ -17,4 +17,5 @@ public interface StudyService {
     void leaveStudy(int userId, int studyId);
     void deleteMember(int adminUserId, int studyId, int targetUserId);
     void changeMemberRole(int adminUserId, int studyId, int targetUserId, String newRole);
+    void rejectJoinRequest(int adminUserId, int studyId, int targetUserId);
 }
