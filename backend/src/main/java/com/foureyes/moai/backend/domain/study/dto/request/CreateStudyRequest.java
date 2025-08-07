@@ -17,4 +17,7 @@ public class CreateStudyRequest {
 
     @Schema(description = "스터디 대표 이미지 파일", type = "string", format = "binary", required = true)
     private MultipartFile image;
+
+    @Schema(description="최대 수용 인원", example="8", required=true)
+    private int maxCapacity;
 }

@@ -33,8 +33,14 @@ public class StudyGroup {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Column(name = "invite_url")
-    private String inviteUrl;
+    @Column(name = "hash_id", nullable = false, unique = true, length = 100)
+    private String hashId;
+
+    @Column(columnDefinition = "TEXT")
+    private String notice;
+
+    @Column(name = "max_capacity", nullable = false)
+    private Integer maxCapacity;
 
     @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<StudyMembership> memberships = new ArrayList<>();
