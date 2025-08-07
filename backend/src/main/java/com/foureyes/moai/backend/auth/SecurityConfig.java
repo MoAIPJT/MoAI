@@ -1,4 +1,4 @@
-package com.foureyes.moai.backend.domain.user.config;
+package com.foureyes.moai.backend.auth;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
