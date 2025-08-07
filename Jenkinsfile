@@ -56,23 +56,25 @@ pipeline {
 
         stage('Deploy to EC2') {
             steps {
-                script {
-                    sh """
-                        ssh -o StrictHostKeyChecking=no -i $EC2_SSH $EC2_HOST '
-                          echo \$DOCKERHUB_CREDENTIALS_PSW | docker login -u \$DOCKERHUB_CREDENTIALS_USR --password-stdin &&
-                          docker network create $DOCKER_NETWORK || true &&
+                withCredentials([sshUserPrivateKey(credentialsId: 'EC2_SSH', keyFileVariable: 'SSH_KEY')]) {
+                    script {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no -i \$SSH_KEY $EC2_HOST '
+                              echo \$DOCKERHUB_CREDENTIALS_PSW | docker login -u \$DOCKERHUB_CREDENTIALS_USR --password-stdin &&
+                              docker network create $DOCKER_NETWORK || true &&
 
-                          docker pull $DOCKER_IMAGE_BACKEND:latest &&
-                          docker stop $BACKEND_CONTAINER_NAME || true &&
-                          docker rm $BACKEND_CONTAINER_NAME || true &&
-                          docker run -d --name $BACKEND_CONTAINER_NAME --network $DOCKER_NETWORK -p 8080:8080 $DOCKER_IMAGE_BACKEND:latest
+                              docker pull $DOCKER_IMAGE_BACKEND:latest &&
+                              docker stop $BACKEND_CONTAINER_NAME || true &&
+                              docker rm $BACKEND_CONTAINER_NAME || true &&
+                              docker run -d --name $BACKEND_CONTAINER_NAME --network $DOCKER_NETWORK -p 8080:8080 $DOCKER_IMAGE_BACKEND:latest &&
 
-                          docker pull $DOCKER_IMAGE_FRONTEND:latest &&
-                          docker stop $FRONTEND_CONTAINER_NAME || true &&
-                          docker rm $FRONTEND_CONTAINER_NAME || true &&
-                          docker run -d --name $FRONTEND_CONTAINER_NAME --network $DOCKER_NETWORK -p 80:80 $DOCKER_IMAGE_FRONTEND:latest
-                        '
-                    """
+                              docker pull $DOCKER_IMAGE_FRONTEND:latest &&
+                              docker stop $FRONTEND_CONTAINER_NAME || true &&
+                              docker rm $FRONTEND_CONTAINER_NAME || true &&
+                              docker run -d --name $FRONTEND_CONTAINER_NAME --network $DOCKER_NETWORK -p 80:80 $DOCKER_IMAGE_FRONTEND:latest
+                            '
+                        """
+                    }
                 }
             }
         }
