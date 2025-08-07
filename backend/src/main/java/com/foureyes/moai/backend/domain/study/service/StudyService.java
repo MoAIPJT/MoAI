@@ -15,4 +15,5 @@ public interface StudyService {
     List<StudyMemberListResponseDto> getStudyMembers(int userId, int studyId);
     List<StudyListResponseDto> getUserStudies(int userId);
     void leaveStudy(int userId, int studyId);
+    void deleteMember(int adminUserId, int studyId, int targetUserId);
 }

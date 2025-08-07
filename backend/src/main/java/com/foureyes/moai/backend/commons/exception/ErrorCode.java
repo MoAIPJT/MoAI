@@ -10,16 +10,21 @@ public enum ErrorCode {
     INVALID_PASSWORD("비밀번호가 올바르지 않습니다.", HttpStatus.BAD_REQUEST),
     ALREADY_JOINED_STUDY("이미 가입 요청중입니다.", HttpStatus.BAD_REQUEST),
     FILE_UPLOAD_FAILED("파일 업로드에 실패했습니다.", HttpStatus.BAD_REQUEST),
-    STUDY_NOT_MEMBER          ("해당 스터디에 참여 중이지 않습니다.",    HttpStatus.BAD_REQUEST),
+    STUDY_NOT_MEMBER("해당 스터디에 참여 중이지 않습니다.",    HttpStatus.BAD_REQUEST),
+
 
     // 401 Unauthorized
     INVALID_TOKEN("유효하지 않은 토큰입니다.", HttpStatus.UNAUTHORIZED),
     TOKEN_EXPIRED("JWT 토큰이 만료되었습니다.", HttpStatus.UNAUTHORIZED),
     TOKEN_SIGNATURE_INVALID("JWT 서명 검증에 실패했습니다.", HttpStatus.UNAUTHORIZED),
 
+    // 403 Forbidden
+    FORBIDDEN("권한이 없습니다.", HttpStatus.FORBIDDEN),
+
     // 404 Not Found
     USER_NOT_FOUND("등록되지 않은 이메일입니다.", HttpStatus.NOT_FOUND),
     STUDY_GROUP_NOT_FOUND("존재하지 않는 스터디 그룹입니다.", HttpStatus.NOT_FOUND),
+    STUDY_MEMBERSHIP_NOT_FOUND("스터디 멤버 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
 
     // 500 Internal Server Error
     DATABASE_ERROR("데이터베이스 처리 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),

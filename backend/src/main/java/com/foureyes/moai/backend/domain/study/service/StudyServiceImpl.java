@@ -146,4 +146,24 @@ public class StudyServiceImpl implements StudyService {
         membership.setStatus(StudyMembership.Status.LEFT);
         studyMembershipRepository.save(membership);
     }
+
+    @Override
+    @Transactional
+    public void deleteMember(int adminUserId, int studyId, int targetUserId) {
+        StudyMembership adminMember = studyMembershipRepository
+            .findByUserIdAndStudyGroup_IdAndStatus(
+                adminUserId, studyId, StudyMembership.Status.APPROVED)
+            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_NOT_MEMBER));
+
+        if (adminMember.getRole() != StudyMembership.Role.ADMIN) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+        StudyMembership targetMember = studyMembershipRepository
+            .findByUserIdAndStudyGroup_IdAndStatus(
+                targetUserId, studyId, StudyMembership.Status.APPROVED)
+            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_MEMBERSHIP_NOT_FOUND));
+
+        targetMember.setStatus(StudyMembership.Status.LEFT);
+        studyMembershipRepository.save(targetMember);
+    }
 }
