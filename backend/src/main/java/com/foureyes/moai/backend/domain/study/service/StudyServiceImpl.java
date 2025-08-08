@@ -188,6 +188,8 @@ public class StudyServiceImpl implements StudyService {
                     .map(User::getName)
                     .orElse("Unknown"))
                 .status(m.getStatus().name())
+                .studyId(m.getStudyGroup().getId())
+                .hashId(m.getStudyGroup().getHashId())
                 .build())
             .collect(Collectors.toList());
             
