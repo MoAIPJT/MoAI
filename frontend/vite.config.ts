@@ -13,7 +13,7 @@ export default defineConfig({
     allowedHosts: ['i13b201.p.ssafy.io'],
     proxy: {
       '/api': {
-        target: 'https://localhost:7443',
+        target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path

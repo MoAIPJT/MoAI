@@ -5,4 +5,4 @@ export function extractAxiosErrorMessage(error: unknown, fallback = '오류가 �
     return error.response.data.message
   }
   return fallback
-} 
+}

@@ -4,9 +4,15 @@ import DashboardSidebar from '../components/organisms/DashboardSidebar'
 import TopBar from '../components/molecules/TopBar'
 import StudyList from '../components/organisms/StudyList'
 import AISummaryList from '../components/organisms/AISummaryList'
+import ProfileSettingsModal from '../components/organisms/ProfileSettingsModal'
+import ChangePasswordModal from '../components/organisms/ChangePasswordModal'
+import { Calendar } from '../components/ui/calendar'
 import type { Study } from '../components/organisms/StudyList/types'
 import type { AISummary } from '../components/molecules/AISummaryCard/types'
 import type { CreateStudyData } from '../components/organisms/CreateStudyModal/types'
+import type { ProfileData } from '../components/organisms/ProfileSettingsModal/types'
+import type { ChangePasswordData } from '../components/organisms/ChangePasswordModal/types'
+import type { CalendarEvent } from '../components/ui/calendar'
 import InviteLinkModal from '../components/organisms/InviteLinkModal'
 import { fetchSummaryList } from '../services/summaryService'
 
@@ -18,20 +24,92 @@ const DashboardPage: React.FC = () => {
   const [isSummaryLoading, setIsSummaryLoading] = useState(true)
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
   const [currentInviteUrl, setCurrentInviteUrl] = useState('')
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([
+    {
+      date: new Date(new Date().getFullYear(), new Date().getMonth(), 15),
+      color: '#AA64FF',
+      title: '알고리즘 스터디',
+      startTime: '14:00',
+      endTime: '16:00'
+    },
+    {
+      date: new Date(new Date().getFullYear(), new Date().getMonth(), 20),
+      color: '#FF6B6B',
+      title: 'CS 면접 준비',
+      startTime: '19:00',
+      endTime: '21:00'
+    },
+    {
+      date: new Date(new Date().getFullYear(), new Date().getMonth(), 25),
+      color: '#4ECDC4',
+      title: '프로젝트 회의',
+      startTime: '10:00',
+      endTime: '12:00'
+    }
+  ])
+
+  // 이벤트 제목에 따른 스터디 이름 매핑
+  const getStudyNameByEvent = (eventTitle: string) => {
+    if (eventTitle.includes('알고리즘')) return '싸피 알고리즘'
+    if (eventTitle.includes('면접')) return '면접 화상 스터디'
+    if (eventTitle.includes('프로젝트')) return 'CS 모여라'
+    return '기타'
+  }
+
+  // 이벤트 제목에 따른 스터디 이미지 매핑
+  const getStudyImageByEvent = (eventTitle: string) => {
+    if (eventTitle.includes('알고리즘')) return 'SSAFY'
+    if (eventTitle.includes('면접')) return '면'
+    if (eventTitle.includes('프로젝트')) return 'CS'
+    return '📅'
+  }
+
+  // 다가오는 일정을 달력 이벤트에서 동적으로 생성
+  const upcomingEvents = calendarEvents
+    .filter(event => {
+      const eventDate = new Date(event.date)
+      const today = new Date()
+      // 오늘 이후의 이벤트만 필터링
+      return eventDate >= today
+    })
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) // 날짜순 정렬
+    .slice(0, 3) // 최대 3개만 표시
+    .map((event, index) => {
+      const eventDate = new Date(event.date)
+      const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][eventDate.getDay()]
+
+      return {
+        id: index + 1,
+        title: event.title || '제목 없음',
+        date: `${eventDate.getMonth() + 1}.${eventDate.getDate()}(${dayOfWeek})`,
+        time: `${event.startTime} - ${event.endTime}`,
+        studyName: getStudyNameByEvent(event.title || ''),
+        studyImage: getStudyImageByEvent(event.title || ''),
+        color: event.color
+      }
+    })
+  const [profileData, setProfileData] = useState<ProfileData>({
+    nickname: '안덕현',
+    email: 'dksejrqus2@gmail.com',
+    profileImage: ''
+  })
 
   // 스터디 목록을 가져오는 함수 (실제 API 호출)
   const fetchStudies = async () => {
     try {
       setIsLoading(true)
-      
+
       // 실제 API 호출 (현재는 주석 처리)
       // const response = await fetch('/api/studies')
       // const data = await response.json()
       // setStudies(data)
-      
+
       // 임시로 로딩 시뮬레이션
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
+
       // 더미 데이터 설정
       const dummyStudies = [
         {
@@ -71,7 +149,7 @@ const DashboardPage: React.FC = () => {
           inviteUrl: 'https://example.com/invite/4'
         }
       ]
-      
+
       setStudies(dummyStudies)
     } catch (error) {
       setStudies([]) // 에러 시에는 빈 배열
@@ -84,11 +162,11 @@ const DashboardPage: React.FC = () => {
   const fetchSummaries = async () => {
     try {
       setIsSummaryLoading(true)
-      
+
       // 실제 API 호출
       const userId = localStorage.getItem('userId') || '1' // 실제로는 로그인된 유저 ID를 사용
       const response = await fetchSummaryList(userId)
-      
+
       // API 응답을 기존 AISummary 타입에 맞게 변환
       const convertedSummaries: AISummary[] = response.summaries.map(summary => ({
         id: parseInt(summary.summary_id) || Date.now(), // summary_id를 숫자로 변환
@@ -97,11 +175,11 @@ const DashboardPage: React.FC = () => {
         createdAt: new Date().toISOString().split('T')[0], // 임시 날짜
         pdfUrl: `/pdfs/${summary.summary_id}.pdf` // 임시 PDF 경로
       }))
-      
+
       setSummaries(convertedSummaries)
     } catch (error) {
       console.error('AI 요약본 목록 조회 실패:', error)
-      
+
       // 에러 시 더미 데이터 사용 (개발용)
       const dummySummaries: AISummary[] = [
         {
@@ -126,7 +204,7 @@ const DashboardPage: React.FC = () => {
           pdfUrl: '/pdfs/hamburger.pdf'
         }
       ]
-      
+
       setSummaries(dummySummaries)
     } finally {
       setIsSummaryLoading(false)
@@ -154,11 +232,43 @@ const DashboardPage: React.FC = () => {
     // TODO: 로그아웃 로직 구현
   }
 
+  const handleSettingsClick = () => {
+    setIsProfileModalOpen(true)
+  }
+
+  const handleUpdateProfile = (data: Partial<ProfileData>) => {
+    setProfileData(prev => ({ ...prev, ...data }))
+    // TODO: API 호출로 프로필 업데이트
+    console.log('프로필 업데이트:', data)
+  }
+
+  const handleChangePassword = () => {
+    // TODO: 비밀번호 변경 페이지로 이동 또는 모달 열기
+    console.log('비밀번호 변경')
+  }
+
+  const handleOpenChangePasswordModal = () => {
+    setIsChangePasswordModalOpen(true)
+  }
+
+  const handleChangePasswordSubmit = (data: ChangePasswordData) => {
+    // TODO: API 호출로 비밀번호 변경
+    console.log('비밀번호 변경 요청:', data)
+    alert('비밀번호가 성공적으로 변경되었습니다.')
+  }
+
+  const handleWithdrawMembership = () => {
+    // TODO: 회원탈퇴 확인 모달 또는 페이지로 이동
+    if (confirm('정말로 회원탈퇴를 하시겠습니까?')) {
+      console.log('회원탈퇴 처리')
+    }
+  }
+
   const handleCreateStudy = async (data: CreateStudyData) => {
     try {
       // 스터디 생성 로직
       console.log('새 스터디 생성:', data)
-      
+
       // API 스펙에 맞는 Request Body 구성
       // const requestBody = {
       //   id: 1, // 실제로는 현재 로그인한 유저의 ID를 사용해야 함
@@ -166,7 +276,7 @@ const DashboardPage: React.FC = () => {
       //   description: data.description,
       //   image_url: data.image ? await convertImageToBase64(data.image) : null
       // }
-      
+
       // 실제 API 호출 (현재는 주석 처리)
       // const response = await fetch('/register', {
       //   method: 'POST',
@@ -176,7 +286,7 @@ const DashboardPage: React.FC = () => {
       //   },
       //   body: JSON.stringify(requestBody)
       // })
-      
+
       // if (response.status === 201) {
       //   const responseData = await response.json()
       //   const newStudy: Study = {
@@ -189,14 +299,14 @@ const DashboardPage: React.FC = () => {
       //     inviteUrl: responseData.invite_url || `https://duckfac.com/B201-nice-team`
       //   }
       //   setStudies(prevStudies => [newStudy, ...prevStudies])
-      //   
+      //
       //   // 초대 링크 모달 표시
       //   setCurrentInviteUrl(newStudy.inviteUrl)
       //   setIsInviteModalOpen(true)
       // } else {
       //   throw new Error('스터디 생성에 실패했습니다.')
       // }
-      
+
       // 임시로 프론트엔드에서 즉시 스터디 목록에 추가
       const newStudy: Study = {
         id: Date.now(), // 임시 ID 생성
@@ -207,9 +317,9 @@ const DashboardPage: React.FC = () => {
         createdAt: new Date().toISOString().split('T')[0],
         inviteUrl: `https://duckfac.com/B201-nice-team` // 임시 초대 링크
       }
-      
+
       setStudies(prevStudies => [newStudy, ...prevStudies])
-      
+
       // 초대 링크 모달 표시
       setCurrentInviteUrl(newStudy.inviteUrl || '')
       setIsInviteModalOpen(true)
@@ -244,14 +354,30 @@ const DashboardPage: React.FC = () => {
   //   // navigate(`/ai-summary/${summaryId}`)
   // }
 
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date)
+    console.log('선택된 날짜:', date)
+  }
+
+  const handleAddEvent = () => {
+    console.log('새 이벤트 추가')
+    // TODO: 이벤트 추가 모달 또는 페이지로 이동
+  }
+
+  const handleMonthChange = (date: Date) => {
+    console.log('월 변경:', date)
+    // TODO: 해당 월의 이벤트 데이터 로드
+  }
+
   return (
     <div className="flex h-screen bg-gray-50">
       <DashboardSidebar
         activeItem="mypage"
         onItemClick={handleItemClick}
         onLogout={handleLogout}
+        onSettingsClick={handleSettingsClick}
       />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col ml-64">
         <TopBar userName="user"/>
         <div className="flex-1 overflow-auto">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
@@ -269,12 +395,69 @@ const DashboardPage: React.FC = () => {
                 onSummaryClick={() => {}}
               />
             </div>
-            
-            {/* 오른쪽 열 - 달력 및 예정된 이벤트 (추후 구현) */}
+
+            {/* 오른쪽 열 - 달력 및 예정된 이벤트 */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">달력</h2>
-                <p className="text-gray-500">달력 및 예정된 이벤트가 여기에 표시됩니다.</p>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">일정 관리</h2>
+                <Calendar
+                  events={calendarEvents}
+                  selectedDate={selectedDate}
+                  onDateSelect={handleDateSelect}
+                  onAddEvent={handleAddEvent}
+                  onMonthChange={handleMonthChange}
+                  className="w-full"
+                />
+
+                {/* 다가오는 일정 섹션 */}
+                <div className="mt-6">
+                  <h3 className="text-md font-semibold text-gray-900 mb-3">다가오는 일정</h3>
+                  <div className="space-y-3">
+                    {upcomingEvents.map((event) => (
+                      <div key={event.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        {/* 이벤트 색상 점 */}
+                        <div
+                          className="w-3 h-3 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: event.color }}
+                        />
+
+                        {/* 이벤트 정보 */}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">
+                            {event.title}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {event.date} {event.time}
+                          </div>
+                        </div>
+
+                        {/* 스터디 이미지와 이름 */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <div className="w-6 h-6 flex items-center justify-center text-xs font-medium">
+                            {event.studyImage === 'SSAFY' ? (
+                              <div className="w-6 h-6 bg-blue-500 text-white rounded flex items-center justify-center text-xs font-bold">
+                                S
+                              </div>
+                            ) : event.studyImage === '면' ? (
+                              <div className="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                                면
+                              </div>
+                            ) : event.studyImage === 'CS' ? (
+                              <div className="w-6 h-6 bg-green-500 text-white rounded flex items-center justify-center text-xs font-bold">
+                                CS
+                              </div>
+                            ) : (
+                              <span className="text-lg">{event.studyImage}</span>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-600 truncate max-w-16">
+                            {event.studyName}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -286,6 +469,24 @@ const DashboardPage: React.FC = () => {
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
         inviteUrl={currentInviteUrl}
+      />
+
+      {/* 프로필 설정 모달 */}
+      <ProfileSettingsModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        profileData={profileData}
+        onUpdateProfile={handleUpdateProfile}
+        onChangePassword={handleChangePassword}
+        onWithdrawMembership={handleWithdrawMembership}
+        onOpenChangePasswordModal={handleOpenChangePasswordModal}
+      />
+
+      {/* 비밀번호 변경 모달 */}
+      <ChangePasswordModal
+        isOpen={isChangePasswordModalOpen}
+        onClose={() => setIsChangePasswordModalOpen(false)}
+        onSubmit={handleChangePasswordSubmit}
       />
     </div>
   )

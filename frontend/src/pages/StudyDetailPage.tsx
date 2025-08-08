@@ -115,7 +115,7 @@ const StudyDetailPage: React.FC = () => {
           setError(null)
           const studyData = await getStudyById(activeStudyId)
           setCurrentStudy(studyData)
-          
+
           // 참여자 정보도 함께 로드
           const participantsData = await getStudyParticipants(activeStudyId)
           setParticipants(participantsData)

@@ -15,4 +15,4 @@ export interface CalendarEventProps {
   event: Event
   style: React.CSSProperties
   onClick: (event: Event) => void
-} 
+}
