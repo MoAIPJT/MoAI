@@ -512,4 +512,44 @@ public class StudyServiceImpl implements StudyService {
             .build();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public StudyNoticeResponseDto getStudyNotice(int userId, int studyId) {
+        StudyGroup group = studyGroupRepository.findById(studyId)
+            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_GROUP_NOT_FOUND));
+        boolean approved = studyMembershipRepository
+            .existsByUserIdAndStudyGroup_IdAndStatus(
+                userId, studyId, StudyMembership.Status.APPROVED);
+        if (!approved) {
+            throw new CustomException(ErrorCode.STUDY_NOT_MEMBER);
+        }
+        return StudyNoticeResponseDto.builder()
+            .notice(group.getNotice())
+            .build();
+    }
+
+    @Override
+    @Transactional
+    public void updateStudyNotice(int userId, int studyId, String notice) {
+        StudyGroup group = studyGroupRepository.findById(studyId)
+            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_GROUP_NOT_FOUND));
+
+        StudyMembership membership = studyMembershipRepository
+            .findByUserIdAndStudyGroup_Id(userId, studyId)
+            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_NOT_MEMBER));
+
+        if (membership.getStatus() != StudyMembership.Status.APPROVED) {
+            throw new CustomException(ErrorCode.STUDY_NOT_MEMBER);
+        }
+
+        if (membership.getRole() != StudyMembership.Role.ADMIN) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+
+        group.setNotice(notice == null ? null : notice.trim());
+        studyGroupRepository.save(group);
+
+    }
+
 }

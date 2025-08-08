@@ -20,4 +20,6 @@ public interface StudyService {
     List<JoinRequestResponseDto> getPendingJoinRequests(int adminUserId, int studyId);
     List<JoinStudyListResponseDto> getJoinedStudies(int userId);
     StudyDetailResponseDto getStudyDetailByHashId(int userId, String hashId);
+    StudyNoticeResponseDto getStudyNotice(int userId, int studyId);
+    void updateStudyNotice(int userId, int studyId, String notice);
 }

@@ -298,4 +298,44 @@ public class StudyController {
         StudyDetailResponseDto dto = studyService.getStudyDetailByHashId(userId, hashId);
         return ResponseEntity.ok(dto);
     }
+
+    @Operation(
+        summary = "스터디 공지사항 조회",
+        description = "studyId로 해당 스터디의 공지사항을 조회합니다. 승인된 멤버만 접근 가능합니다.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @GetMapping("/notice")
+    public ResponseEntity<StudyNoticeResponseDto> getStudyNotice(
+        @Parameter(hidden = true)
+        @RequestHeader("Authorization") String bearerToken,
+
+        @Parameter(description = "스터디 ID", example = "101", required = true)
+        @RequestParam("studyId") int studyId
+    ) {
+        String token = bearerToken.replaceFirst("^Bearer ", "").trim();
+        int userId = jwtTokenProvider.getUserId(token);
+
+        StudyNoticeResponseDto dto = studyService.getStudyNotice(userId, studyId);
+        return ResponseEntity.ok(dto);
+    }
+
+    @Operation(
+        summary = "스터디 공지사항 수정",
+        description = "승인된 관리자만 공지사항을 수정할 수 있습니다.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PatchMapping("/notice")
+    public ResponseEntity<String> updateNotice(
+        @Parameter(hidden = true)
+        @RequestHeader("Authorization") String bearerToken,
+        @Valid @RequestBody UpdateStudyNoticeRequestDto request
+    ) {
+        String token = bearerToken.replaceFirst("^Bearer ", "").trim();
+        int userId = jwtTokenProvider.getUserId(token);
+
+
+        studyService.updateStudyNotice(userId, request.getStudyId(), request.getNotice());
+
+        return ResponseEntity.ok("수정완료");
+    }
 }
