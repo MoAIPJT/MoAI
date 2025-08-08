@@ -53,7 +53,7 @@ public class StudyServiceImpl implements StudyService {
             log.error("스터디 이미지 업로드 실패: userId={}, error={}", userId, e.getMessage());
             throw new CustomException(ErrorCode.FILE_UPLOAD_FAILED);
         }
-        
+
         StudyGroup studyGroup = StudyGroup.builder()
             .name(request.getName())
             .description(request.getDescription())
@@ -99,7 +99,7 @@ public class StudyServiceImpl implements StudyService {
     @Transactional
     public void sendJoinRequest(int userId, int studyGroupId) {
         log.info("스터디 가입 요청 시작: userId={}, studyGroupId={}", userId, studyGroupId);
-        
+
         StudyGroup group = studyGroupRepository.findById(studyGroupId)
             .orElseThrow(() -> {
                 log.warn("존재하지 않는 스터디 그룹에 가입 요청: studyGroupId={}", studyGroupId);
@@ -110,7 +110,7 @@ public class StudyServiceImpl implements StudyService {
             log.warn("이미 가입 요청한 스터디에 중복 요청: userId={}, studyGroupId={}", userId, studyGroupId);
             throw new CustomException(ErrorCode.ALREADY_JOINED_STUDY);
         }
-        
+
         StudyMembership req = StudyMembership.builder()
             .userId(userId)
             .studyGroup(group)
@@ -119,7 +119,7 @@ public class StudyServiceImpl implements StudyService {
             .joinedAt(LocalDateTime.now())
             .build();
         studyMembershipRepository.save(req);
-        
+
         log.info("스터디 가입 요청 완료: userId={}, studyGroupId={}", userId, studyGroupId);
     }
 
@@ -132,14 +132,14 @@ public class StudyServiceImpl implements StudyService {
     @Transactional(readOnly = true)
     public List<StudyMemberListResponseDto> getStudyMembers(int userId, int studyId) {
         log.info("스터디 멤버 목록 조회 시작: userId={}, studyId={}", userId, studyId);
-        
+
         boolean joined = studyMembershipRepository
             .existsByUserIdAndStudyGroup_IdAndStatus(userId, studyId, StudyMembership.Status.APPROVED);
         if (!joined) {
             log.warn("스터디 멤버가 아닌 사용자의 멤버 목록 조회 시도: userId={}, studyId={}", userId, studyId);
             throw new CustomException(ErrorCode.STUDY_NOT_MEMBER);
         }
-        
+
         List<StudyMemberListResponseDto> members = studyMembershipRepository
             .findAllByStudyGroup_IdAndStatus(studyId, StudyMembership.Status.APPROVED)
             .stream()
@@ -149,11 +149,13 @@ public class StudyServiceImpl implements StudyService {
 
                 return StudyMemberListResponseDto.builder()
                     .member(user.getName())
+                    .email(user.getEmail())
+                    .imageUrl(user.getProfileImageUrl())
                     .role(membership.getRole().name())
                     .build();
             })
             .collect(Collectors.toList());
-            
+
         log.info("스터디 멤버 목록 조회 완료: studyId={}, memberCount={}", studyId, members.size());
         return members;
     }
@@ -167,7 +169,7 @@ public class StudyServiceImpl implements StudyService {
     @Transactional(readOnly = true)
     public List<StudyListResponseDto> getUserStudies(int userId) {
         log.info("사용자 스터디 목록 조회 시작: userId={}", userId);
-        
+
         List<StudyMembership.Status> statuses = List.of(
             StudyMembership.Status.PENDING,
             StudyMembership.Status.APPROVED
@@ -189,7 +191,7 @@ public class StudyServiceImpl implements StudyService {
                 .hashId(m.getStudyGroup().getHashId())
                 .build())
             .collect(Collectors.toList());
-            
+
         log.info("사용자 스터디 목록 조회 완료: userId={}, studyCount={}", userId, studies.size());
         return studies;
     }
@@ -203,7 +205,7 @@ public class StudyServiceImpl implements StudyService {
     @Transactional
     public void leaveStudy(int userId, int studyId) {
         log.info("스터디 탈퇴 시작: userId={}, studyId={}", userId, studyId);
-        
+
         StudyMembership membership = studyMembershipRepository
             .findByUserIdAndStudyGroup_IdAndStatus(
                 userId, studyId, StudyMembership.Status.APPROVED)
@@ -211,10 +213,10 @@ public class StudyServiceImpl implements StudyService {
                 log.warn("스터디 멤버가 아닌 사용자의 탈퇴 시도: userId={}, studyId={}", userId, studyId);
                 return new CustomException(ErrorCode.STUDY_NOT_MEMBER);
             });
-            
+
         membership.setStatus(StudyMembership.Status.LEFT);
         studyMembershipRepository.save(membership);
-        
+
         log.info("스터디 탈퇴 완료: userId={}, studyId={}", userId, studyId);
     }
 
@@ -226,9 +228,9 @@ public class StudyServiceImpl implements StudyService {
     @Override
     @Transactional
     public void deleteMember(int adminUserId, int studyId, int targetUserId) {
-        log.info("스터디 멤버 강제 탈퇴 시작: adminUserId={}, studyId={}, targetUserId={}", 
+        log.info("스터디 멤버 강제 탈퇴 시작: adminUserId={}, studyId={}, targetUserId={}",
                 adminUserId, studyId, targetUserId);
-        
+
         StudyMembership adminMember = studyMembershipRepository
             .findByUserIdAndStudyGroup_IdAndStatus(
                 adminUserId, studyId, StudyMembership.Status.APPROVED)
@@ -241,7 +243,7 @@ public class StudyServiceImpl implements StudyService {
             log.warn("관리자 권한 없는 사용자의 멤버 삭제 시도: adminUserId={}, studyId={}", adminUserId, studyId);
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
-        
+
         StudyMembership targetMember = studyMembershipRepository
             .findByUserIdAndStudyGroup_IdAndStatus(
                 targetUserId, studyId, StudyMembership.Status.APPROVED)
@@ -252,8 +254,8 @@ public class StudyServiceImpl implements StudyService {
 
         targetMember.setStatus(StudyMembership.Status.LEFT);
         studyMembershipRepository.save(targetMember);
-        
-        log.info("스터디 멤버 강제 탈퇴 완료: adminUserId={}, studyId={}, targetUserId={}", 
+
+        log.info("스터디 멤버 강제 탈퇴 완료: adminUserId={}, studyId={}, targetUserId={}",
                 adminUserId, studyId, targetUserId);
     }
 
@@ -265,9 +267,9 @@ public class StudyServiceImpl implements StudyService {
     @Override
     @Transactional
     public void changeMemberRole(int adminUserId, int studyId, int targetUserId, String newRole) {
-        log.info("스터디 멤버 역할 변경 시작: adminUserId={}, studyId={}, targetUserId={}, newRole={}", 
+        log.info("스터디 멤버 역할 변경 시작: adminUserId={}, studyId={}, targetUserId={}, newRole={}",
                 adminUserId, studyId, targetUserId, newRole);
-        
+
         StudyMembership adminMembership = studyMembershipRepository
             .findByUserIdAndStudyGroup_IdAndStatus(
                 adminUserId, studyId, StudyMembership.Status.APPROVED)
@@ -309,8 +311,8 @@ public class StudyServiceImpl implements StudyService {
         // 대상 멤버 역할 변경 및 저장
         targetMembership.setRole(roleEnum);
         studyMembershipRepository.save(targetMembership);
-        
-        log.info("스터디 멤버 역할 변경 완료: adminUserId={}, studyId={}, targetUserId={}, newRole={}", 
+
+        log.info("스터디 멤버 역할 변경 완료: adminUserId={}, studyId={}, targetUserId={}, newRole={}",
                 adminUserId, studyId, targetUserId, newRole);
     }
 
@@ -322,9 +324,9 @@ public class StudyServiceImpl implements StudyService {
     @Override
     @Transactional
     public void rejectJoinRequest(int adminUserId, int studyId, int targetUserId) {
-        log.info("스터디 가입 요청 거절 시작: adminUserId={}, studyId={}, targetUserId={}", 
+        log.info("스터디 가입 요청 거절 시작: adminUserId={}, studyId={}, targetUserId={}",
                 adminUserId, studyId, targetUserId);
-        
+
         StudyMembership adminMembership = studyMembershipRepository
             .findByUserIdAndStudyGroup_IdAndStatus(
                 adminUserId, studyId, StudyMembership.Status.APPROVED)
@@ -350,8 +352,8 @@ public class StudyServiceImpl implements StudyService {
         // 상태를 REJECTED로 변경
         target.setStatus(StudyMembership.Status.REJECTED);
         studyMembershipRepository.save(target);
-        
-        log.info("스터디 가입 요청 거절 완료: adminUserId={}, studyId={}, targetUserId={}", 
+
+        log.info("스터디 가입 요청 거절 완료: adminUserId={}, studyId={}, targetUserId={}",
                 adminUserId, studyId, targetUserId);
     }
 
@@ -363,9 +365,9 @@ public class StudyServiceImpl implements StudyService {
     @Override
     @Transactional
     public void acceptJoinRequest(int adminUserId, int studyId, int targetUserId, String newRole) {
-        log.info("스터디 가입 요청 승인 시작: adminUserId={}, studyId={}, targetUserId={}, newRole={}", 
+        log.info("스터디 가입 요청 승인 시작: adminUserId={}, studyId={}, targetUserId={}, newRole={}",
                 adminUserId, studyId, targetUserId, newRole);
-        
+
         StudyMembership admin = studyMembershipRepository
             .findByUserIdAndStudyGroup_IdAndStatus(
                 adminUserId, studyId, StudyMembership.Status.APPROVED)
@@ -373,7 +375,7 @@ public class StudyServiceImpl implements StudyService {
                 log.warn("관리자가 아닌 사용자의 가입 요청 승인 시도: adminUserId={}, studyId={}", adminUserId, studyId);
                 return new CustomException(ErrorCode.STUDY_NOT_MEMBER);
             });
-            
+
         if (admin.getRole() != StudyMembership.Role.ADMIN) {
             log.warn("관리자 권한 없는 사용자의 가입 요청 승인 시도: adminUserId={}, studyId={}", adminUserId, studyId);
             throw new CustomException(ErrorCode.FORBIDDEN);
@@ -398,8 +400,8 @@ public class StudyServiceImpl implements StudyService {
         target.setStatus(StudyMembership.Status.APPROVED);
         target.setRole(roleEnum);
         studyMembershipRepository.save(target);
-        
-        log.info("스터디 가입 요청 승인 완료: adminUserId={}, studyId={}, targetUserId={}, newRole={}", 
+
+        log.info("스터디 가입 요청 승인 완료: adminUserId={}, studyId={}, targetUserId={}, newRole={}",
                 adminUserId, studyId, targetUserId, newRole);
     }
 
@@ -412,7 +414,7 @@ public class StudyServiceImpl implements StudyService {
     @Transactional(readOnly = true)
     public List<JoinRequestResponseDto> getPendingJoinRequests(int adminUserId, int studyId) {
         log.info("대기 중인 가입 요청 목록 조회 시작: adminUserId={}, studyId={}", adminUserId, studyId);
-        
+
         StudyMembership admin = studyMembershipRepository
             .findByUserIdAndStudyGroup_IdAndStatus(
                 adminUserId, studyId, StudyMembership.Status.APPROVED)
@@ -420,7 +422,7 @@ public class StudyServiceImpl implements StudyService {
                 log.warn("관리자가 아닌 사용자의 가입 요청 목록 조회 시도: adminUserId={}, studyId={}", adminUserId, studyId);
                 return new CustomException(ErrorCode.STUDY_NOT_MEMBER);
             });
-            
+
         if (admin.getRole() != StudyMembership.Role.ADMIN) {
             log.warn("관리자 권한 없는 사용자의 가입 요청 목록 조회 시도: adminUserId={}, studyId={}", adminUserId, studyId);
             throw new CustomException(ErrorCode.FORBIDDEN);
@@ -435,10 +437,10 @@ public class StudyServiceImpl implements StudyService {
                 m.getStatus().name()
             ))
             .collect(Collectors.toList());
-            
-        log.info("대기 중인 가입 요청 목록 조회 완료: adminUserId={}, studyId={}, requestCount={}", 
+
+        log.info("대기 중인 가입 요청 목록 조회 완료: adminUserId={}, studyId={}, requestCount={}",
                 adminUserId, studyId, pendingRequests.size());
-        
+
         return pendingRequests;
     }
 
