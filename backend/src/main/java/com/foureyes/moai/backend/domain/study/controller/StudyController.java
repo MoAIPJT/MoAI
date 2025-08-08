@@ -87,7 +87,7 @@ public class StudyController {
         description = "유저가 가입 혹은 신청한 스터디 목록을 반환합니다",
         security = @SecurityRequirement(name = "bearerAuth")
     )
-    @GetMapping("/list")
+    @GetMapping("/all")
     public ResponseEntity<List<StudyListResponseDto>> listUserStudies(
         @Parameter(hidden = true)
         @RequestHeader("Authorization") String bearerToken
