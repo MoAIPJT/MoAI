@@ -1,6 +1,6 @@
-import React from 'react';
-import SocialSignupTemplate from '@/components/templates/SocialSignupTemplate';
+import React from 'react'
+import SocialSignupTemplate from '@/components/templates/SocialSignupTemplate'
 
-const SocialSignupPage: React.FC = () => <SocialSignupTemplate />;
+const SocialSignupPage: React.FC = () => <SocialSignupTemplate />
 
-export default SocialSignupPage; 
+export default SocialSignupPage

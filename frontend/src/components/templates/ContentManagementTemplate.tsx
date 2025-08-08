@@ -108,8 +108,6 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
     }))
 
   const handleModalSubmit = async () => {
-    const selectedContents = contents.filter(content => content.isSelected)
-
     // 여기에 실제 AI 요약본 생성 API 호출 로직 추가
     await new Promise(resolve => setTimeout(resolve, 2000)) // 임시 지연
 

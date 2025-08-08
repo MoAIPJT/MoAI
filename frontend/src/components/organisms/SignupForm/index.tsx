@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import LabeledInput from '@/components/molecules/LabeledInput';
-import Button from '@/components/atoms/Button';
-import LinkText from '@/components/atoms/LinkText';
-import WelcomeText from '@/components/molecules/WelcomeText';
-import type { SignupFormProps, SignupFormData } from './types';
+import React, { useState } from 'react'
+import LabeledInput from '@/components/molecules/LabeledInput'
+import Button from '@/components/atoms/Button'
+import LinkText from '@/components/atoms/LinkText'
+import WelcomeText from '@/components/molecules/WelcomeText'
+import type { SignupFormProps, SignupFormData } from './types'
 
 const SignupForm: React.FC<SignupFormProps> = ({
   onSignup,
@@ -17,23 +17,23 @@ const SignupForm: React.FC<SignupFormProps> = ({
     name: '',
     password: '',
     passwordConfirm: '',
-  });
+  })
 
 
   const handleChange = (field: keyof SignupFormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setForm({ ...form, [field]: newValue });
-  };
+    const newValue = e.target.value
+    setForm({ ...form, [field]: newValue })
+  }
 
   const handleSignup = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     if (form.password !== form.passwordConfirm) {
-      return;
+      return
     }
 
-    onSignup?.(form);
-  };
+    onSignup?.(form)
+  }
 
   // 버튼 disabled 상태 확인
   const isButtonDisabled = loading || form.password !== form.passwordConfirm || !form.password || !form.passwordConfirm;
@@ -118,4 +118,4 @@ const SignupForm: React.FC<SignupFormProps> = ({
   );
 };
 
-export default SignupForm;
+export default SignupForm

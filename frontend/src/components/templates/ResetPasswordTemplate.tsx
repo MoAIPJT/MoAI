@@ -1,11 +1,11 @@
-import React from 'react';
-import LoginIllustration from '@/components/organisms/LoginIllustration';
-import ResetPasswordForm from '@/components/organisms/ResetPasswordForm';
+import React from 'react'
+import LoginIllustration from '@/components/organisms/LoginIllustration'
+import ResetPasswordForm from '@/components/organisms/ResetPasswordForm'
 
 interface ResetPasswordTemplateProps {
-  onResetPassword: (email: string) => void;
-  loading: boolean;
-  error: string | null;
+  onResetPassword: (email: string) => void
+  loading: boolean
+  error: string | null
 }
 
 const ResetPasswordTemplate: React.FC<ResetPasswordTemplateProps> = ({
@@ -28,7 +28,7 @@ const ResetPasswordTemplate: React.FC<ResetPasswordTemplateProps> = ({
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ResetPasswordTemplate; 
+export default ResetPasswordTemplate
