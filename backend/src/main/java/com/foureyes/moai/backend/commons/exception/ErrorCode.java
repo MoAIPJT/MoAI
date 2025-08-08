@@ -37,7 +37,18 @@ public enum ErrorCode {
         this.message = message;
         this.httpStatus = httpStatus;
     }
-    public String getMessage() { return message; }
+    
+    public String getMessage() { 
+        return message; 
+    }
+
+    public HttpStatus getStatus() {
+        return httpStatus;
+    }
+    
+    public String getCode() {
+        return this.name();
+    }
 
     public HttpStatus getHttpStatus() {
         return httpStatus;
