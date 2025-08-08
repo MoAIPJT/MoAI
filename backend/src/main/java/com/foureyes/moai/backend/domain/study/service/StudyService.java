@@ -2,10 +2,7 @@ package com.foureyes.moai.backend.domain.study.service;
 
 
 import com.foureyes.moai.backend.domain.study.dto.request.CreateStudyRequest;
-import com.foureyes.moai.backend.domain.study.dto.response.JoinRequestResponseDto;
-import com.foureyes.moai.backend.domain.study.dto.response.StudyListResponseDto;
-import com.foureyes.moai.backend.domain.study.dto.response.StudyMemberListResponseDto;
-import com.foureyes.moai.backend.domain.study.dto.response.StudyResponseDto;
+import com.foureyes.moai.backend.domain.study.dto.response.*;
 import org.apache.coyote.BadRequestException;
 
 import java.util.List;
@@ -21,4 +18,5 @@ public interface StudyService {
     void rejectJoinRequest(int adminUserId, int studyId, int targetUserId);
     void acceptJoinRequest(int adminUserId, int studyId, int targetUserId, String newRole);
     List<JoinRequestResponseDto> getPendingJoinRequests(int adminUserId, int studyId);
+    List<JoinStudyListResponseDto> getJoinedStudies(int userId);
 }

@@ -4,10 +4,7 @@ import com.foureyes.moai.backend.commons.exception.CustomException;
 import com.foureyes.moai.backend.commons.exception.ErrorCode;
 import com.foureyes.moai.backend.commons.util.StorageService;
 import com.foureyes.moai.backend.domain.study.dto.request.CreateStudyRequest;
-import com.foureyes.moai.backend.domain.study.dto.response.JoinRequestResponseDto;
-import com.foureyes.moai.backend.domain.study.dto.response.StudyListResponseDto;
-import com.foureyes.moai.backend.domain.study.dto.response.StudyMemberListResponseDto;
-import com.foureyes.moai.backend.domain.study.dto.response.StudyResponseDto;
+import com.foureyes.moai.backend.domain.study.dto.response.*;
 import com.foureyes.moai.backend.domain.study.entity.StudyGroup;
 import com.foureyes.moai.backend.domain.study.entity.StudyMembership;
 import com.foureyes.moai.backend.domain.study.repository.StudyGroupRepository;
@@ -443,5 +440,23 @@ public class StudyServiceImpl implements StudyService {
                 adminUserId, studyId, pendingRequests.size());
         
         return pendingRequests;
+    }
+
+    @Override
+    @Transactional
+    public List<JoinStudyListResponseDto> getJoinedStudies(int userId) {
+        return studyMembershipRepository
+            .findAllByUserIdAndStatus(userId, StudyMembership.Status.APPROVED)
+            .stream()
+            .map(membership -> {
+                StudyGroup group = membership.getStudyGroup();
+                return JoinStudyListResponseDto.builder()
+                    .name(group.getName())
+                    .imageUrl(group.getImageUrl())
+                    .studyId(group.getId())
+                    .hashId(group.getHashId())
+                    .build();
+            })
+            .collect(Collectors.toList());
     }
 }
