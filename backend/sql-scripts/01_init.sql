@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
     provider_type VARCHAR(255) NOT NULL,
     profile_image_url VARCHAR(500),
     password VARCHAR(255) NOT NULL,
-    refresh_token VARCHAR(255) NOT NULL,
+    refresh_token VARCHAR(255),
     created_at DATETIME
 );
 
@@ -17,10 +17,12 @@ CREATE TABLE IF NOT EXISTS study_groups (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(200) NOT NULL,
     description TEXT,
+    hash_id VARCHAR(100) NULL UNIQUE,
+    max_capacity INT NOT NULL,
+    notice TEXT,
     image_url VARCHAR(500),
     created_by INT,
     created_at DATETIME,
-    invite_url VARCHAR(500),
     FOREIGN KEY (created_by) REFERENCES users(id)
 );
 
@@ -38,8 +40,8 @@ CREATE TABLE IF NOT EXISTS study_memberships (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     study_id INT NOT NULL,
-    role ENUM('관리자', '대리자', '일반') NOT NULL,
-    status ENUM('대기중', '승인', '탈퇴'),
+    role ENUM('ADMIN','DELEGATE','MEMBER') NOT NULL,
+    status ENUM('PENDING','APPROVED','LEFT','REJECTED') NOT NULL,
     joined_at DATETIME,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (study_id) REFERENCES study_groups(id)
