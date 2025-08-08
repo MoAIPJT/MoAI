@@ -8,4 +8,4 @@ export interface CircleButtonProps {
   onClick?: () => void // 이벤트 핸들러
   disabled?: boolean // 비활성화 상태
   className?: string // 추가 스타일링
-} 
+}

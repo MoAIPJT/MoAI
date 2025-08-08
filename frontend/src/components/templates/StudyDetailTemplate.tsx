@@ -140,8 +140,8 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
                 <StudyNoticeBox onEdit={onEditNotice} />
               </div>
               <div className="flex-1">
-                <StudyVideoConference 
-                  onCreateRoom={onCreateRoom} 
+                <StudyVideoConference
+                  onCreateRoom={onCreateRoom}
                   participants={participants} // 화상채팅은 별도 참여자 목록 사용
                 />
               </div>
@@ -206,7 +206,6 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
           onCategoryAdd={onCategoryAdd || (() => {})}
           onMemberRemove={onMemberRemove || (() => {})}
          onSave={() => {
-           console.log('Study management saved')
            handleCloseManagementModal()
          }}
        />

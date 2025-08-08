@@ -27,27 +27,16 @@ const SignupForm: React.FC<SignupFormProps> = ({
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('회원가입 폼 제출됨:', form);
-    console.log('비밀번호 일치 여부:', form.password === form.passwordConfirm);
-    
+
     if (form.password !== form.passwordConfirm) {
-      console.log('비밀번호가 일치하지 않음');
       return;
     }
-    
-    console.log('onSignup 함수 호출');
+
     onSignup?.(form);
   };
 
   // 버튼 disabled 상태 확인
   const isButtonDisabled = loading || form.password !== form.passwordConfirm || !form.password || !form.passwordConfirm;
-  console.log('버튼 상태:', {
-    loading,
-    passwordMatch: form.password === form.passwordConfirm,
-    hasPassword: !!form.password,
-    hasPasswordConfirm: !!form.passwordConfirm,
-    isDisabled: isButtonDisabled
-  });
 
   return (
     <div className="w-full max-w-md">
@@ -105,10 +94,10 @@ const SignupForm: React.FC<SignupFormProps> = ({
           </div>
         )}
 
-        <Button 
-          variant="primary" 
-          size="lg" 
-          fullWidth 
+        <Button
+          variant="primary"
+          size="lg"
+          fullWidth
           type="submit"
           disabled={isButtonDisabled}
         >
@@ -129,4 +118,4 @@ const SignupForm: React.FC<SignupFormProps> = ({
   );
 };
 
-export default SignupForm; 
+export default SignupForm;

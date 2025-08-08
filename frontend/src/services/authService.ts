@@ -94,13 +94,17 @@ export const login = async (data: LoginFormData): Promise<LoginResponse> => {
 
 // 일반 회원가입 API
 export const signup = async (data: SignupRequest): Promise<SignupResponse> => {
-  const response = await apiClient.post('/register', data)
+  const response = await apiClient.post('/users/signup', {
+    email: data.email,
+    password: data.password,
+    name: data.name,
+  })
   return response.data
 }
 
 // 소셜 회원가입 API
 export const socialSignup = async (data: SocialSignupRequest): Promise<SocialSignupResponse> => {
-  const response = await apiClient.post('/social/register', data, {
+  const response = await apiClient.post('/social/signup', data, {
     headers: {
       'Authorization': `Bearer ${data.refresh_token}`
     }

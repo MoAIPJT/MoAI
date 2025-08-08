@@ -3,8 +3,13 @@ import AISummaryTemplate from '../components/templates/AISummaryTemplate'
 import SummaryViewer from '../components/atoms/SummaryViewer'
 import PDFViewer from '../components/atoms/PDFViewer'
 import SplitResizer from '../components/atoms/SplitResizer'
+import ProfileSettingsModal from '../components/organisms/ProfileSettingsModal'
+import ChangePasswordModal from '../components/organisms/ChangePasswordModal'
 import { fetchSummaryList, type StudyWithSummaries } from '../services/summaryService'
 import { dummySummaryData } from '../types/summary'
+import type { ProfileData } from '../components/organisms/ProfileSettingsModal/types'
+// import type { ChangePasswordData } from '../components/organisms/ChangePasswordModal/types'
+import { useAuth } from '../hooks/useAuth'
 
 const AISummaryPage: React.FC = () => {
   const [activeItem, setActiveItem] = useState<string>('')
@@ -13,6 +18,14 @@ const AISummaryPage: React.FC = () => {
   const [leftPanelWidth, setLeftPanelWidth] = useState(500)
   const [studiesWithSummaries, setStudiesWithSummaries] = useState<StudyWithSummaries[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false)
+  const [profileData, setProfileData] = useState<ProfileData>({
+    nickname: '안덕현',
+    email: 'dksejrqus2@gmail.com',
+    profileImage: ''
+  })
+  const { logout } = useAuth()
   // const [error, setError] = useState<string | null>(null)
 
   // AI 요약본 목록 조회
@@ -20,15 +33,14 @@ const AISummaryPage: React.FC = () => {
     try {
       setIsLoading(true)
       // setError(null)
-      
+
       // 실제 API 호출
       const userId = localStorage.getItem('userId') || '1' // 실제로는 로그인된 유저 ID를 사용
       const response = await fetchSummaryList(userId)
       setStudiesWithSummaries(response.studies || [])
-    } catch (error) {
-      console.error('AI 요약본 목록 조회 실패:', error)
+    } catch {
       // setError('AI 요약본 목록을 불러오는데 실패했습니다.')
-      
+
       // 에러 시 더미 데이터 사용 (개발용)
       const dummyStudiesWithSummaries: StudyWithSummaries[] = [
         {
@@ -83,8 +95,8 @@ const AISummaryPage: React.FC = () => {
   }
 
   const handleStudyToggle = (studyId: string) => {
-    setExpandedStudies(prev => 
-      prev.includes(studyId) 
+    setExpandedStudies(prev =>
+      prev.includes(studyId)
         ? prev.filter(id => id !== studyId)
         : [...prev, studyId]
     )
@@ -98,6 +110,34 @@ const AISummaryPage: React.FC = () => {
     setLeftPanelWidth(width)
   }
 
+  const handleSettingsClick = () => {
+    setIsProfileModalOpen(true)
+  }
+
+  const handleLogout = () => {
+    logout()
+  }
+
+  const handleUpdateProfile = (data: Partial<ProfileData>) => {
+    setProfileData(prev => ({ ...prev, ...data }))
+  }
+
+  const handleOpenChangePasswordModal = () => {
+    setIsChangePasswordModalOpen(true)
+  }
+
+  const handleChangePasswordSubmit = () => {
+    // TODO: API 호출로 비밀번호 변경
+    // data.currentPassword, data.newPassword, data.confirmPassword 사용
+    alert('비밀번호가 성공적으로 변경되었습니다.')
+  }
+
+  const handleWithdrawMembership = () => {
+    if (confirm('정말로 회원탈퇴를 하시겠습니까?')) {
+      // 회원탈퇴 처리
+    }
+  }
+
   // 선택된 요약본 데이터
   const selectedSummary = activeItem ? dummySummaryData[activeItem] : null
 
@@ -106,9 +146,9 @@ const AISummaryPage: React.FC = () => {
     <div className="flex items-center justify-center h-full">
       <div className="text-center">
         <div className="mb-6">
-          <img 
-            src="/src/assets/MoAI/file.png" 
-            alt="File Icon" 
+          <img
+            src="/src/assets/MoAI/file.png"
+            alt="File Icon"
             className="w-72 h-72 mx-auto mb-4"
           />
           <p className="text-gray-600 text-xl">파일을 선택해주세요...</p>
@@ -133,7 +173,7 @@ const AISummaryPage: React.FC = () => {
       return (
         <div className="flex h-full">
           {/* 왼쪽 패널 - 요약본 */}
-          <div 
+          <div
             className="bg-white border-r border-gray-200"
             style={{ width: `${leftPanelWidth}px` }}
           >
@@ -144,7 +184,7 @@ const AISummaryPage: React.FC = () => {
           </div>
 
           {/* 리사이저 */}
-          <SplitResizer 
+          <SplitResizer
             onResize={handleResize}
             minLeftWidth={300}
             maxLeftWidth={800}
@@ -155,8 +195,8 @@ const AISummaryPage: React.FC = () => {
             <PDFViewer
               pdfUrl={selectedSummary.originalPdfPath}
               title={selectedSummary.title}
-              onLoad={() => console.log('PDF 로드 완료')}
-              onError={(error) => console.error('PDF 로드 실패:', error)}
+              onLoad={() => {}}
+              onError={() => {}}
             />
           </div>
         </div>
@@ -182,10 +222,30 @@ const AISummaryPage: React.FC = () => {
       isLoading={isLoading}
       onItemClick={handleItemClick}
       onStudyToggle={handleStudyToggle}
+      onSettingsClick={handleSettingsClick}
+      onLogout={handleLogout}
     >
       {activeItem ? renderSummaryContent() : renderEmptyState()}
+
+      {/* 프로필 설정 모달 */}
+      <ProfileSettingsModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        profileData={profileData}
+        onUpdateProfile={handleUpdateProfile}
+        onChangePassword={handleOpenChangePasswordModal}
+        onWithdrawMembership={handleWithdrawMembership}
+        onOpenChangePasswordModal={handleOpenChangePasswordModal}
+      />
+
+      {/* 비밀번호 변경 모달 */}
+      <ChangePasswordModal
+        isOpen={isChangePasswordModalOpen}
+        onClose={() => setIsChangePasswordModalOpen(false)}
+        onSubmit={handleChangePasswordSubmit}
+      />
     </AISummaryTemplate>
   )
 }
 
-export default AISummaryPage 
+export default AISummaryPage
