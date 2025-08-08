@@ -11,7 +11,7 @@ import type { Study } from '../components/organisms/StudyList/types'
 import type { AISummary } from '../components/molecules/AISummaryCard/types'
 import type { CreateStudyData } from '../components/organisms/CreateStudyModal/types'
 import type { ProfileData } from '../components/organisms/ProfileSettingsModal/types'
-import type { ChangePasswordData } from '../components/organisms/ChangePasswordModal/types'
+// import type { ChangePasswordData } from '../components/organisms/ChangePasswordModal/types'
 import type { CalendarEvent } from '../components/ui/calendar'
 import InviteLinkModal from '../components/organisms/InviteLinkModal'
 import { fetchSummaryList } from '../services/summaryService'
@@ -27,7 +27,9 @@ const DashboardPage: React.FC = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([
+  const [expandedStudy, setExpandedStudy] = useState(false)
+  const [activeStudyId, setActiveStudyId] = useState<string | null>(null)
+  const [calendarEvents] = useState<CalendarEvent[]>([
     {
       date: new Date(new Date().getFullYear(), new Date().getMonth(), 15),
       color: '#AA64FF',
@@ -151,7 +153,7 @@ const DashboardPage: React.FC = () => {
       ]
 
       setStudies(dummyStudies)
-    } catch (error) {
+    } catch {
       setStudies([]) // 에러 시에는 빈 배열
     } finally {
       setIsLoading(false)
@@ -177,8 +179,7 @@ const DashboardPage: React.FC = () => {
       }))
 
       setSummaries(convertedSummaries)
-    } catch (error) {
-      console.error('AI 요약본 목록 조회 실패:', error)
+    } catch {
 
       // 에러 시 더미 데이터 사용 (개발용)
       const dummySummaries: AISummary[] = [
@@ -222,9 +223,9 @@ const DashboardPage: React.FC = () => {
       window.open('/ai-summary', '_blank')
     }
 
-    // Study 클릭 시 Study 상세페이지로 이동 (기본 스터디)
+    // 스터디 클릭 시 토글
     if (itemId === 'study') {
-      navigate('/study/study-1')
+      setExpandedStudy(!expandedStudy)
     }
   }
 
@@ -239,35 +240,32 @@ const DashboardPage: React.FC = () => {
   const handleUpdateProfile = (data: Partial<ProfileData>) => {
     setProfileData(prev => ({ ...prev, ...data }))
     // TODO: API 호출로 프로필 업데이트
-    console.log('프로필 업데이트:', data)
   }
 
   const handleChangePassword = () => {
     // TODO: 비밀번호 변경 페이지로 이동 또는 모달 열기
-    console.log('비밀번호 변경')
   }
 
   const handleOpenChangePasswordModal = () => {
     setIsChangePasswordModalOpen(true)
   }
 
-  const handleChangePasswordSubmit = (data: ChangePasswordData) => {
+  const handleChangePasswordSubmit = () => {
     // TODO: API 호출로 비밀번호 변경
-    console.log('비밀번호 변경 요청:', data)
+
     alert('비밀번호가 성공적으로 변경되었습니다.')
   }
 
   const handleWithdrawMembership = () => {
     // TODO: 회원탈퇴 확인 모달 또는 페이지로 이동
     if (confirm('정말로 회원탈퇴를 하시겠습니까?')) {
-      console.log('회원탈퇴 처리')
+      // 회원탈퇴 처리
     }
   }
 
   const handleCreateStudy = async (data: CreateStudyData) => {
     try {
       // 스터디 생성 로직
-      console.log('새 스터디 생성:', data)
 
       // API 스펙에 맞는 Request Body 구성
       // const requestBody = {
@@ -323,8 +321,7 @@ const DashboardPage: React.FC = () => {
       // 초대 링크 모달 표시
       setCurrentInviteUrl(newStudy.inviteUrl || '')
       setIsInviteModalOpen(true)
-    } catch (error) {
-      console.error('스터디 생성 오류:', error)
+    } catch {
       alert('스터디 생성에 실패했습니다.')
     }
   }
@@ -356,16 +353,13 @@ const DashboardPage: React.FC = () => {
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date)
-    console.log('선택된 날짜:', date)
   }
 
   const handleAddEvent = () => {
-    console.log('새 이벤트 추가')
     // TODO: 이벤트 추가 모달 또는 페이지로 이동
   }
 
-  const handleMonthChange = (date: Date) => {
-    console.log('월 변경:', date)
+  const handleMonthChange = () => {
     // TODO: 해당 월의 이벤트 데이터 로드
   }
 
@@ -373,7 +367,20 @@ const DashboardPage: React.FC = () => {
     <div className="flex h-screen bg-gray-50">
       <DashboardSidebar
         activeItem="mypage"
+        expandedStudy={expandedStudy}
+        studies={studies.map(study => ({
+          id: study.id.toString(),
+          name: study.name,
+          description: study.description || '',
+          image: study.imageUrl || '',
+          icon: '📚'
+        }))}
         onItemClick={handleItemClick}
+        activeStudyId={activeStudyId}
+        onStudyClick={(studyId) => {
+          setActiveStudyId(studyId)
+          navigate(`/study/${studyId}`)
+        }}
         onLogout={handleLogout}
         onSettingsClick={handleSettingsClick}
       />

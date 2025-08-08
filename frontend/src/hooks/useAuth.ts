@@ -58,7 +58,6 @@ export const useAuth = () => {
 
       // 백엔드 연결 실패 시에도 테스트용으로 페이지 이동
       if (errorMessage.includes('Network Error') || errorMessage.includes('ECONNREFUSED')) {
-        console.log('백엔드 서버 연결 실패. 테스트용으로 페이지 이동합니다.')
         navigate('/email-sent', {
           state: {
             message: '회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료해주세요.',
@@ -189,9 +188,8 @@ export const useAuth = () => {
   const logout = async () => {
     try {
       await authService.logout()
-    } catch (err: unknown) {
+    } catch {
       // 로그아웃 실패해도 로컬 토큰은 삭제
-      console.error('Logout error:', err)
     } finally {
       navigate('/login')
     }

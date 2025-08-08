@@ -8,7 +8,7 @@ import ChangePasswordModal from '../components/organisms/ChangePasswordModal'
 import { fetchSummaryList, type StudyWithSummaries } from '../services/summaryService'
 import { dummySummaryData } from '../types/summary'
 import type { ProfileData } from '../components/organisms/ProfileSettingsModal/types'
-import type { ChangePasswordData } from '../components/organisms/ChangePasswordModal/types'
+// import type { ChangePasswordData } from '../components/organisms/ChangePasswordModal/types'
 import { useAuth } from '../hooks/useAuth'
 
 const AISummaryPage: React.FC = () => {
@@ -38,8 +38,7 @@ const AISummaryPage: React.FC = () => {
       const userId = localStorage.getItem('userId') || '1' // 실제로는 로그인된 유저 ID를 사용
       const response = await fetchSummaryList(userId)
       setStudiesWithSummaries(response.studies || [])
-    } catch (error) {
-      console.error('AI 요약본 목록 조회 실패:', error)
+    } catch {
       // setError('AI 요약본 목록을 불러오는데 실패했습니다.')
 
       // 에러 시 더미 데이터 사용 (개발용)
@@ -121,21 +120,21 @@ const AISummaryPage: React.FC = () => {
 
   const handleUpdateProfile = (data: Partial<ProfileData>) => {
     setProfileData(prev => ({ ...prev, ...data }))
-    console.log('프로필 업데이트:', data)
   }
 
   const handleOpenChangePasswordModal = () => {
     setIsChangePasswordModalOpen(true)
   }
 
-  const handleChangePasswordSubmit = (data: ChangePasswordData) => {
-    console.log('비밀번호 변경 요청:', data)
+  const handleChangePasswordSubmit = () => {
+    // TODO: API 호출로 비밀번호 변경
+    // data.currentPassword, data.newPassword, data.confirmPassword 사용
     alert('비밀번호가 성공적으로 변경되었습니다.')
   }
 
   const handleWithdrawMembership = () => {
     if (confirm('정말로 회원탈퇴를 하시겠습니까?')) {
-      console.log('회원탈퇴 처리')
+      // 회원탈퇴 처리
     }
   }
 
@@ -196,8 +195,8 @@ const AISummaryPage: React.FC = () => {
             <PDFViewer
               pdfUrl={selectedSummary.originalPdfPath}
               title={selectedSummary.title}
-              onLoad={() => console.log('PDF 로드 완료')}
-              onError={(error) => console.error('PDF 로드 실패:', error)}
+              onLoad={() => {}}
+              onError={() => {}}
             />
           </div>
         </div>

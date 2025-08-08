@@ -1,11 +1,6 @@
 import axios from 'axios'
 
-// API 인스턴스 생성
-console.log('환경변수 확인:', {
-  VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
-  VITE_BACKEND_URL: import.meta.env.VITE_BACKEND_URL,
-  NODE_ENV: import.meta.env.NODE_ENV
-})
+
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',

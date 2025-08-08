@@ -70,10 +70,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = () => {
     }
   ])
 
-  // 디버깅용: 이벤트 데이터 확인
-  console.log('Current events:', events);
-  console.log('Current year:', new Date().getFullYear());
-  console.log('Current month:', new Date().getMonth());
+
   const [modalCreateModal, setModalCreateModal] = useState(false)
 
   // 특정 날짜에 이벤트가 있는지 확인하는 함수는 이제 필요 없음 (직접 렌더링 방식으로 변경)
@@ -135,11 +132,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = () => {
       }
     }
 
-    console.log('Original event:', newEvent)
-    console.log('Modal current date:', modalCurrentDate)
-    console.log('Target day:', newEvent.day)
-    console.log('Saving event with date:', eventWithDate)
-    console.log('Date string:', eventWithDate.date.toDateString())
+
 
     if (selectedEvent) {
       // Edit existing event
@@ -149,7 +142,6 @@ const StudyCalendar: React.FC<StudyCalendarProps> = () => {
       // Create new event
       setEvents(prevEvents => {
         const updatedEvents = [...prevEvents, eventWithDate]
-        console.log('Updated events:', updatedEvents) // 디버깅용
         return updatedEvents
       })
     }

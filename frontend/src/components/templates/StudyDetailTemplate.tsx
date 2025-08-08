@@ -206,7 +206,6 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
           onCategoryAdd={onCategoryAdd || (() => {})}
           onMemberRemove={onMemberRemove || (() => {})}
          onSave={() => {
-           console.log('Study management saved')
            handleCloseManagementModal()
          }}
        />
