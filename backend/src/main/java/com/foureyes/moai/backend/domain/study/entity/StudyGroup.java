@@ -1,4 +1,5 @@
 package com.foureyes.moai.backend.domain.study.entity;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,6 +20,7 @@ public class StudyGroup {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
+    @Column(nullable = false, length = 100)
     private String name;
 
     @Column(columnDefinition = "TEXT")
@@ -27,10 +29,10 @@ public class StudyGroup {
     @Column(name = "image_url")
     private String imageUrl;
 
-    @Column(name = "created_by")
+    @Column(name = "created_by", nullable = false)
     private int createdBy;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "hash_id", nullable = false, unique = true, length = 100)
@@ -43,6 +45,6 @@ public class StudyGroup {
     private Integer maxCapacity;
 
     @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<StudyMembership> memberships = new ArrayList<>();
-
 }
