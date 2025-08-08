@@ -1,34 +1,34 @@
 // import api from './api';
 
 export interface OpenViduTokenResponse {
-  token: string;
-  sessionId: string;
+  token: string
+  sessionId: string
 }
 
 export interface OpenViduSessionResponse {
-  sessionId: string;
-  createdAt: number;
-  recording: boolean;
-  broadcasting: boolean;
-  forcedVideoCodec: string;
-  allowTranscoding: boolean;
-  mediaMode: string;
-  recordingLayout: string;
-  customSessionId: string;
+  sessionId: string
+  createdAt: number
+  recording: boolean
+  broadcasting: boolean
+  forcedVideoCodec: string
+  allowTranscoding: boolean
+  mediaMode: string
+  recordingLayout: string
+  customSessionId: string
   connections: {
-    numberOfElements: number;
-    content: any[];
-  };
+    numberOfElements: number
+    content: any[]
+  }
   recordingProperties: {
-    name: string;
-    hasAudio: boolean;
-    hasVideo: boolean;
-    outputMode: string;
-    recordingLayout: string;
-    resolution: string;
-    frameRate: number;
-    shmSize: number;
-  };
+    name: string
+    hasAudio: boolean
+    hasVideo: boolean
+    outputMode: string
+    recordingLayout: string
+    resolution: string
+    frameRate: number
+    shmSize: number
+  }
 }
 
 class OpenViduService {
@@ -210,4 +210,4 @@ class OpenViduService {
   }
 }
 
-export default new OpenViduService();
+export default new OpenViduService()

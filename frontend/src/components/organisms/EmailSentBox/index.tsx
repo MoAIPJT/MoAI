@@ -1,10 +1,10 @@
-import React from 'react';
+import React from 'react'
 import sendEmailVideo from '@/assets/send_email.mp4'
 import type { EmailSentBoxProps } from './types'
 
-const EmailSentBox: React.FC<EmailSentBoxProps> = ({ 
+const EmailSentBox: React.FC<EmailSentBoxProps> = ({
   message = '이메일 인증 메일이 전송되었습니다.',
-  email 
+  email
 }) => (
   <div className="bg-white rounded-2xl shadow-xl p-12 w-full max-w-md flex flex-col items-center">
     <h2 className="text-xl font-bold text-center mb-4 mt-2">
@@ -34,6 +34,6 @@ const EmailSentBox: React.FC<EmailSentBoxProps> = ({
       인증을 완료해주세요.
     </p>
   </div>
-);
+)
 
-export default EmailSentBox; 
+export default EmailSentBox

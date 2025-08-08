@@ -1,7 +1,7 @@
-import React from 'react';
-import LoginTemplate from '@/components/templates/LoginTemplate';
-import { useAuth } from '@/hooks/useAuth';
-import type { LoginFormData } from '@/components/organisms/LoginForm/types';
+import React from 'react'
+import LoginTemplate from '@/components/templates/LoginTemplate'
+import { useAuth } from '@/hooks/useAuth'
+import type { LoginFormData } from '@/components/organisms/LoginForm/types'
 
 const LoginPage: React.FC = () => {
   const { login, loading, error } = useAuth();
@@ -20,8 +20,8 @@ const LoginPage: React.FC = () => {
   }
 
   const handleGoogleLogin = () => {
-    const backendUrl = import.meta.env.VITE_BACKEND_URL;
-    window.location.href = `${backendUrl}/oauth2/authorization/google`;
+    const backendUrl = import.meta.env.VITE_BACKEND_URL
+    window.location.href = `${backendUrl}/oauth2/authorization/google`
   }
 
   return (
@@ -32,7 +32,7 @@ const LoginPage: React.FC = () => {
       loading={loading}
       error={error}
     />
-  );
-};
+      )
+  }
 
-export default LoginPage;
+  export default LoginPage

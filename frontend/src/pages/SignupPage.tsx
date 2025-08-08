@@ -1,7 +1,7 @@
-import React from 'react';
-import SignupTemplate from '@/components/templates/SignupTemplate';
-import { useAuth } from '@/hooks/useAuth';
-import type { SignupFormData } from '@/components/organisms/SignupForm/types';
+import React from 'react'
+import SignupTemplate from '@/components/templates/SignupTemplate'
+import { useAuth } from '@/hooks/useAuth'
+import type { SignupFormData } from '@/components/organisms/SignupForm/types'
 
 const SignupPage: React.FC = () => {
   const { signup, loading, error } = useAuth();
@@ -44,6 +44,6 @@ const SignupPage: React.FC = () => {
       error={error}
     />
   );
-};
+  }
 
-export default SignupPage; 
+  export default SignupPage

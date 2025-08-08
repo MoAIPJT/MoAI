@@ -1,11 +1,11 @@
-import React from 'react';
-import { useLocation } from 'react-router-dom';
-import LoginIllustration from '@/components/organisms/LoginIllustration';
-import EmailSentBox from '@/components/organisms/EmailSentBox';
+import React from 'react'
+import { useLocation } from 'react-router-dom'
+import LoginIllustration from '@/components/organisms/LoginIllustration'
+import EmailSentBox from '@/components/organisms/EmailSentBox'
 
 const EmailSentTemplate: React.FC = () => {
-  const location = useLocation();
-  const { message, email } = location.state || {};
+  const location = useLocation()
+  const { message, email } = location.state || {}
 
   return (
   <div className="flex min-h-screen bg-[#f9f9f9]">
@@ -16,7 +16,7 @@ const EmailSentTemplate: React.FC = () => {
       <EmailSentBox message={message} email={email} />
     </div>
   </div>
-  );
-};
+  )
+}
 
-export default EmailSentTemplate; 
+export default EmailSentTemplate

@@ -8,20 +8,17 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   onClose,
   profileData,
   onUpdateProfile,
-  onChangePassword,
   onWithdrawMembership,
   onOpenChangePasswordModal
 }) => {
   const [nickname, setNickname] = useState(profileData.nickname)
   const [isEditingNickname, setIsEditingNickname] = useState(false)
-  const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string>(profileData.profileImage || '')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      setSelectedImage(file)
       const reader = new FileReader()
       reader.onload = (e) => {
         setPreviewUrl(e.target?.result as string)
@@ -45,7 +42,6 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   const handleClose = () => {
     setNickname(profileData.nickname)
     setIsEditingNickname(false)
-    setSelectedImage(null)
     setPreviewUrl(profileData.profileImage || '')
     onClose()
   }
