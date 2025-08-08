@@ -6,6 +6,7 @@ import com.foureyes.moai.backend.domain.study.dto.response.*;
 import com.foureyes.moai.backend.domain.study.service.StudyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -46,11 +47,11 @@ public class StudyController {
         @RequestHeader("Authorization") String bearerToken,
         @Valid @ModelAttribute CreateStudyRequest request) {
         log.info("스터디 생성 API 호출: 스터디명={}", request.getName());
-        
+
         String token = bearerToken.replaceFirst("^Bearer ", "").trim();
         int userId = jwtTokenProvider.getUserId(token);
         StudyResponseDto response = studyService.createStudy(userId, request);
-        
+
         log.info("스터디 생성 완료: studyId={}, userId={}", response.getId(), userId);
         return ResponseEntity.status(201).body(response);
     }
@@ -72,12 +73,12 @@ public class StudyController {
         @RequestParam("study_id") int studyId
     ) throws BadRequestException {
         log.info("스터디 가입 요청 API 호출: studyId={}", studyId);
-        
+
         String token = bearerToken.replaceFirst("^Bearer ", "").trim();
         int userId = jwtTokenProvider.getUserId(token);
 
         studyService.sendJoinRequest(userId, studyId);
-        
+
         log.info("스터디 가입 요청 완료: userId={}, studyId={}", userId, studyId);
         return ResponseEntity.ok("OK");
     }
@@ -99,7 +100,7 @@ public class StudyController {
         @PathVariable("study_id") int studyId
     ) {
         log.info("스터디 멤버 목록 조회 API 호출: studyId={}", studyId);
-        
+
         String token = bearerToken.replaceFirst("^Bearer ", "").trim();
         int userId = jwtTokenProvider.getUserId(token);
 
@@ -125,12 +126,12 @@ public class StudyController {
         @RequestHeader("Authorization") String bearerToken
     ) {
         log.info("사용자 스터디 목록 조회 API 호출");
-        
+
         String token = bearerToken.replaceFirst("^Bearer ", "").trim();
         int userId = jwtTokenProvider.getUserId(token);
 
         List<StudyListResponseDto> studies = studyService.getUserStudies(userId);
-        
+
         log.info("사용자 스터디 목록 조회 완료: userId={}, studyCount={}", userId, studies.size());
         return ResponseEntity.ok(studies);
     }
@@ -278,4 +279,23 @@ public class StudyController {
         return ResponseEntity.ok(studies);
     }
 
+    @Operation(
+        summary = "스터디 정보 조회(디테일 페이지, hashId 기반)",
+        description = "hashId로 스터디 상세 정보를 조회합니다. 상태/역할은 현재 사용자 기준입니다.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @GetMapping("/detail")
+    public ResponseEntity<StudyDetailResponseDto> getStudyDetailByHash(
+        @Parameter(hidden = true)
+        @RequestHeader("Authorization") String bearerToken,
+
+        @Parameter(description = "라우팅/공유용 해시 ID", example = "jR4kd8Lz", required = true, schema = @Schema(type = "string"))
+        @RequestParam("hashId") String hashId
+    ) {
+        String token = bearerToken.replaceFirst("^Bearer ", "").trim();
+        int userId = jwtTokenProvider.getUserId(token);
+
+        StudyDetailResponseDto dto = studyService.getStudyDetailByHashId(userId, hashId);
+        return ResponseEntity.ok(dto);
+    }
 }

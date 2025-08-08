@@ -19,4 +19,5 @@ public interface StudyService {
     void acceptJoinRequest(int adminUserId, int studyId, int targetUserId, String newRole);
     List<JoinRequestResponseDto> getPendingJoinRequests(int adminUserId, int studyId);
     List<JoinStudyListResponseDto> getJoinedStudies(int userId);
+    StudyDetailResponseDto getStudyDetailByHashId(int userId, String hashId);
 }

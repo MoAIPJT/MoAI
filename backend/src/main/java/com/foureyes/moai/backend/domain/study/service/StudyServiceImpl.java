@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -461,4 +462,54 @@ public class StudyServiceImpl implements StudyService {
             })
             .collect(Collectors.toList());
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public StudyDetailResponseDto getStudyDetailByHashId(int userId, String hashId) {
+
+        StudyGroup group = studyGroupRepository.findByHashId(hashId)
+            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_GROUP_NOT_FOUND));
+
+        Optional<StudyMembership> membershipOpt =
+            studyMembershipRepository.findByUserIdAndStudyGroup_Id(userId, group.getId());
+
+        // 1) 멤버십 없음 → 이름, 이미지
+        if (membershipOpt.isEmpty()) {
+            return StudyDetailResponseDto.builder()
+                .name(group.getName())
+                .imageUrl(group.getImageUrl())
+                .build();
+        }
+        StudyMembership membership = membershipOpt.get();
+        // 2) PENDING → 이름, 이미지, 상태 만
+        if (membership.getStatus() == StudyMembership.Status.PENDING) {
+            return StudyDetailResponseDto.builder()
+                .name(group.getName())
+                .imageUrl(group.getImageUrl())
+                .status(StudyMembership.Status.PENDING.name())
+                .build();
+        }
+        // 3) APPROVED → 전부
+        if (membership.getStatus() == StudyMembership.Status.APPROVED) {
+            long approvedCount = studyMembershipRepository
+                .countByStudyGroup_IdAndStatus(group.getId(), StudyMembership.Status.APPROVED);
+
+            return StudyDetailResponseDto.builder()
+                .name(group.getName())
+                .imageUrl(group.getImageUrl())
+                .status(StudyMembership.Status.APPROVED.name())
+                .role(membership.getRole().name())
+                .description(group.getDescription())
+                .userCount((int) approvedCount)
+                .build();
+        }
+
+        // 4) 그 외(LEFT/REJECTED) → 명시 없으셔서 이름, 이미지, 상태만 포함하도록 처리
+        return StudyDetailResponseDto.builder()
+            .name(group.getName())
+            .imageUrl(group.getImageUrl())
+            .status(membership.getStatus().name())
+            .build();
+    }
+
 }
