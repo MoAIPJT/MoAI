@@ -96,10 +96,8 @@ const StudyDetailPage: React.FC = () => {
       try {
         setError(null)
         const studiesData = await getStudies()
-        console.log('Loaded studies:', studiesData) // 디버깅용
         setStudies(Array.isArray(studiesData) ? studiesData : [])
-      } catch (error) {
-        console.error('Failed to load studies:', error)
+      } catch  {
         setError('스터디 목록을 불러오는데 실패했습니다.')
         setStudies([]) // 에러 시 빈 배열로 설정
       }
@@ -119,8 +117,7 @@ const StudyDetailPage: React.FC = () => {
           // 참여자 정보도 함께 로드
           const participantsData = await getStudyParticipants(activeStudyId)
           setParticipants(participantsData)
-        } catch (error) {
-          console.error('Failed to load current study:', error)
+        } catch {
           setError('스터디 정보를 불러오는데 실패했습니다.')
         } finally {
           setLoading(false)
@@ -151,7 +148,6 @@ const StudyDetailPage: React.FC = () => {
   })
 
   const handleItemClick = (itemId: string) => {
-    console.log('Navigation clicked:', itemId)
 
     // 스터디 클릭 시 토글
     if (itemId === 'study') {
@@ -170,45 +166,39 @@ const StudyDetailPage: React.FC = () => {
   }
 
   const handleStudyClick = (studyId: string) => {
-    setActiveStudyId(studyId)
-    setLoading(true) // 로딩 상태 활성화
+    // 현재 페이지의 스터디와 다른 스터디를 클릭한 경우에만 페이지 이동
+    if (activeStudyId !== studyId) {
+      setActiveStudyId(studyId)
+      setLoading(true) // 로딩 상태 활성화
 
-    // 즉시 현재 스터디 목록에서 해당 스터디 정보를 찾아서 임시로 설정
-    const selectedStudy = studies.find(study => study.id === studyId)
-    if (selectedStudy) {
-      setCurrentStudy(selectedStudy)
+      // 즉시 현재 스터디 목록에서 해당 스터디 정보를 찾아서 임시로 설정
+      const selectedStudy = studies.find(study => study.id === studyId)
+      if (selectedStudy) {
+        setCurrentStudy(selectedStudy)
+      }
+
+      // 선택된 스터디로 페이지 이동
+      navigate(`/study/${studyId}`)
     }
-
-    console.log('Selected study:', studyId)
-    // 선택된 스터디로 페이지 이동
-    navigate(`/study/${studyId}`)
   }
 
   const handleSearch = () => {
-    console.log('Search performed')
   }
 
   const handleUploadData = () => {
-    console.log('Upload data clicked')
     setIsUploadModalOpen(true)
   }
 
   const handleCreateRoom = () => {
-    console.log('Create room clicked')
   }
 
-  // const handleAddEvent = () => {
-  //   console.log('Add event clicked')
-  // }
 
   const handleEditNotice = () => {
-    console.log('Edit notice clicked')
   }
 
 
 
   const handleSettingsClick = () => {
-    console.log('Settings clicked')
   }
 
   // 스터디 관리 모달 관련 핸들러들
@@ -241,7 +231,6 @@ const StudyDetailPage: React.FC = () => {
   }
 
   const handleStudyImageChange = (image: File | null) => {
-    console.log('Study image changed:', image)
     if (image) {
       // File을 Data URL로 변환하여 즉시 미리보기 가능하게 함
       const reader = new FileReader()
@@ -286,7 +275,6 @@ const StudyDetailPage: React.FC = () => {
   }
 
   const handleContentSelect = (contentId: string) => {
-    console.log('Content selected:', contentId)
     setContents(prevContents =>
       prevContents.map(content =>
         content.id === contentId
@@ -296,8 +284,8 @@ const StudyDetailPage: React.FC = () => {
     )
   }
 
-  const handleContentPreview = (contentId: string) => {
-    console.log('Content preview:', contentId)
+  const handleContentPreview = () => {
+    //contentId: string
   }
 
   // Upload Modal 관련 핸들러들
@@ -306,7 +294,6 @@ const StudyDetailPage: React.FC = () => {
   }
 
   const handleUploadSubmit = (data: UploadData) => {
-    console.log('Upload data submitted:', data)
 
     // 새로운 콘텐츠 아이템 생성
     const newContent: ContentItem = {
@@ -336,7 +323,6 @@ const StudyDetailPage: React.FC = () => {
     setIsUploadModalOpen(false)
 
     // 성공 메시지 표시 (실제로는 toast 등을 사용)
-    console.log('자료가 성공적으로 업로드되었습니다!')
   }
 
   // 화상회의 더미 참여자 데이터

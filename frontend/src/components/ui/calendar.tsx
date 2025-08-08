@@ -163,10 +163,7 @@ function CustomCalendar({
           const dayEvents = getEventsForDate(day);
           const hasEvents = dayEvents.length > 0;
 
-          // 디버깅용 로그
-          if (hasEvents) {
-            console.log(`Day ${day.getDate()}: ${dayEvents.length} events`, dayEvents);
-          }
+
 
           return (
             <button

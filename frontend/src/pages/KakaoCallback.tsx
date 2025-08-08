@@ -16,8 +16,8 @@ const KakaoCallback = () => {
         localStorage.setItem('accessToken', accessToken)
         localStorage.setItem('refreshToken', refreshToken)
         navigate('/dashboard')
-      } catch (err) {
-        console.error('카카오 로그인 실패:', err)
+      } catch {
+        // 에러 처리
       }
     }
 

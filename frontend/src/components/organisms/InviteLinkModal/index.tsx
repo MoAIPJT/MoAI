@@ -15,8 +15,7 @@ const InviteLinkModal: React.FC<InviteLinkModalProps> = ({
       await navigator.clipboard.writeText(inviteUrl)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000) // 2초 후 복사 상태 초기화
-    } catch (error) {
-      console.error('클립보드 복사 실패:', error)
+    } catch {
       // fallback: 구식 브라우저 지원
       const textArea = document.createElement('textarea')
       textArea.value = inviteUrl
@@ -38,9 +37,9 @@ const InviteLinkModal: React.FC<InviteLinkModalProps> = ({
           {/* 왼쪽 이미지 */}
           <div className="flex-shrink-0">
             <div className="w-48 h-48 rounded-full bg-yellow-100 flex items-center justify-center">
-              <img 
-                src={bikingImage} 
-                alt="스터디 생성 완료" 
+              <img
+                src={bikingImage}
+                alt="스터디 생성 완료"
                 className="w-32 h-32 object-contain"
               />
             </div>
@@ -51,7 +50,7 @@ const InviteLinkModal: React.FC<InviteLinkModalProps> = ({
             <h2 className="text-2xl font-bold text-purple-600 mb-4">
               스터디 생성이 완료되었어요!
             </h2>
-            
+
             <p className="text-gray-600 mb-6">
               친구에게 서버 초대 링크 전송하기
             </p>
@@ -94,4 +93,4 @@ const InviteLinkModal: React.FC<InviteLinkModalProps> = ({
   )
 }
 
-export default InviteLinkModal 
+export default InviteLinkModal
