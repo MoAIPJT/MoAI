@@ -46,4 +46,13 @@ public interface StudyMembershipRepository extends JpaRepository<StudyMembership
         StudyMembership.Status status
     );
 
+    Optional<StudyMembership> findByUserIdAndStudyGroup_Id(
+        int userId,
+        int id
+    );
+
+    long  countByStudyGroup_IdAndStatus(
+        int id,
+        StudyMembership.Status status
+    );
 }
