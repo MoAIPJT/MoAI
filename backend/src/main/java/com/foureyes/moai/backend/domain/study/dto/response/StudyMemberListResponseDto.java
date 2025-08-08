@@ -13,4 +13,9 @@ public class StudyMemberListResponseDto {
     private final String member;
     @Schema(description = "권한", example = "Admin")
     private final String role;
+    @Schema(description = "맴버 프로필", example = "https://cdn.example.com/images/user_101.png")
+    private final String imageUrl;
+    @Schema(description = "맴버 이메일", example = "gildo@example.com")
+    private final String email;
+
 }
