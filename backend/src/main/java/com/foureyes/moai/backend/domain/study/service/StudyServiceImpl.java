@@ -433,11 +433,18 @@ public class StudyServiceImpl implements StudyService {
         List<JoinRequestResponseDto> pendingRequests = studyMembershipRepository
             .findAllByStudyGroup_IdAndStatus(studyId, StudyMembership.Status.PENDING)
             .stream()
-            .map(m -> new JoinRequestResponseDto(
-                m.getUserId(),
-                m.getStatus().name()
-            ))
-            .collect(Collectors.toList());
+            .map(m -> {
+                User user = userRepository.getReferenceById(m.getUserId());
+                return new JoinRequestResponseDto(
+                    m.getUserId(),
+                    user.getEmail(),
+                    user.getName(),
+                    user.getProfileImageUrl(),
+                    m.getStatus().name()
+                );
+            })
+            .toList();
+
 
         log.info("대기 중인 가입 요청 목록 조회 완료: adminUserId={}, studyId={}, requestCount={}",
                 adminUserId, studyId, pendingRequests.size());
