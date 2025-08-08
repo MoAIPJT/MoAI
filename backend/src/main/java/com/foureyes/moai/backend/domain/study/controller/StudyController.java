@@ -2,10 +2,7 @@ package com.foureyes.moai.backend.domain.study.controller;
 
 import com.foureyes.moai.backend.auth.jwt.JwtTokenProvider;
 import com.foureyes.moai.backend.domain.study.dto.request.*;
-import com.foureyes.moai.backend.domain.study.dto.response.JoinRequestResponseDto;
-import com.foureyes.moai.backend.domain.study.dto.response.StudyListResponseDto;
-import com.foureyes.moai.backend.domain.study.dto.response.StudyMemberListResponseDto;
-import com.foureyes.moai.backend.domain.study.dto.response.StudyResponseDto;
+import com.foureyes.moai.backend.domain.study.dto.response.*;
 import com.foureyes.moai.backend.domain.study.service.StudyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -225,4 +222,21 @@ public class StudyController {
 
         return ResponseEntity.ok(requests);
     }
+
+    @Operation(
+        summary = "참여 중인 스터디 목록 조회",
+        description = "현재 로그인한 사용자가 참여 중인 모든 스터디 정보를 반환합니다.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @GetMapping("/list")
+    public ResponseEntity<List<JoinStudyListResponseDto>> getJoinedStudies(
+        @Parameter(hidden = true) @RequestHeader("Authorization") String bearerToken
+    ) {
+        String token = bearerToken.replaceFirst("^Bearer ", "").trim();
+        int userId = jwtTokenProvider.getUserId(token);
+
+        List<JoinStudyListResponseDto> studies = studyService.getJoinedStudies(userId);
+        return ResponseEntity.ok(studies);
+    }
+
 }
