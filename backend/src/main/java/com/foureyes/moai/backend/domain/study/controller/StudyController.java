@@ -11,8 +11,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,10 +28,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StudyController {
 
+    private static final Logger log = LoggerFactory.getLogger(StudyController.class);
     private final StudyService studyService;
     private final JwtTokenProvider jwtTokenProvider;
 
 
+    /**
+     * 입력: CreateStudyRequest (스터디 생성 요청 정보)
+     * 출력: StudyResponseDto (생성된 스터디 정보)
+     * 기능: 새로운 스터디를 생성하고 요청자를 관리자로 등록
+     **/
     @Operation(
         summary = "스터디 생성",
         description = "스터디 이름, 설명, 대표 이미지를 등록하여 새 스터디를 생성합니다",
@@ -38,13 +47,22 @@ public class StudyController {
     public ResponseEntity<StudyResponseDto> createStudy(
         @Parameter(hidden = true)
         @RequestHeader("Authorization") String bearerToken,
-        @ModelAttribute CreateStudyRequest request) {
+        @Valid @ModelAttribute CreateStudyRequest request) {
+        log.info("스터디 생성 API 호출: 스터디명={}", request.getName());
+        
         String token = bearerToken.replaceFirst("^Bearer ", "").trim();
         int userId = jwtTokenProvider.getUserId(token);
         StudyResponseDto response = studyService.createStudy(userId, request);
+        
+        log.info("스터디 생성 완료: studyId={}, userId={}", response.getId(), userId);
         return ResponseEntity.status(201).body(response);
     }
 
+    /**
+     * 입력: studyId (스터디 ID)
+     * 출력: String (요청 결과 메시지)
+     * 기능: 사용자가 특정 스터디에 가입 요청을 전송
+     **/
     @Operation(
         summary = "스터디 가입 요청 전송",
         description = "사용자가 특정 스터디에 가입 요청을 전송합니다",
@@ -56,13 +74,22 @@ public class StudyController {
         @RequestHeader("Authorization") String bearerToken,
         @RequestParam("study_id") int studyId
     ) throws BadRequestException {
+        log.info("스터디 가입 요청 API 호출: studyId={}", studyId);
+        
         String token = bearerToken.replaceFirst("^Bearer ", "").trim();
         int userId = jwtTokenProvider.getUserId(token);
 
         studyService.sendJoinRequest(userId, studyId);
+        
+        log.info("스터디 가입 요청 완료: userId={}, studyId={}", userId, studyId);
         return ResponseEntity.ok("OK");
     }
 
+    /**
+     * 입력: studyId (스터디 ID)
+     * 출력: List<StudyMemberListResponseDto> (스터디 멤버 목록)
+     * 기능: 유저가 참여 중인 스터디의 모든 멤버 이름과 역할을 조회
+     **/
     @Operation(
         summary = "스터디 멤버 목록 조회",
         description = "유저가 참여 중인 스터디의 모든 멤버 이름과 역할을 반환합니다.",
@@ -74,14 +101,22 @@ public class StudyController {
         @RequestHeader("Authorization") String bearerToken,
         @PathVariable("study_id") int studyId
     ) {
+        log.info("스터디 멤버 목록 조회 API 호출: studyId={}", studyId);
+        
         String token = bearerToken.replaceFirst("^Bearer ", "").trim();
         int userId = jwtTokenProvider.getUserId(token);
 
         List<StudyMemberListResponseDto> members =
             studyService.getStudyMembers(userId, studyId);
 
+        log.info("스터디 멤버 목록 조회 완료: studyId={}, memberCount={}", studyId, members.size());
         return ResponseEntity.ok(members);
     }
+    /**
+     * 입력: Authorization Header (Bearer Token)
+     * 출력: List<StudyListResponseDto> (사용자 스터디 목록)
+     * 기능: 유저가 가입 혹은 신청한 스터디 목록을 조회
+     **/
     @Operation(
         summary = "참여/승인 대기 중인 스터디 조회",
         description = "유저가 가입 혹은 신청한 스터디 목록을 반환합니다",
@@ -92,10 +127,14 @@ public class StudyController {
         @Parameter(hidden = true)
         @RequestHeader("Authorization") String bearerToken
     ) {
+        log.info("사용자 스터디 목록 조회 API 호출");
+        
         String token = bearerToken.replaceFirst("^Bearer ", "").trim();
         int userId = jwtTokenProvider.getUserId(token);
 
         List<StudyListResponseDto> studies = studyService.getUserStudies(userId);
+        
+        log.info("사용자 스터디 목록 조회 완료: userId={}, studyCount={}", userId, studies.size());
         return ResponseEntity.ok(studies);
     }
 
