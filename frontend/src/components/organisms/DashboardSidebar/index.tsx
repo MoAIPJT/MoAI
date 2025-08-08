@@ -14,6 +14,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   onItemClick,
   onStudyClick,
   onLogout,
+  onSettingsClick,
 }) => {
   const navigationItems: NavigationItem[] = [
     {
@@ -49,6 +50,8 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   const handleItemClick = (itemId: string) => {
     if (itemId === 'logout') {
       onLogout?.()
+    } else if (itemId === 'settings') {
+      onSettingsClick?.()
     } else {
       onItemClick(itemId)
     }

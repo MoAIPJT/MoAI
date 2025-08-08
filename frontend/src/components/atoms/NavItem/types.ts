@@ -8,4 +8,4 @@ export interface NavItemProps {
   isExpanded?: boolean // 스터디가 펼쳐진 상태인지 여부
   isStudy?: boolean // 스터디인지 요약본인지 구분
   onClick?: () => void // 클릭 이벤트 핸들러
-} 
+}

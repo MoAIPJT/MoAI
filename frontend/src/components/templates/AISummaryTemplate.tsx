@@ -11,6 +11,8 @@ interface AISummaryTemplateProps {
   isLoading?: boolean
   onItemClick: (itemId: string) => void
   onStudyToggle: (studyId: string) => void
+  onSettingsClick?: () => void
+  onLogout?: () => void
   children: React.ReactNode
 }
 
@@ -21,6 +23,8 @@ const AISummaryTemplate: React.FC<AISummaryTemplateProps> = ({
   isLoading = false,
   onItemClick,
   onStudyToggle,
+  onSettingsClick,
+  onLogout,
   children,
 }) => {
   const [sidebarWidth, setSidebarWidth] = useState(256)
@@ -31,32 +35,34 @@ const AISummaryTemplate: React.FC<AISummaryTemplateProps> = ({
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <div 
+      <div
         className="bg-white border-r border-gray-200 h-screen flex flex-col"
         style={{ width: `${sidebarWidth}px` }}
       >
         {/* 로고 섹션 */}
         <Logo variant="default" />
-        
+
         {/* 네비게이션 섹션 */}
-        <Sidebar 
-          activeItem={activeItem} 
+        <Sidebar
+          activeItem={activeItem}
           expandedStudies={expandedStudies}
           studiesWithSummaries={studiesWithSummaries}
           isLoading={isLoading}
-          onItemClick={onItemClick} 
+          onItemClick={onItemClick}
           onStudyToggle={onStudyToggle}
+          onSettingsClick={onSettingsClick}
+          onLogout={onLogout}
         />
       </div>
-      
+
       {/* 리사이저 */}
-      <Resizer 
+      <Resizer
         onResize={handleResize}
         minWidth={200}
         maxWidth={500}
         initialWidth={256}
       />
-      
+
       <main className="flex-1 overflow-auto">
         {children}
       </main>
@@ -64,4 +70,4 @@ const AISummaryTemplate: React.FC<AISummaryTemplateProps> = ({
   )
 }
 
-export default AISummaryTemplate 
+export default AISummaryTemplate

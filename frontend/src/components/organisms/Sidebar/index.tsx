@@ -10,6 +10,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   isLoading = false,
   onItemClick,
   onStudyToggle,
+  onSettingsClick,
+  onLogout,
 }) => {
   // 더미 데이터 (API 데이터가 없을 때 사용)
   const dummyStudyData = [
@@ -18,13 +20,13 @@ const Sidebar: React.FC<SidebarProps> = ({
       name: '싸피 알고리즘',
       image: '/src/assets/MoAI/thinking.png',
       summaries: [
-        { 
-          id: 'cats-dogs', 
+        {
+          id: 'cats-dogs',
           title: 'Cats and Dogs',
           pdfPath: '/src/assets/pdfs/cats-and-dogs.pdf'
         },
-        { 
-          id: 'i-love-duck', 
+        {
+          id: 'i-love-duck',
           title: 'I Love Duck',
           pdfPath: '/src/assets/pdfs/i-love-duck.pdf'
         },
@@ -35,13 +37,13 @@ const Sidebar: React.FC<SidebarProps> = ({
       name: '대전 맛집 탐방',
       image: '/src/assets/MoAI/traveling.png',
       summaries: [
-        { 
-          id: 'hamburger', 
+        {
+          id: 'hamburger',
           title: '햄버거 맛있겠다',
           pdfPath: '/src/assets/pdfs/hamburger.pdf'
         },
-        { 
-          id: 'omori-kalguksu', 
+        {
+          id: 'omori-kalguksu',
           title: '오모리생바지락칼국수',
           pdfPath: '/src/assets/pdfs/omori-kalguksu.pdf'
         },
@@ -67,7 +69,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   }
 
   // API 데이터가 있으면 사용, 없으면 더미 데이터 사용
-  const studyData = studiesWithSummaries.length > 0 
+  const studyData = studiesWithSummaries.length > 0
     ? convertApiDataToStudyData(studiesWithSummaries)
     : dummyStudyData
 
@@ -99,14 +101,14 @@ const Sidebar: React.FC<SidebarProps> = ({
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {studyData.map((study) => {
           const isExpanded = expandedStudies.includes(study.id)
-          
+
           return (
-            <div key={study.id} className="space-y-1">
+            <div key={study.id}>
               <NavItem
                 icon={
-                  <img 
-                    src={study.image} 
-                    alt={study.name} 
+                  <img
+                    src={study.image}
+                    alt={study.name}
                     className="w-6 h-6 object-cover rounded"
                   />
                 }
@@ -118,7 +120,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               >
                 {study.name}
               </NavItem>
-              
+
               {/* 요약본들 */}
               {isExpanded && (
                 <div className="ml-6 space-y-1">
@@ -138,8 +140,26 @@ const Sidebar: React.FC<SidebarProps> = ({
           )
         })}
       </nav>
+
+      {/* 사용자 액션 섹션 */}
+      <div className="p-4 border-t border-gray-200 space-y-1">
+        <NavItem
+          icon="👤"
+          variant="default"
+          onClick={onSettingsClick}
+        >
+          내 설정
+        </NavItem>
+        <NavItem
+          icon="🚪"
+          variant="default"
+          onClick={onLogout}
+        >
+          로그아웃
+        </NavItem>
+      </div>
     </div>
   )
 }
 
-export default Sidebar 
+export default Sidebar

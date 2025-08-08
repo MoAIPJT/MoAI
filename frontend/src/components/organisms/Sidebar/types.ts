@@ -7,4 +7,6 @@ export interface SidebarProps {
   isLoading?: boolean // 로딩 상태
   onItemClick: (itemId: string) => void // 네비게이션 아이템 클릭 핸들러
   onStudyToggle: (studyId: string) => void // 스터디 토글 핸들러
-} 
+  onSettingsClick?: () => void // 설정 클릭 핸들러
+  onLogout?: () => void // 로그아웃 핸들러
+}
