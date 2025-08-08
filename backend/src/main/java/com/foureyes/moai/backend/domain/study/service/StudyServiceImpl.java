@@ -13,6 +13,8 @@ import com.foureyes.moai.backend.domain.user.entity.User;
 import com.foureyes.moai.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.hashids.Hashids;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,22 +27,33 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class StudyServiceImpl implements StudyService {
 
+    private static final Logger log = LoggerFactory.getLogger(StudyServiceImpl.class);
+
     private final StudyGroupRepository studyGroupRepository;
     private final StudyMembershipRepository studyMembershipRepository;
     private final StorageService storageService;
     private final UserRepository userRepository;
     private final Hashids hashids;
 
+    /**
+     * 입력: int userId (사용자 ID), CreateStudyRequest request (스터디 생성 요청)
+     * 출력: StudyResponseDto (생성된 스터디 정보)
+     * 기능: 새로운 스터디 그룹을 생성하고 요청자를 관리자로 등록
+     **/
     @Override
     @Transactional
     public StudyResponseDto createStudy(int userId, CreateStudyRequest request) {
+        log.info("스터디 생성 시작: userId={}, 스터디명={}", userId, request.getName());
 
         String imageUrl = null;
         try {
             imageUrl = storageService.uploadFile(request.getImage());
+            log.info("스터디 이미지 업로드 완료: imageUrl={}", imageUrl);
         } catch (IOException e) {
+            log.error("스터디 이미지 업로드 실패: userId={}, error={}", userId, e.getMessage());
             throw new CustomException(ErrorCode.FILE_UPLOAD_FAILED);
         }
+        
         StudyGroup studyGroup = StudyGroup.builder()
             .name(request.getName())
             .description(request.getDescription())
@@ -54,39 +67,50 @@ public class StudyServiceImpl implements StudyService {
 
         String encoded = hashids.encode(saved.getId());
         saved.setHashId(encoded);
-
         studyGroupRepository.save(saved);
-
-        studyGroupRepository.save(studyGroup);
 
         StudyMembership studyMembership = StudyMembership.builder()
             .userId(userId)
-            .studyGroup(studyGroup)
+            .studyGroup(saved)
             .role(StudyMembership.Role.ADMIN)
             .status(StudyMembership.Status.APPROVED)
             .joinedAt(LocalDateTime.now())
             .build();
         studyMembershipRepository.save(studyMembership);
 
+        log.info("스터디 생성 완료: studyId={}, userId={}", saved.getId(), userId);
+
         return StudyResponseDto.builder()
-            .id(studyGroup.getId())
-            .name(studyGroup.getName())
-            .description(studyGroup.getDescription())
-            .imageUrl(studyGroup.getImageUrl())
-            .createdBy(studyGroup.getCreatedBy())
-            .createdAt(studyGroup.getCreatedAt())
+            .id(saved.getId())
+            .name(saved.getName())
+            .description(saved.getDescription())
+            .imageUrl(saved.getImageUrl())
+            .createdBy(saved.getCreatedBy())
+            .createdAt(saved.getCreatedAt())
             .build();
     }
 
+    /**
+     * 입력: int userId (사용자 ID), int studyGroupId (스터디 그룹 ID)
+     * 출력: void
+     * 기능: 사용자가 특정 스터디에 가입 요청을 전송
+     **/
     @Override
     @Transactional
     public void sendJoinRequest(int userId, int studyGroupId) {
+        log.info("스터디 가입 요청 시작: userId={}, studyGroupId={}", userId, studyGroupId);
+        
         StudyGroup group = studyGroupRepository.findById(studyGroupId)
-            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_GROUP_NOT_FOUND));
+            .orElseThrow(() -> {
+                log.warn("존재하지 않는 스터디 그룹에 가입 요청: studyGroupId={}", studyGroupId);
+                return new CustomException(ErrorCode.STUDY_GROUP_NOT_FOUND);
+            });
 
         if (studyMembershipRepository.existsByUserIdAndStudyGroup(userId, group)) {
+            log.warn("이미 가입 요청한 스터디에 중복 요청: userId={}, studyGroupId={}", userId, studyGroupId);
             throw new CustomException(ErrorCode.ALREADY_JOINED_STUDY);
         }
+        
         StudyMembership req = StudyMembership.builder()
             .userId(userId)
             .studyGroup(group)
@@ -95,17 +119,28 @@ public class StudyServiceImpl implements StudyService {
             .joinedAt(LocalDateTime.now())
             .build();
         studyMembershipRepository.save(req);
+        
+        log.info("스터디 가입 요청 완료: userId={}, studyGroupId={}", userId, studyGroupId);
     }
 
+    /**
+     * 입력: int userId (사용자 ID), int studyId (스터디 ID)
+     * 출력: List<StudyMemberListResponseDto> (스터디 멤버 목록)
+     * 기능: 스터디에 승인된 모든 멤버의 정보를 조회
+     **/
     @Override
     @Transactional(readOnly = true)
     public List<StudyMemberListResponseDto> getStudyMembers(int userId, int studyId) {
+        log.info("스터디 멤버 목록 조회 시작: userId={}, studyId={}", userId, studyId);
+        
         boolean joined = studyMembershipRepository
-            .existsByUserIdAndStudyGroup_IdAndStatus(userId,studyId,StudyMembership.Status.APPROVED);
-        if (!joined){
+            .existsByUserIdAndStudyGroup_IdAndStatus(userId, studyId, StudyMembership.Status.APPROVED);
+        if (!joined) {
+            log.warn("스터디 멤버가 아닌 사용자의 멤버 목록 조회 시도: userId={}, studyId={}", userId, studyId);
             throw new CustomException(ErrorCode.STUDY_NOT_MEMBER);
         }
-        return studyMembershipRepository
+        
+        List<StudyMemberListResponseDto> members = studyMembershipRepository
             .findAllByStudyGroup_IdAndStatus(studyId, StudyMembership.Status.APPROVED)
             .stream()
             .map(membership -> {
@@ -118,17 +153,27 @@ public class StudyServiceImpl implements StudyService {
                     .build();
             })
             .collect(Collectors.toList());
+            
+        log.info("스터디 멤버 목록 조회 완료: studyId={}, memberCount={}", studyId, members.size());
+        return members;
     }
 
+    /**
+     * 입력: int userId (사용자 ID)
+     * 출력: List<StudyListResponseDto> (사용자 스터디 목록)
+     * 기능: 사용자가 가입 신청했거나 승인된 모든 스터디 목록을 조회
+     **/
     @Override
     @Transactional(readOnly = true)
     public List<StudyListResponseDto> getUserStudies(int userId) {
+        log.info("사용자 스터디 목록 조회 시작: userId={}", userId);
+        
         List<StudyMembership.Status> statuses = List.of(
             StudyMembership.Status.PENDING,
             StudyMembership.Status.APPROVED
         );
 
-        return studyMembershipRepository
+        List<StudyListResponseDto> studies = studyMembershipRepository
             .findAllByUserIdAndStatusIn(userId, statuses)
             .stream()
             .map(m -> StudyListResponseDto.builder()
@@ -144,140 +189,245 @@ public class StudyServiceImpl implements StudyService {
                 .hashId(m.getStudyGroup().getHashId())
                 .build())
             .collect(Collectors.toList());
+            
+        log.info("사용자 스터디 목록 조회 완료: userId={}, studyCount={}", userId, studies.size());
+        return studies;
     }
 
+    /**
+     * 입력: int userId (사용자 ID), int studyId (스터디 ID)
+     * 출력: void
+     * 기능: 사용자가 스터디에서 탈퇴
+     **/
     @Override
     @Transactional
     public void leaveStudy(int userId, int studyId) {
+        log.info("스터디 탈퇴 시작: userId={}, studyId={}", userId, studyId);
+        
         StudyMembership membership = studyMembershipRepository
             .findByUserIdAndStudyGroup_IdAndStatus(
                 userId, studyId, StudyMembership.Status.APPROVED)
-            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_NOT_MEMBER));
+            .orElseThrow(() -> {
+                log.warn("스터디 멤버가 아닌 사용자의 탈퇴 시도: userId={}, studyId={}", userId, studyId);
+                return new CustomException(ErrorCode.STUDY_NOT_MEMBER);
+            });
+            
         membership.setStatus(StudyMembership.Status.LEFT);
         studyMembershipRepository.save(membership);
+        
+        log.info("스터디 탈퇴 완료: userId={}, studyId={}", userId, studyId);
     }
 
+    /**
+     * 입력: int adminUserId (관리자 ID), int studyId (스터디 ID), int targetUserId (대상 사용자 ID)
+     * 출력: void
+     * 기능: 관리자가 스터디 멤버를 강제 탈퇴시킴
+     **/
     @Override
     @Transactional
     public void deleteMember(int adminUserId, int studyId, int targetUserId) {
+        log.info("스터디 멤버 강제 탈퇴 시작: adminUserId={}, studyId={}, targetUserId={}", 
+                adminUserId, studyId, targetUserId);
+        
         StudyMembership adminMember = studyMembershipRepository
             .findByUserIdAndStudyGroup_IdAndStatus(
                 adminUserId, studyId, StudyMembership.Status.APPROVED)
-            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_NOT_MEMBER));
+            .orElseThrow(() -> {
+                log.warn("관리자가 아닌 사용자의 멤버 삭제 시도: adminUserId={}, studyId={}", adminUserId, studyId);
+                return new CustomException(ErrorCode.STUDY_NOT_MEMBER);
+            });
 
         if (adminMember.getRole() != StudyMembership.Role.ADMIN) {
+            log.warn("관리자 권한 없는 사용자의 멤버 삭제 시도: adminUserId={}, studyId={}", adminUserId, studyId);
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
+        
         StudyMembership targetMember = studyMembershipRepository
             .findByUserIdAndStudyGroup_IdAndStatus(
                 targetUserId, studyId, StudyMembership.Status.APPROVED)
-            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_MEMBERSHIP_NOT_FOUND));
+            .orElseThrow(() -> {
+                log.warn("존재하지 않는 멤버 삭제 시도: targetUserId={}, studyId={}", targetUserId, studyId);
+                return new CustomException(ErrorCode.STUDY_MEMBERSHIP_NOT_FOUND);
+            });
 
         targetMember.setStatus(StudyMembership.Status.LEFT);
         studyMembershipRepository.save(targetMember);
+        
+        log.info("스터디 멤버 강제 탈퇴 완료: adminUserId={}, studyId={}, targetUserId={}", 
+                adminUserId, studyId, targetUserId);
     }
 
+    /**
+     * 입력: int adminUserId (관리자 ID), int studyId (스터디 ID), int targetUserId (대상 사용자 ID), String newRole (새 역할)
+     * 출력: void
+     * 기능: 관리자가 스터디 멤버의 역할을 변경
+     **/
     @Override
     @Transactional
     public void changeMemberRole(int adminUserId, int studyId, int targetUserId, String newRole) {
+        log.info("스터디 멤버 역할 변경 시작: adminUserId={}, studyId={}, targetUserId={}, newRole={}", 
+                adminUserId, studyId, targetUserId, newRole);
+        
         StudyMembership adminMembership = studyMembershipRepository
             .findByUserIdAndStudyGroup_IdAndStatus(
                 adminUserId, studyId, StudyMembership.Status.APPROVED)
-            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_NOT_MEMBER));
+            .orElseThrow(() -> {
+                log.warn("관리자가 아닌 사용자의 역할 변경 시도: adminUserId={}, studyId={}", adminUserId, studyId);
+                return new CustomException(ErrorCode.STUDY_NOT_MEMBER);
+            });
 
         if (adminMembership.getRole() != StudyMembership.Role.ADMIN) {
+            log.warn("관리자 권한 없는 사용자의 역할 변경 시도: adminUserId={}, studyId={}", adminUserId, studyId);
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
 
-        //변경 대상 멤버 조회 (APPROVED 상태)
+        // 변경 대상 멤버 조회 (APPROVED 상태)
         StudyMembership targetMembership = studyMembershipRepository
             .findByUserIdAndStudyGroup_IdAndStatus(
                 targetUserId, studyId, StudyMembership.Status.APPROVED)
-            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_MEMBERSHIP_NOT_FOUND));
+            .orElseThrow(() -> {
+                log.warn("존재하지 않는 멤버의 역할 변경 시도: targetUserId={}, studyId={}", targetUserId, studyId);
+                return new CustomException(ErrorCode.STUDY_MEMBERSHIP_NOT_FOUND);
+            });
 
-        //새로운 역할 enum 변환
+        // 새로운 역할 enum 변환
         StudyMembership.Role roleEnum;
         try {
             roleEnum = StudyMembership.Role.valueOf(newRole);
         } catch (IllegalArgumentException e) {
+            log.warn("잘못된 역할로 변경 시도: newRole={}, studyId={}", newRole, studyId);
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
 
-        //만약 새 역할이 ADMIN 이면, 기존 ADMIN → MEMBER 로 강등
+        // 만약 새 역할이 ADMIN 이면, 기존 ADMIN → MEMBER 로 강등
         if (roleEnum == StudyMembership.Role.ADMIN) {
             adminMembership.setRole(StudyMembership.Role.MEMBER);
             studyMembershipRepository.save(adminMembership);
+            log.info("기존 관리자 강등: oldAdminUserId={}, studyId={}", adminUserId, studyId);
         }
 
-        //대상 멤버 역할 변경 및 저장
+        // 대상 멤버 역할 변경 및 저장
         targetMembership.setRole(roleEnum);
         studyMembershipRepository.save(targetMembership);
+        
+        log.info("스터디 멤버 역할 변경 완료: adminUserId={}, studyId={}, targetUserId={}, newRole={}", 
+                adminUserId, studyId, targetUserId, newRole);
     }
 
+    /**
+     * 입력: int adminUserId (관리자 ID), int studyId (스터디 ID), int targetUserId (대상 사용자 ID)
+     * 출력: void
+     * 기능: 관리자가 스터디 가입 요청을 거절
+     **/
     @Override
     @Transactional
     public void rejectJoinRequest(int adminUserId, int studyId, int targetUserId) {
+        log.info("스터디 가입 요청 거절 시작: adminUserId={}, studyId={}, targetUserId={}", 
+                adminUserId, studyId, targetUserId);
+        
         StudyMembership adminMembership = studyMembershipRepository
             .findByUserIdAndStudyGroup_IdAndStatus(
                 adminUserId, studyId, StudyMembership.Status.APPROVED)
-            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_NOT_MEMBER));
+            .orElseThrow(() -> {
+                log.warn("관리자가 아닌 사용자의 가입 요청 거절 시도: adminUserId={}, studyId={}", adminUserId, studyId);
+                return new CustomException(ErrorCode.STUDY_NOT_MEMBER);
+            });
 
         if (adminMembership.getRole() != StudyMembership.Role.ADMIN) {
+            log.warn("관리자 권한 없는 사용자의 가입 요청 거절 시도: adminUserId={}, studyId={}", adminUserId, studyId);
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
 
-        //거절 대상이 PENDING 상태인지 조회
+        // 거절 대상이 PENDING 상태인지 조회
         StudyMembership target = studyMembershipRepository
             .findByUserIdAndStudyGroup_IdAndStatus(
                 targetUserId, studyId, StudyMembership.Status.PENDING)
-            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_MEMBERSHIP_NOT_FOUND));
+            .orElseThrow(() -> {
+                log.warn("대기 중이지 않은 사용자의 가입 요청 거절 시도: targetUserId={}, studyId={}", targetUserId, studyId);
+                return new CustomException(ErrorCode.STUDY_MEMBERSHIP_NOT_FOUND);
+            });
 
-        //상태를 REJECTED로 변경
+        // 상태를 REJECTED로 변경
         target.setStatus(StudyMembership.Status.REJECTED);
         studyMembershipRepository.save(target);
+        
+        log.info("스터디 가입 요청 거절 완료: adminUserId={}, studyId={}, targetUserId={}", 
+                adminUserId, studyId, targetUserId);
     }
 
+    /**
+     * 입력: int adminUserId (관리자 ID), int studyId (스터디 ID), int targetUserId (대상 사용자 ID), String newRole (새 역할)
+     * 출력: void
+     * 기능: 관리자가 스터디 가입 요청을 승인하고 역할을 부여
+     **/
     @Override
     @Transactional
     public void acceptJoinRequest(int adminUserId, int studyId, int targetUserId, String newRole) {
+        log.info("스터디 가입 요청 승인 시작: adminUserId={}, studyId={}, targetUserId={}, newRole={}", 
+                adminUserId, studyId, targetUserId, newRole);
+        
         StudyMembership admin = studyMembershipRepository
             .findByUserIdAndStudyGroup_IdAndStatus(
                 adminUserId, studyId, StudyMembership.Status.APPROVED)
-            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_NOT_MEMBER));
+            .orElseThrow(() -> {
+                log.warn("관리자가 아닌 사용자의 가입 요청 승인 시도: adminUserId={}, studyId={}", adminUserId, studyId);
+                return new CustomException(ErrorCode.STUDY_NOT_MEMBER);
+            });
+            
         if (admin.getRole() != StudyMembership.Role.ADMIN) {
+            log.warn("관리자 권한 없는 사용자의 가입 요청 승인 시도: adminUserId={}, studyId={}", adminUserId, studyId);
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
 
         StudyMembership target = studyMembershipRepository
             .findByUserIdAndStudyGroup_IdAndStatus(
                 targetUserId, studyId, StudyMembership.Status.PENDING)
-            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_MEMBERSHIP_NOT_FOUND));
+            .orElseThrow(() -> {
+                log.warn("대기 중이지 않은 사용자의 가입 요청 승인 시도: targetUserId={}, studyId={}", targetUserId, studyId);
+                return new CustomException(ErrorCode.STUDY_MEMBERSHIP_NOT_FOUND);
+            });
 
         StudyMembership.Role roleEnum;
         try {
             roleEnum = StudyMembership.Role.valueOf(newRole);
         } catch (IllegalArgumentException e) {
+            log.warn("잘못된 역할로 가입 승인 시도: newRole={}, studyId={}", newRole, studyId);
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
 
         target.setStatus(StudyMembership.Status.APPROVED);
         target.setRole(roleEnum);
         studyMembershipRepository.save(target);
+        
+        log.info("스터디 가입 요청 승인 완료: adminUserId={}, studyId={}, targetUserId={}, newRole={}", 
+                adminUserId, studyId, targetUserId, newRole);
     }
 
+    /**
+     * 입력: int adminUserId (관리자 ID), int studyId (스터디 ID)
+     * 출력: List<JoinRequestResponseDto> (대기 중인 가입 요청 목록)
+     * 기능: 관리자가 스터디의 대기 중인 가입 요청 목록을 조회
+     **/
     @Override
     @Transactional(readOnly = true)
     public List<JoinRequestResponseDto> getPendingJoinRequests(int adminUserId, int studyId) {
+        log.info("대기 중인 가입 요청 목록 조회 시작: adminUserId={}, studyId={}", adminUserId, studyId);
+        
         StudyMembership admin = studyMembershipRepository
             .findByUserIdAndStudyGroup_IdAndStatus(
                 adminUserId, studyId, StudyMembership.Status.APPROVED)
-            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_NOT_MEMBER));
+            .orElseThrow(() -> {
+                log.warn("관리자가 아닌 사용자의 가입 요청 목록 조회 시도: adminUserId={}, studyId={}", adminUserId, studyId);
+                return new CustomException(ErrorCode.STUDY_NOT_MEMBER);
+            });
+            
         if (admin.getRole() != StudyMembership.Role.ADMIN) {
+            log.warn("관리자 권한 없는 사용자의 가입 요청 목록 조회 시도: adminUserId={}, studyId={}", adminUserId, studyId);
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
 
-        //PENDING 요청 조회
-        return studyMembershipRepository
+        // PENDING 요청 조회
+        List<JoinRequestResponseDto> pendingRequests = studyMembershipRepository
             .findAllByStudyGroup_IdAndStatus(studyId, StudyMembership.Status.PENDING)
             .stream()
             .map(m -> new JoinRequestResponseDto(
@@ -285,6 +435,11 @@ public class StudyServiceImpl implements StudyService {
                 m.getStatus().name()
             ))
             .collect(Collectors.toList());
+            
+        log.info("대기 중인 가입 요청 목록 조회 완료: adminUserId={}, studyId={}, requestCount={}", 
+                adminUserId, studyId, pendingRequests.size());
+        
+        return pendingRequests;
     }
 
     @Override

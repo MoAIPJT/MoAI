@@ -35,5 +35,4 @@ build/
 ### SSL Certificate ###
 nginx/certs/*
 
-
 .env
