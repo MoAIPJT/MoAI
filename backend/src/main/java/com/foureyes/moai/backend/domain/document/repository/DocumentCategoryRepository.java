@@ -1,0 +1,21 @@
+package com.foureyes.moai.backend.domain.document.repository;
+
+import com.foureyes.moai.backend.domain.document.entity.DocumentCategory;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface DocumentCategoryRepository extends JpaRepository<DocumentCategory, Integer> {
+
+    // 문서에 연결된 모든 카테고리
+    List<DocumentCategory> findByDocument_Id(int documentId);
+
+    // 카테고리에 연결된 모든 문서
+    List<DocumentCategory> findByCategory_Id(int categoryId);
+
+    // 중복 매핑 존재 여부 체크
+    boolean existsByDocument_IdAndCategory_Id(int documentId, int categoryId);
+
+    // 문서 + 카테고리 삭제
+    void deleteByDocument_IdAndCategory_Id(int documentId, int categoryId);
+}
