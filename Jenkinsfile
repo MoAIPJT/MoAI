@@ -27,9 +27,9 @@ pipeline {
                     // background (--detached).
                     // dockerCompose(file: 'backend/compose.yaml', up: true, build: true, detached: true)
                     echo "Stopping existing backend services..."
-                    sh "docker-compose -f backend/compose.yaml down -v"
+                    sh "docker compose -f backend/compose.yaml down -v"
                     echo "Starting backend services..."
-                    sh "docker-compose -f backend/compose.yaml up -d --build"
+                    sh "docker compose -f backend/compose.yaml up -d --build"
                     echo 'SUCESS: Backend Deployment'
                  
                 }
@@ -44,9 +44,9 @@ pipeline {
                     echo "Deploying frontend services..."
                     // dockerCompose(file: 'frontend/compose.yml', up: true, build: true, detached: true)
                     echo "Stopping existing frontend services..."
-                    sh "docker-compose -f frontend/compose.yaml down -v"
+                    sh "docker compose -f frontend/compose.yml down -v"
                     echo "Starting frontend services..."
-                    sh "docker-compose -f frontend/compose.yaml up -d --build"
+                    sh "docker compose -f frontend/compose.yml up -d --build"
                     echo 'SUCESS: Frontend Deployment'
                 }
             }
