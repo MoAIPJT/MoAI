@@ -8,9 +8,10 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     hmr: {
-      clientPort: 5173,
+      clientPort: 443,
     },
     allowedHosts: ['i13b201.p.ssafy.io'],
+    port: 5173,
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
