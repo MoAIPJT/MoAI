@@ -47,6 +47,7 @@ public class WebSecurityConfig {
                     "/users/login",
                     "/users/hello",
                     "/users/oauth/**",
+                    "/schedule/**",
                     "/swagger-ui.html",
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
@@ -79,4 +80,3 @@ public class WebSecurityConfig {
 
 
 }
- 

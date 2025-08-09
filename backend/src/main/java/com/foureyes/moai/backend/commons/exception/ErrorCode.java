@@ -10,6 +10,7 @@ public enum ErrorCode {
     INVALID_PASSWORD("비밀번호가 올바르지 않습니다.", HttpStatus.BAD_REQUEST),
     ALREADY_JOINED_STUDY("이미 가입 요청중입니다.", HttpStatus.BAD_REQUEST),
     FILE_UPLOAD_FAILED("파일 업로드에 실패했습니다.", HttpStatus.BAD_REQUEST),
+    INVALID_DATETIME("시작 시간이 종료 시간보다 늦을 수 없습니다.", HttpStatus.BAD_REQUEST),
     STUDY_NOT_MEMBER("해당 스터디에 참여 중이지 않습니다.",    HttpStatus.BAD_REQUEST),
 
 
