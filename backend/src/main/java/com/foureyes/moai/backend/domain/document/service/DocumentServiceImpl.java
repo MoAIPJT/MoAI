@@ -1,5 +1,7 @@
 package com.foureyes.moai.backend.domain.document.service;
 
+import com.foureyes.moai.backend.commons.exception.CustomException;
+import com.foureyes.moai.backend.commons.exception.ErrorCode;
 import com.foureyes.moai.backend.commons.util.StorageService;
 import com.foureyes.moai.backend.domain.document.dto.request.CreateDocumentRequest;
 import com.foureyes.moai.backend.domain.document.dto.response.DocumentResponseDto;
@@ -10,6 +12,8 @@ import com.foureyes.moai.backend.domain.document.repository.CategoryRepository;
 import com.foureyes.moai.backend.domain.document.repository.DocumentCategoryRepository;
 import com.foureyes.moai.backend.domain.document.repository.DocumentRepository;
 import com.foureyes.moai.backend.domain.study.entity.StudyGroup;
+import com.foureyes.moai.backend.domain.study.entity.StudyMembership;
+import com.foureyes.moai.backend.domain.study.repository.StudyMembershipRepository;
 import com.foureyes.moai.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,7 +34,7 @@ public class DocumentServiceImpl implements DocumentService{
     private final DocumentCategoryRepository documentCategoryRepository;
     private final UserRepository userRepository;
     private final StorageService storageService;
-
+    private final StudyMembershipRepository studyMembershipRepository;
     @Override
     @Transactional
     public DocumentResponseDto uploadDocument(int uploaderId, CreateDocumentRequest req) throws IOException, IOException {
@@ -81,5 +85,18 @@ public class DocumentServiceImpl implements DocumentService{
             .categoryIds(List.of(category.getId()))
             .createdAt(LocalDateTime.now()) // DB default 사용하는 경우 간단 대체
             .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getDocumentKeyIfAllowed(int userId, int documentId) {
+        Document doc = documentRepository.findById(documentId)
+            .orElseThrow(() -> new CustomException(ErrorCode.DOCUMENT_NOT_FOUND));
+
+        boolean hasAccess = studyMembershipRepository.existsByUserIdAndStudyGroup_IdAndStatus(
+            userId, doc.getStudyGroup().getId(), StudyMembership.Status.APPROVED);
+
+        if (!hasAccess) throw new CustomException(ErrorCode.FORBIDDEN_DOCUMENT_ACCESS);
+        return doc.getFileKey(); // DB 컬럼 file_key
     }
 }

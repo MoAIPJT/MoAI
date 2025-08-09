@@ -7,4 +7,5 @@ import java.io.IOException;
 
 public interface DocumentService {
     DocumentResponseDto uploadDocument(int uploaderId, CreateDocumentRequest req) throws IOException;
+    String getDocumentKeyIfAllowed(int userId, int documentId);
 }
