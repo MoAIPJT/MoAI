@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -29,6 +28,14 @@ public class StudyController {
     private static final Logger log = LoggerFactory.getLogger(StudyController.class);
     private final StudyService studyService;
     private final JwtTokenProvider jwtTokenProvider;
+
+    /**
+     * Bearer 토큰에서 사용자 ID를 추출하는 공통 메서드
+     */
+    private int extractUserIdFromToken(String bearerToken) {
+        String token = bearerToken.replaceFirst("^Bearer ", "").trim();
+        return jwtTokenProvider.getUserId(token);
+    }
 
 
     /**
@@ -48,8 +55,7 @@ public class StudyController {
         @Valid @ModelAttribute CreateStudyRequest request) {
         log.info("스터디 생성 API 호출: 스터디명={}", request.getName());
 
-        String token = bearerToken.replaceFirst("^Bearer ", "").trim();
-        int userId = jwtTokenProvider.getUserId(token);
+        int userId = extractUserIdFromToken(bearerToken);
         StudyResponseDto response = studyService.createStudy(userId, request);
 
         log.info("스터디 생성 완료: studyId={}, userId={}", response.getId(), userId);
@@ -71,12 +77,10 @@ public class StudyController {
         @Parameter(hidden = true)
         @RequestHeader("Authorization") String bearerToken,
         @RequestParam("study_id") int studyId
-    ) throws BadRequestException {
+    ) {
         log.info("스터디 가입 요청 API 호출: studyId={}", studyId);
 
-        String token = bearerToken.replaceFirst("^Bearer ", "").trim();
-        int userId = jwtTokenProvider.getUserId(token);
-
+        int userId = extractUserIdFromToken(bearerToken);
         studyService.sendJoinRequest(userId, studyId);
 
         log.info("스터디 가입 요청 완료: userId={}, studyId={}", userId, studyId);
@@ -101,9 +105,7 @@ public class StudyController {
     ) {
         log.info("스터디 멤버 목록 조회 API 호출: studyId={}", studyId);
 
-        String token = bearerToken.replaceFirst("^Bearer ", "").trim();
-        int userId = jwtTokenProvider.getUserId(token);
-
+        int userId = extractUserIdFromToken(bearerToken);
         List<StudyMemberListResponseDto> members =
             studyService.getStudyMembers(userId, studyId);
 
@@ -127,9 +129,7 @@ public class StudyController {
     ) {
         log.info("사용자 스터디 목록 조회 API 호출");
 
-        String token = bearerToken.replaceFirst("^Bearer ", "").trim();
-        int userId = jwtTokenProvider.getUserId(token);
-
+        int userId = extractUserIdFromToken(bearerToken);
         List<StudyListResponseDto> studies = studyService.getUserStudies(userId);
 
         log.info("사용자 스터디 목록 조회 완료: userId={}, studyCount={}", userId, studies.size());
@@ -147,8 +147,7 @@ public class StudyController {
         @RequestHeader("Authorization") String bearerToken,
         @RequestBody StudyIdRequestDto request
     ) {
-        String token = bearerToken.replaceFirst("^Bearer ", "").trim();
-        int userId   = jwtTokenProvider.getUserId(token);
+        int userId = extractUserIdFromToken(bearerToken);
         studyService.leaveStudy(userId, request.getStudyGroupId());
         return ResponseEntity.ok().build();
     }
@@ -163,8 +162,7 @@ public class StudyController {
         @RequestHeader("Authorization") String bearerToken,
         @RequestBody StudyMemberDeleteRequestDto request
     ) {
-        String token     = bearerToken.replaceFirst("^Bearer ", "").trim();
-        int adminUserId  = jwtTokenProvider.getUserId(token);
+        int adminUserId = extractUserIdFromToken(bearerToken);
 
         studyService.deleteMember(
             adminUserId,
@@ -186,11 +184,10 @@ public class StudyController {
 
         @RequestBody StudyMemberRoleChangeRequestDto request
     ) {
-        String token        = bearerToken.replaceFirst("^Bearer ", "").trim();
-        int adminUserId     = jwtTokenProvider.getUserId(token);
-        int studyId         = request.getStudyId();
-        int targetUserId    = request.getUserId();
-        String newRole      = request.getRole();
+        int adminUserId = extractUserIdFromToken(bearerToken);
+        int studyId = request.getStudyId();
+        int targetUserId = request.getUserId();
+        String newRole = request.getRole();
 
         studyService.changeMemberRole(adminUserId, studyId, targetUserId, newRole);
         return ResponseEntity.ok().build();
@@ -206,13 +203,12 @@ public class StudyController {
         @RequestHeader("Authorization") String bearerToken,
         @RequestBody StudyMemberRejectRequestDto request
     ) {
-        String token     = bearerToken.replaceFirst("^Bearer ", "").trim();
-        int adminUserId  = jwtTokenProvider.getUserId(token);
+        int adminUserId = extractUserIdFromToken(bearerToken);
 
         studyService.rejectJoinRequest(
             adminUserId,
             request.getStudyId(),
-            request.getUserID()
+            request.getUserId()
         );
 
         return ResponseEntity.ok().build();
@@ -229,8 +225,7 @@ public class StudyController {
 
         @RequestBody AcceptJoinRequestDto request
     ) {
-        String token       = bearerToken.replaceFirst("^Bearer ", "").trim();
-        int adminUserId    = jwtTokenProvider.getUserId(token);
+        int adminUserId = extractUserIdFromToken(bearerToken);
 
         studyService.acceptJoinRequest(
             adminUserId,
@@ -254,8 +249,7 @@ public class StudyController {
         @Parameter(description = "스터디 ID", example = "101")
         @RequestParam("studyId") int studyId
     ) {
-        String token      = bearerToken.replaceFirst("^Bearer ", "").trim();
-        int adminUserId   = jwtTokenProvider.getUserId(token);
+        int adminUserId = extractUserIdFromToken(bearerToken);
 
         List<JoinRequestResponseDto> requests =
             studyService.getPendingJoinRequests(adminUserId, studyId);
@@ -272,8 +266,7 @@ public class StudyController {
     public ResponseEntity<List<JoinStudyListResponseDto>> getJoinedStudies(
         @Parameter(hidden = true) @RequestHeader("Authorization") String bearerToken
     ) {
-        String token = bearerToken.replaceFirst("^Bearer ", "").trim();
-        int userId = jwtTokenProvider.getUserId(token);
+        int userId = extractUserIdFromToken(bearerToken);
 
         List<JoinStudyListResponseDto> studies = studyService.getJoinedStudies(userId);
         return ResponseEntity.ok(studies);
@@ -292,8 +285,7 @@ public class StudyController {
         @Parameter(description = "라우팅/공유용 해시 ID", example = "jR4kd8Lz", required = true, schema = @Schema(type = "string"))
         @RequestParam("hashId") String hashId
     ) {
-        String token = bearerToken.replaceFirst("^Bearer ", "").trim();
-        int userId = jwtTokenProvider.getUserId(token);
+        int userId = extractUserIdFromToken(bearerToken);
 
         StudyDetailResponseDto dto = studyService.getStudyDetailByHashId(userId, hashId);
         return ResponseEntity.ok(dto);
@@ -312,8 +304,7 @@ public class StudyController {
         @Parameter(description = "스터디 ID", example = "101", required = true)
         @RequestParam("studyId") int studyId
     ) {
-        String token = bearerToken.replaceFirst("^Bearer ", "").trim();
-        int userId = jwtTokenProvider.getUserId(token);
+        int userId = extractUserIdFromToken(bearerToken);
 
         StudyNoticeResponseDto dto = studyService.getStudyNotice(userId, studyId);
         return ResponseEntity.ok(dto);
@@ -330,9 +321,7 @@ public class StudyController {
         @RequestHeader("Authorization") String bearerToken,
         @Valid @RequestBody UpdateStudyNoticeRequestDto request
     ) {
-        String token = bearerToken.replaceFirst("^Bearer ", "").trim();
-        int userId = jwtTokenProvider.getUserId(token);
-
+        int userId = extractUserIdFromToken(bearerToken);
 
         studyService.updateStudyNotice(userId, request.getStudyId(), request.getNotice());
 
