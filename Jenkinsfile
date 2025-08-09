@@ -25,13 +25,19 @@ pipeline {
                     // It looks for 'backend/compose.yaml', builds the images
                     // if they are new (--build), and starts the services in the
                     // background (--detached).
-                    // dockerCompose(file: 'backend/compose.yaml', up: true, build: true, detached: true)
-                    echo "Stopping existing backend services..."
-                    sh "docker compose -f backend/compose.yaml down -v"
-                    echo "Starting backend services..."
-                    sh "docker compose -f backend/compose.yaml up -d --build"
-                    echo 'SUCESS: Backend Deployment'
-                 
+                    withCredentials([file(credentialsId: 'backend-env-file', variable: 'BACKEND_ENV_PATH')]){
+                       try {
+                            echo "Stopping existing backend services..."
+                            sh "docker compose --env-file ${BACKEND_ENV_PATH} -f backend/compose.yaml down -v"
+                            echo "Starting backend services..."
+                            sh "docker compose --env-file ${BACKEND_ENV_PATH} -f backend/compose.yaml up -d --build"
+                            echo 'SUCESS: Backend Deployment'
+                       } catch (e) {
+                           echo "Error deploying backend services: ${e.getMessage()}"
+                           // Optionally, you can fail the build here if needed
+                           error "Backend deployment failed"
+                       } // dockerCompose(file: 'backend/compose.yaml', up: true, build: true, detached: true)
+                    }
                 }
             }
         }
@@ -43,11 +49,19 @@ pipeline {
                 script {
                     echo "Deploying frontend services..."
                     // dockerCompose(file: 'frontend/compose.yml', up: true, build: true, detached: true)
-                    echo "Stopping existing frontend services..."
-                    sh "docker compose -f frontend/compose.yml down -v"
-                    echo "Starting frontend services..."
-                    sh "docker compose -f frontend/compose.yml up -d --build"
-                    echo 'SUCESS: Frontend Deployment'
+                    withCredentials([file(credentialsId: 'frontend-env-file', variable: 'FRONTEND_ENV_PATH')]){
+                        try {
+                            echo "Stopping existing frontend services..."
+                            sh "docker compose --env-file ${FRONTEND_ENV_PATH} -f frontend/compose.yml down -v"
+                            echo "Starting frontend services..."
+                            sh "docker compose --env-file ${FRONTEND_ENV_PATH} -f frontend/compose.yml up -d --build"
+                            echo 'SUCESS: Frontend Deployment'
+                        } catch (e) {
+                            echo "Error deploying frontend services: ${e.getMessage()}"
+                            // Optionally, you can fail the build here if needed
+                            error "Frontend deployment failed"
+                        } 
+                    }
                 }
             }
         }
