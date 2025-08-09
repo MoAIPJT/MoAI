@@ -6,11 +6,7 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 export default defineConfig({
   plugins: [react(), tsconfigPaths()],
   server: {
-    host: '0.0.0.0',
-    hmr: {
-	    clientPort: 443,
-    },
-    allowedHosts: ['i13b201.p.ssafy.io'],
+    host: true,
     port: 5173,
     proxy: {
       '/api': {
