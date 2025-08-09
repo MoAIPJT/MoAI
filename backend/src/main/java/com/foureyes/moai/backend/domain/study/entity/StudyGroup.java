@@ -10,7 +10,6 @@ import java.util.List;
 @Entity
 @Table(name = "study_groups")
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -47,4 +46,14 @@ public class StudyGroup {
     @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<StudyMembership> memberships = new ArrayList<>();
+
+    // HashId 설정을 위한 메서드
+    public void setHashId(String hashId) {
+        this.hashId = hashId;
+    }
+
+    // 공지사항 업데이트를 위한 메서드
+    public void setNotice(String notice) {
+        this.notice = notice;
+    }
 }
