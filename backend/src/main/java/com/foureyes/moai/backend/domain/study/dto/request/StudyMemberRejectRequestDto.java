@@ -12,8 +12,8 @@ public class StudyMemberRejectRequestDto  {
     @Schema(description = "스터디 ID", example = "101", required = true)
     private int studyId;
 
-    @Schema(description = "거절할 userID", example = "12", required = true)
-    private int userID;
+    @Schema(description = "거절할 userId", example = "12", required = true)
+    private int userId;
 
 
 }

@@ -27,4 +27,11 @@ public class StudyListResponseDto {
 
     @Schema(description = "가입상태", example = "PENDING")
     private final String status;  // PENDING 또는 APPROVED
+
+    @Schema(description = "스터디 아이디", example = "101")
+    private final int studyId;
+
+    @Schema(description = "스터디 해쉬 아이디", example = "ex531a")
+    private final String hashId;
+
 }
