@@ -11,6 +11,7 @@ pipeline {
                 // 'scm' is a special variable that refers to the Source Code Management
                 // configuration you set up in the Jenkins job (your GitLab repo).
                 checkout scm
+                echo 'SUCESS: Checkout'
             }
         }
 
@@ -25,6 +26,8 @@ pipeline {
                     // if they are new (--build), and starts the services in the
                     // background (--detached).
                     dockerCompose(file: 'backend/compose.yaml', up: true, build: true, detached: true)
+                    echo 'SUCESS: Backend Deployment'
+                 
                 }
             }
         }
@@ -36,6 +39,7 @@ pipeline {
                 script {
                     echo "Deploying frontend services..."
                     dockerCompose(file: 'frontend/compose.yml', up: true, build: true, detached: true)
+                    echo 'SUCESS: Frontend Deployment'
                 }
             }
         }
@@ -48,6 +52,7 @@ pipeline {
                 echo 'Cleaning up old Docker images...'
                 // The 'sh' step executes a shell command on the Jenkins agent.
                 sh 'docker image prune -f'
+                echo 'SUCESS: Docker CleanUp'
             }
         }
 	}
