@@ -195,4 +195,27 @@ public class DocumentServiceImpl implements DocumentService{
             ))
             .toList();
     }
+
+    @Override
+    @Transactional
+    public void deleteDocument(int userId, int documentId) {
+        Document doc = documentRepository.findById(documentId)
+            .orElseThrow(() -> new CustomException(ErrorCode.DOCUMENT_NOT_FOUND));
+
+        // 권한: 업로더 본인 또는 스터디 관리자(예시)
+        boolean isUploader = doc.getUploader().getId() == userId;
+        boolean isAdmin = studyMembershipRepository.existsByUserIdAndStudyGroup_IdAndRole(
+            userId, doc.getStudyGroup().getId(), StudyMembership.Role.ADMIN
+        );
+        if (!isUploader && !isAdmin) {
+            throw new CustomException(ErrorCode.FORBIDDEN_DOCUMENT_ACCESS);
+        }
+
+        documentCategoryRepository.deleteByDocument_Id(doc.getId());
+
+        storageService.deleteDocumentObject(doc.getFileKey());
+
+        documentRepository.delete(doc);
+    }
+
 }

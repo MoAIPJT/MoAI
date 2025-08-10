@@ -55,4 +55,6 @@ public interface StudyMembershipRepository extends JpaRepository<StudyMembership
         int id,
         StudyMembership.Status status
     );
+
+    boolean existsByUserIdAndStudyGroup_IdAndRole(int userId, int id, StudyMembership.Role role);
 }

@@ -103,5 +103,22 @@ public class DocumentController {
         List<DocumentListItemDto> result = documentService.getDocuments(userId, studyId);
         return ResponseEntity.ok(result);
     }
+
+    @Operation(
+        summary = "공부 자료 삭제",
+        description = "파일 ID에 해당하는 공부 자료를 삭제합니다.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Void> deleteDocument(
+        @Parameter(hidden = true) @RequestHeader("Authorization") String bearerToken,
+        @Parameter(description = "파일 ID", example = "123") @PathVariable int id
+    ) {
+        int userId = extractUserIdFromToken(bearerToken);
+        documentService.deleteDocument(userId, id);
+        return ResponseEntity.noContent().build();
+    }
+
+
 }
 

@@ -205,4 +205,18 @@ public class StorageService {
             studyId, now.getYear(), now.getMonthValue(), UUID.randomUUID(), ext
         );
     }
+
+    public void deleteDocumentObject(String key) {
+        if (key == null || key.isBlank()) return;
+        try {
+            s3Client.deleteObject(b -> b
+                .bucket(props.getDocsBucketName())
+                .key(key)
+            );
+            log.info("S3 object deleted: bucket={}, key={}", props.getDocsBucketName(), key);
+        } catch (Exception e) {
+            log.error("S3 object delete failed: key={}, err={}", key, e.getMessage(), e);
+            throw new CustomException(ErrorCode.FILE_DELETE_FAILED);
+        }
+    }
 }

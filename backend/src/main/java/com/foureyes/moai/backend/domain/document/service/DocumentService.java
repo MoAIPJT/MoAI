@@ -15,4 +15,6 @@ public interface DocumentService {
     String getDocumentKeyIfAllowed(int userId, int documentId);
     void updateDocument(int userId, int documentId, EditDocumentRequest req);
     List<DocumentListItemDto> getDocuments(int userId, int studyId);
+    void deleteDocument(int userId, int documentId);
+
 }
