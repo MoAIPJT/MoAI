@@ -1,44 +1,38 @@
 package com.foureyes.moai.backend.domain.ai.controller;
 
-import com.foureyes.moai.backend.domain.ai.dto.SummaryDto;
-import com.foureyes.moai.backend.domain.ai.dto.SummaryResponseDto;
+import com.foureyes.moai.backend.domain.ai.dto.request.AiCreateRequestDto;
+import com.foureyes.moai.backend.domain.ai.dto.response.AiCreateResponseDto;
 import com.foureyes.moai.backend.domain.ai.service.AiService;
-import org.springframework.http.HttpStatus;
+import io.swagger.v3.oas.annotations.Operation;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
-
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/ai")
 public class AiController {
-    private final AiService summaryService;
 
-    // 생성자를 통해 SummaryService를 주입받습니다 (의존성 주입).
-    public AiController(AiService summaryService) {
-        this.summaryService = summaryService;
-    }
+    private static final Logger log = LoggerFactory.getLogger(AiController.class);
+    private final AiService aiService;
 
-    @PostMapping("/summarize")
-    public ResponseEntity<?> summarizeRoute(@RequestParam("files") MultipartFile file) {
-        // 파일이 비어있는지 확인
-        if (file.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "No selected files"));
-        }
-
-        try {
-            // 서비스 로직 호출
-            List<SummaryDto> summaryPoints = summaryService.summarizePdf(file);
-
-            // 성공 응답 생성
-            SummaryResponseDto response = new SummaryResponseDto(file.getOriginalFilename(), summaryPoints);
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            // 그 외 모든 에러 (e.g., Gemini API 호출 실패)
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "An unexpected error occurred: " + e.getMessage()));
-        }
+    /**
+     * 입력: 클라이언트로부터 받은 AI 요약 생성 요청(AiCreateRequestDto)
+     * 출력: 생성된 AI 요약 정보(AiCreateResponseDto)
+     * 기능: AI 요약 생성을 위한 POST 요청을 처리한다.
+     */
+    @PostMapping("/create")
+    @Operation(summary = "AI 요약 생성", description = "AI 요약 생성 API 입니다.")
+    public ResponseEntity<AiCreateResponseDto> createSummary(
+        @RequestBody AiCreateRequestDto requestDto) {
+        log.info("AI 요약 생성 요청: {}", requestDto.getTitle());
+        AiCreateResponseDto responseDto = aiService.createSummary(requestDto);
+        log.info("AI 요약 생성 완료: {}", responseDto.getTitle());
+        return ResponseEntity.ok(responseDto);
     }
 }
