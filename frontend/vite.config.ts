@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import tsconfigPaths from 'vite-tsconfig-paths';
+import tsconfigPaths from 'vite-tsconfig-paths'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -8,12 +8,13 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     hmr: {
-      clientPort: 5173,
+      clientPort: 443,
     },
     allowedHosts: ['i13b201.p.ssafy.io'],
+    port: 5173,
     proxy: {
       '/api': {
-        target: 'https://localhost:7443',
+        target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path

@@ -4,11 +4,11 @@ import LoginForm from '@/components/organisms/LoginForm'
 import type { LoginFormData } from '@/components/organisms/LoginForm/types'
 
 interface LoginTemplateProps {
-  onLogin: (data: LoginFormData) => void;
-  onKakaoLogin: () => void;
-  onGoogleLogin: () => void;
-  loading: boolean;
-  error: string | null;
+  onLogin: (data: LoginFormData) => void
+  onKakaoLogin: () => void
+  onGoogleLogin: () => void
+  loading: boolean
+  error: string | null
 }
 
 const LoginTemplate: React.FC<LoginTemplateProps> = ({

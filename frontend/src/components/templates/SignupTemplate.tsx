@@ -1,14 +1,14 @@
-import React from 'react';
-import LoginIllustration from '@/components/organisms/LoginIllustration';
-import SignupForm from '@/components/organisms/SignupForm';
-import type { SignupFormData } from '@/components/organisms/SignupForm/types';
+import React from 'react'
+import LoginIllustration from '@/components/organisms/LoginIllustration'
+import SignupForm from '@/components/organisms/SignupForm'
+import type { SignupFormData } from '@/components/organisms/SignupForm/types'
 
 interface SignupTemplateProps {
-  onSignup: (data: SignupFormData) => void;
-  onKakaoSignup: () => void;
-  onGoogleSignup: () => void;
-  loading: boolean;
-  error: string | null;
+  onSignup: (data: SignupFormData) => void
+  onKakaoSignup: () => void
+  onGoogleSignup: () => void
+  loading: boolean
+  error: string | null
 }
 
 const SignupTemplate: React.FC<SignupTemplateProps> = ({
@@ -35,7 +35,7 @@ const SignupTemplate: React.FC<SignupTemplateProps> = ({
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default SignupTemplate; 
+export default SignupTemplate

@@ -1,6 +1,6 @@
-import React from 'react';
-import ResetPasswordConfirmTemplate from '@/components/templates/ResetPasswordConfirmTemplate';
+import React from 'react'
+import ResetPasswordConfirmTemplate from '@/components/templates/ResetPasswordConfirmTemplate'
 
-const ResetPasswordConfirmPage: React.FC = () => <ResetPasswordConfirmTemplate />;
+const ResetPasswordConfirmPage: React.FC = () => <ResetPasswordConfirmTemplate />
 
-export default ResetPasswordConfirmPage; 
+export default ResetPasswordConfirmPage

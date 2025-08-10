@@ -1,6 +1,5 @@
 package com.foureyes.moai.backend.auth.jwt;
 
-import com.foureyes.moai.backend.auth.jwt.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

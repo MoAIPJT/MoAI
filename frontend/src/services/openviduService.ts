@@ -1,34 +1,34 @@
 // import api from './api';
 
 export interface OpenViduTokenResponse {
-  token: string;
-  sessionId: string;
+  token: string
+  sessionId: string
 }
 
 export interface OpenViduSessionResponse {
-  sessionId: string;
-  createdAt: number;
-  recording: boolean;
-  broadcasting: boolean;
-  forcedVideoCodec: string;
-  allowTranscoding: boolean;
-  mediaMode: string;
-  recordingLayout: string;
-  customSessionId: string;
+  sessionId: string
+  createdAt: number
+  recording: boolean
+  broadcasting: boolean
+  forcedVideoCodec: string
+  allowTranscoding: boolean
+  mediaMode: string
+  recordingLayout: string
+  customSessionId: string
   connections: {
-    numberOfElements: number;
-    content: any[];
-  };
+    numberOfElements: number
+    content: any[]
+  }
   recordingProperties: {
-    name: string;
-    hasAudio: boolean;
-    hasVideo: boolean;
-    outputMode: string;
-    recordingLayout: string;
-    resolution: string;
-    frameRate: number;
-    shmSize: number;
-  };
+    name: string
+    hasAudio: boolean
+    hasVideo: boolean
+    outputMode: string
+    recordingLayout: string
+    resolution: string
+    frameRate: number
+    shmSize: number
+  }
 }
 
 class OpenViduService {
@@ -78,7 +78,6 @@ class OpenViduService {
         sessionId: sessionId
       };
     } catch (error) {
-      console.error('토큰 생성 실패:', error);
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
         throw new Error('OpenVidu 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
       }
@@ -110,7 +109,6 @@ class OpenViduService {
 
       return await response.json();
     } catch (error) {
-      console.error('세션 생성 실패:', error);
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
         throw new Error('OpenVidu 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
       }
@@ -138,7 +136,6 @@ class OpenViduService {
 
       return await response.json();
     } catch (error) {
-      console.error('세션 조회 실패:', error);
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
         throw new Error('OpenVidu 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
       }
@@ -163,7 +160,6 @@ class OpenViduService {
         throw new Error(`세션 삭제 실패: ${response.status}`);
       }
     } catch (error) {
-      console.error('세션 삭제 실패:', error);
       throw new Error('세션을 삭제할 수 없습니다.');
     }
   }
@@ -186,7 +182,6 @@ class OpenViduService {
         throw new Error(`연결 제거 실패: ${response.status}`);
       }
     } catch (error) {
-      console.error('연결 제거 실패:', error);
       throw new Error('연결을 제거할 수 없습니다.');
     }
   }
@@ -210,10 +205,9 @@ class OpenViduService {
 
       return await response.json();
     } catch (error) {
-      console.error('서버 상태 확인 실패:', error);
       throw new Error('서버 상태를 확인할 수 없습니다.');
     }
   }
 }
 
-export default new OpenViduService();
+export default new OpenViduService()

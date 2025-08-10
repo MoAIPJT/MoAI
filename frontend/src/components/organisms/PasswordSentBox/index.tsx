@@ -1,10 +1,10 @@
-import React from 'react';
+import React from 'react'
 import sendEmailVideo from '@/assets/send_email.mp4'
 import type { PasswordSentBoxProps } from './types'
 
-const PasswordSentBox: React.FC<PasswordSentBoxProps> = ({ 
+const PasswordSentBox: React.FC<PasswordSentBoxProps> = ({
   message = '비밀번호 재설정 메일이 전송되었습니다.',
-  email 
+  email
 }) => (
   <div className="bg-white rounded-2xl shadow-xl p-12 w-full max-w-md flex flex-col items-center">
     <h2 className="text-xl font-bold text-center mb-4 mt-2">
@@ -34,6 +34,6 @@ const PasswordSentBox: React.FC<PasswordSentBoxProps> = ({
       인증을 완료해주세요.
     </p>
   </div>
-);
+)
 
-export default PasswordSentBox; 
+export default PasswordSentBox

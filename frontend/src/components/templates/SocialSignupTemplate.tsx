@@ -1,6 +1,6 @@
-import React from 'react';
-import LoginIllustration from '@/components/organisms/LoginIllustration';
-import SocialSignupForm from '@/components/organisms/SocialSignupForm';
+import React from 'react'
+import LoginIllustration from '@/components/organisms/LoginIllustration'
+import SocialSignupForm from '@/components/organisms/SocialSignupForm'
 
 const SocialSignupTemplate: React.FC = () => (
   <div className="flex min-h-screen bg-[#f9f9f9]">
@@ -11,6 +11,6 @@ const SocialSignupTemplate: React.FC = () => (
       <SocialSignupForm email="dksejrgus2@gmail.com" provider="google" />
     </div>
   </div>
-);
+)
 
-export default SocialSignupTemplate; 
+export default SocialSignupTemplate

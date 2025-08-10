@@ -1,74 +1,74 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { OpenVidu, Session, Publisher, Subscriber } from 'openvidu-browser';
-import axios from 'axios';
-import CircleButton from '../components/atoms/CircleButton';
+import React, { useEffect, useRef, useState } from 'react'
+import { useParams } from 'react-router-dom'
+import { OpenVidu, Session, Publisher, Subscriber } from 'openvidu-browser'
+import axios from 'axios'
+import CircleButton from '../components/atoms/CircleButton'
 
 interface VideoConferencePageProps {
-  studyId?: number;
-  studyName?: string;
+  studyId?: number
+  studyName?: string
 }
 
-const VideoConferencePage: React.FC<VideoConferencePageProps> = ({ 
-  studyId: propStudyId, 
-  studyName = '스터디' 
+const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
+  studyId: propStudyId,
+  studyName = '스터디'
 }) => {
-  const { studyId: urlStudyId } = useParams<{ studyId: string }>();
-  const studyId = propStudyId || (urlStudyId ? parseInt(urlStudyId) : undefined);
-  
-  const [session, setSession] = useState<Session | null>(null);
-  const [publisher, setPublisher] = useState<Publisher | null>(null);
-  const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isScreenSharing, setIsScreenSharing] = useState(false);
-  const [screenShareStream, setScreenShareStream] = useState<MediaStream | null>(null);
-  const [isDemoMode, setIsDemoMode] = useState(false);
-  const [demoParticipants, setDemoParticipants] = useState<Array<{id: string, name: string, hasAudio: boolean, hasVideo: boolean}>>([]);
-  
+  const { studyId: urlStudyId } = useParams<{ studyId: string }>()
+  const studyId = propStudyId || (urlStudyId ? parseInt(urlStudyId) : undefined)
+
+  const [session, setSession] = useState<Session | null>(null)
+  const [publisher, setPublisher] = useState<Publisher | null>(null)
+  const [subscribers, setSubscribers] = useState<Subscriber[]>([])
+  const [isConnected, setIsConnected] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isScreenSharing, setIsScreenSharing] = useState(false)
+  const [screenShareStream, setScreenShareStream] = useState<MediaStream | null>(null)
+  const [isDemoMode, setIsDemoMode] = useState(false)
+  const [demoParticipants, setDemoParticipants] = useState<Array<{id: string, name: string, hasAudio: boolean, hasVideo: boolean}>>([])
+
   // 오디오/비디오 상태 관리
-  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
-  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
-  
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true)
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true)
+
   // 사이드바 상태 관리
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeSidebarTab, setActiveSidebarTab] = useState<'participants' | 'chat' | 'materials' | null>(null);
-  const [chatMessages, setChatMessages] = useState<Array<{id: string, sender: string, message: string, timestamp: Date}>>([]);
-  const [newChatMessage, setNewChatMessage] = useState('');
-  const [studyMaterials, setStudyMaterials] = useState<Array<{id: string, name: string, type: string, url: string}>>([]);
-  
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [activeSidebarTab, setActiveSidebarTab] = useState<'participants' | 'chat' | 'materials' | null>(null)
+  const [chatMessages, setChatMessages] = useState<Array<{id: string, sender: string, message: string, timestamp: Date}>>([])
+  const [newChatMessage, setNewChatMessage] = useState('')
+  const [studyMaterials, setStudyMaterials] = useState<Array<{id: string, name: string, type: string, url: string}>>([])
+
   // PDF 뷰어 모드 상태
-  const [isPdfViewerMode, setIsPdfViewerMode] = useState(false);
-  const [currentPdfUrl, setCurrentPdfUrl] = useState<string>('');
-  const [currentPdfName, setCurrentPdfName] = useState<string>('');
-  
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const subscribersRef = useRef<HTMLDivElement>(null);
-  const screenShareVideoRef = useRef<HTMLVideoElement>(null);
-  const demoVideoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
-  const chatInputRef = useRef<HTMLInputElement>(null);
-  const pdfViewerRef = useRef<HTMLIFrameElement>(null);
+  const [isPdfViewerMode, setIsPdfViewerMode] = useState(false)
+  const [currentPdfUrl, setCurrentPdfUrl] = useState<string>('')
+  const [currentPdfName, setCurrentPdfName] = useState<string>('')
+
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const subscribersRef = useRef<HTMLDivElement>(null)
+  const screenShareVideoRef = useRef<HTMLVideoElement>(null)
+  const demoVideoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({})
+  const chatInputRef = useRef<HTMLInputElement>(null)
+  const pdfViewerRef = useRef<HTMLIFrameElement>(null)
 
   // OpenVidu 서버 설정 (3.x 버전 - LiveKit 기반)
-  const OPENVIDU_SERVER_URL = "/api"; // Vite proxy를 통해 접근
-  const OPENVIDU_API_KEY = "devkey"; // OpenVidu 3.x 기본 API 키
-  const OPENVIDU_API_SECRET = "secret"; // OpenVidu 3.x 기본 API 시크릿
-  const sessionId = studyId ? `study-${studyId}` : `session-${Date.now()}`;
-  const studyNameDisplay = studyName !== '스터디' ? studyName : studyId ? `스터디 ${studyId}` : '스터디';
+  const OPENVIDU_SERVER_URL = "/api" // Vite proxy를 통해 접근
+  const OPENVIDU_API_KEY = "devkey" // OpenVidu 3.x 기본 API 키
+  const OPENVIDU_API_SECRET = "secret" // OpenVidu 3.x 기본 API 시크릿
+  const sessionId = studyId ? `study-${studyId}` : `session-${Date.now()}`
+  const studyNameDisplay = studyName !== '스터디' ? studyName : studyId ? `스터디 ${studyId}` : '스터디'
 
   // 사이드바 토글 함수
   const toggleSidebar = (tab: 'participants' | 'chat' | 'materials') => {
     if (sidebarOpen) {
       // 사이드바가 열려있으면 닫기
-      setSidebarOpen(false);
-      setActiveSidebarTab(null);
+      setSidebarOpen(false)
+      setActiveSidebarTab(null)
     } else {
       // 사이드바가 닫혀있으면 열기 (기본값: participants)
-      setSidebarOpen(true);
-      setActiveSidebarTab(tab || 'participants');
+      setSidebarOpen(true)
+      setActiveSidebarTab(tab || 'participants')
     }
-  };
+  }
 
   // 채팅 메시지 전송
   const sendChatMessage = () => {
@@ -79,9 +79,9 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
         message: newChatMessage.trim(),
         timestamp: new Date()
       };
-      setChatMessages(prev => [...prev, message]);
-      setNewChatMessage('');
-      
+      setChatMessages(prev => [...prev, message])
+      setNewChatMessage('')
+
       // 데모 모드에서는 자동 응답
       if (isDemoMode) {
         setTimeout(() => {
@@ -97,18 +97,18 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
             message: responses[Math.floor(Math.random() * responses.length)],
             timestamp: new Date()
           };
-          setChatMessages(prev => [...prev, demoResponse]);
-        }, 1000);
+          setChatMessages(prev => [...prev, demoResponse])
+        }, 1000)
       }
     }
-  };
+  }
 
   // 채팅 엔터키 처리
   const handleChatKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      sendChatMessage();
+      sendChatMessage()
     }
-  };
+  }
 
   // 데모용 공부자료 목록
   useEffect(() => {
@@ -138,7 +138,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
       }
       setCurrentPdfUrl(pdfUrl);
       setCurrentPdfName(material.name);
-      
+
       // 다른 참가자들에게 PDF 뷰어 모드 공유
       if (session && !isDemoMode) {
         session.signal({
@@ -157,7 +157,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
           timestamp: Date.now()
         }));
       }
-      
+
       // 사이드바 닫기
       setSidebarOpen(false);
       setActiveSidebarTab(null);
@@ -172,7 +172,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
     setIsPdfViewerMode(false);
     setCurrentPdfUrl('');
     setCurrentPdfName('');
-    
+
     // 라이브 세션에서 PDF 뷰어 모드 종료 신호 전송
     if (session && !isDemoMode) {
       session.signal({
@@ -198,8 +198,8 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
             setIsPdfViewerMode(true);
             setCurrentPdfUrl(data.pdfUrl);
             setCurrentPdfName(data.pdfName);
-          } catch (error) {
-            console.error('데모 PDF 뷰어 데이터 파싱 실패:', error);
+          } catch  {
+            //  JSON 파싱 오류 처리
           }
         } else {
           setIsPdfViewerMode(false);
@@ -242,26 +242,26 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
         const ctx = canvas.getContext('2d')!;
         canvas.width = 640;
         canvas.height = 480;
-        
+
         let frame = 0;
         const animate = () => {
           ctx.fillStyle = color;
           ctx.fillRect(0, 0, canvas.width, canvas.height);
-          
+
           // 움직이는 패턴 추가
           ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
           ctx.fillRect(
-            (frame * 2) % canvas.width, 
-            (frame * 1.5) % canvas.height, 
-            100, 
+            (frame * 2) % canvas.width,
+            (frame * 1.5) % canvas.height,
+            100,
             100
           );
-          
+
           frame++;
           requestAnimationFrame(animate);
         };
         animate();
-        
+
         return canvas.captureStream(30);
       };
 
@@ -271,7 +271,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
           const canvas = document.createElement('canvas');
           const colors = ['#4F46E5', '#7C3AED', '#059669'];
           const stream = createDemoVideo(canvas, colors[index % colors.length]);
-          
+
           const videoElement = demoVideoRefs.current[user.id];
           if (videoElement) {
             videoElement.srcObject = stream;
@@ -281,10 +281,10 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
 
       setIsConnected(true);
       setIsDemoMode(true);
-      console.log('✅ 데모 모드 시작');
 
-    } catch (err) {
-      console.error('데모 모드 초기화 오류:', err);
+
+    } catch  {
+
       setError('데모 모드를 초기화할 수 없습니다.');
     } finally {
       setIsLoading(false);
@@ -295,7 +295,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
     // URL 파라미터로 데모 모드 확인
     const urlParams = new URLSearchParams(window.location.search);
     const demo = urlParams.get('demo');
-    
+
     if (demo === 'true') {
       initializeDemoMode();
     } else {
@@ -344,7 +344,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
       });
 
       newSession.on('streamDestroyed', (event: any) => {
-        setSubscribers((prev) => 
+        setSubscribers((prev) =>
           prev.filter((sub) => sub.stream.streamId !== event.stream.streamId)
         );
       });
@@ -366,18 +366,16 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
               setCurrentPdfName('');
             }
           }
-        } catch (error) {
-          console.error('시그널 데이터 파싱 오류:', error);
+        } catch {
+          // JSON 파싱 오류 처리
         }
       });
 
-      newSession.on('exception', (exception: any) => {
-        console.error('OpenVidu 예외:', exception);
+      newSession.on('exception', () => {
         setError('세션 연결 중 오류가 발생했습니다.');
       });
 
-    } catch (err) {
-      console.error('세션 초기화 오류:', err);
+    } catch {
       setError('세션을 초기화할 수 없습니다.');
     } finally {
       setIsLoading(false);
@@ -386,52 +384,34 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
 
   // OpenVidu REST API를 통해 세션 생성 (axios 사용)
   const createSession = async (sessionId: string) => {
-    try {
-      console.log('세션 생성 요청:', `${OPENVIDU_SERVER_URL}/sessions`, { customSessionId: sessionId });
-      
-      const response = await axios.post(
-        `${OPENVIDU_SERVER_URL}/sessions`,
-        { customSessionId: sessionId },
-        {
-          headers: {
-            Authorization: "Basic " + btoa(`OPENVIDUAPP:${OPENVIDU_API_SECRET}`),
-            "Content-Type": "application/json",
-          },
-        }
-      );
+    const response = await axios.post(
+      `${OPENVIDU_SERVER_URL}/sessions`,
+      { customSessionId: sessionId },
+      {
+        headers: {
+          Authorization: "Basic " + btoa(`OPENVIDUAPP:${OPENVIDU_API_SECRET}`),
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-      console.log('세션 생성 성공:', response.data);
-      return response.data;
-    } catch (err: any) {
-      console.error('세션 생성 오류:', err);
-      console.error('응답 데이터:', err.response?.data);
-      throw err;
-    }
+    return response.data;
   };
 
   // OpenVidu REST API를 통해 토큰 생성 (axios 사용)
   const createToken = async (sessionId: string) => {
-    try {
-      console.log('토큰 생성 요청:', `${OPENVIDU_SERVER_URL}/sessions/${sessionId}/connections`);
-      
-      const response = await axios.post(
-        `${OPENVIDU_SERVER_URL}/sessions/${sessionId}/connections`,
-        {},
-        {
-          headers: {
-            Authorization: "Basic " + btoa(`OPENVIDUAPP:${OPENVIDU_API_SECRET}`),
-            "Content-Type": "application/json",
-          },
-        }
-      );
+    const response = await axios.post(
+      `${OPENVIDU_SERVER_URL}/sessions/${sessionId}/connections`,
+      {},
+      {
+        headers: {
+          Authorization: "Basic " + btoa(`OPENVIDUAPP:${OPENVIDU_API_SECRET}`),
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-      console.log('토큰 생성 성공:', response.data);
-      return response.data;
-    } catch (err: any) {
-      console.error('토큰 생성 오류:', err);
-      console.error('응답 데이터:', err.response?.data);
-      throw err;
-    }
+    return response.data;
   };
 
   const joinSession = async () => {
@@ -441,43 +421,31 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
       setIsLoading(true);
       setError(null);
 
-      console.log('세션 참가 시작:', sessionId);
-
       // 1. 세션 생성 (없으면 새로 생성)
       try {
         await createSession(sessionId);
-        console.log('세션 생성 완료 또는 이미 존재');
-      } catch (err: any) {
+      } catch {
         // 세션이 이미 존재하는 경우는 무시
-        if (err.response?.status === 409) {
-          console.log('세션이 이미 존재함');
-        } else {
-          throw err;
-        }
       }
 
       // 2. 토큰 생성
       const tokenData = await createToken(sessionId);
-      console.log('토큰 생성 완료:', tokenData);
 
       // 3. 세션 연결 (제공된 예시와 일치)
       await session.connect(tokenData.token);
-      console.log('세션 연결 완료');
 
       // 4. 퍼블리셔 생성
       await createPublisher();
-      console.log('퍼블리셔 생성 완료');
 
       setIsConnected(true);
-      console.log('✅ OpenVidu 세션 연결 성공');
 
     } catch (err: any) {
-      console.error('❌ OpenVidu 연결 실패:', err);
-      
+
+
       // OpenVidu 서버가 실행되지 않았을 때의 안내 메시지
       if (err.code === 'ERR_NETWORK' || err.message?.includes('fetch')) {
-        setError(`OpenVidu 서버에 연결할 수 없습니다. 
-        
+        setError(`OpenVidu 서버에 연결할 수 없습니다.
+
 OpenVidu 서버가 실행 중인지 확인해주세요.
 
 서버 실행 방법:
@@ -520,9 +488,7 @@ API 시크릿: ${OPENVIDU_API_SECRET}
       setIsAudioEnabled(true);
       setIsVideoEnabled(true);
       session.publish(newPublisher);
-      console.log('퍼블리셔 생성 및 발행 완료');
-    } catch (err) {
-      console.error('퍼블리셔 생성 오류:', err);
+    } catch {
       setError('카메라/마이크에 접근할 수 없습니다. 브라우저 권한을 확인해주세요.');
     }
   };
@@ -543,7 +509,6 @@ API 시크릿: ${OPENVIDU_API_SECRET}
     // 오디오/비디오 상태 초기화
     setIsAudioEnabled(true);
     setIsVideoEnabled(true);
-    console.log('세션에서 나감');
   };
 
   const toggleAudio = () => {
@@ -551,7 +516,6 @@ API 시크릿: ${OPENVIDU_API_SECRET}
       const newAudioState = !isAudioEnabled;
       setIsAudioEnabled(newAudioState);
       publisher.publishAudio(newAudioState);
-      console.log('오디오 토글:', newAudioState);
     }
   };
 
@@ -560,7 +524,6 @@ API 시크릿: ${OPENVIDU_API_SECRET}
       const newVideoState = !isVideoEnabled;
       setIsVideoEnabled(newVideoState);
       publisher.publishVideo(newVideoState);
-      console.log('비디오 토글:', newVideoState);
     }
   };
 
@@ -590,9 +553,7 @@ API 시크릿: ${OPENVIDU_API_SECRET}
         stopScreenShare();
       };
 
-      console.log('화면 공유 시작');
-    } catch (err) {
-      console.error('화면 공유 시작 실패:', err);
+    } catch {
       setError('화면 공유를 시작할 수 없습니다.');
     }
   };
@@ -607,21 +568,21 @@ API 시크릿: ${OPENVIDU_API_SECRET}
     if (screenShareVideoRef.current) {
       screenShareVideoRef.current.srcObject = null;
     }
-    console.log('화면 공유 중지');
+
   };
 
   // 데모 모드에서 참가자 토글
   // const toggleDemoParticipantAudio = (participantId: string) => {
-  //   setDemoParticipants(prev => 
-  //     prev.map(p => 
+  //   setDemoParticipants(prev =>
+  //     prev.map(p =>
   //       p.id === participantId ? { ...p, hasAudio: !p.hasAudio } : p
   //     )
   //   );
   // };
 
   // const toggleDemoParticipantVideo = (participantId: string) => {
-  //   setDemoParticipants(prev => 
-  //     prev.map(p => 
+  //   setDemoParticipants(prev =>
+  //     prev.map(p =>
   //       p.id === participantId ? { ...p, hasVideo: !p.hasVideo } : p
   //     )
   //   );
@@ -714,7 +675,7 @@ API 시크릿: ${OPENVIDU_API_SECRET}
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   <span className="text-white text-sm">나 (나)</span>
                 </div>
-                
+
                 {/* 데모 참가자들 */}
                 {isDemoMode && demoParticipants.map((participant) => (
                   <div key={participant.id} className="flex items-center space-x-2 p-2 bg-gray-700 rounded">
@@ -724,7 +685,7 @@ API 시크릿: ${OPENVIDU_API_SECRET}
                     {!participant.hasVideo && <span className="text-red-400 text-xs">📹</span>}
                   </div>
                 ))}
-                
+
                 {/* 실제 참가자들 */}
                 {!isDemoMode && subscribers.map((_, index) => (
                   <div key={index} className="flex items-center space-x-2 p-2 bg-gray-700 rounded">
@@ -752,7 +713,7 @@ API 시크릿: ${OPENVIDU_API_SECRET}
                   </div>
                 ))}
               </div>
-              
+
               {/* 채팅 입력 영역 */}
               <div className="p-3 border-t border-gray-700">
                 <div className="flex space-x-2">
@@ -780,8 +741,8 @@ API 시크릿: ${OPENVIDU_API_SECRET}
             <div className="p-3">
               <div className="space-y-2">
                 {studyMaterials.map((material) => (
-                  <div 
-                    key={material.id} 
+                  <div
+                    key={material.id}
                     className="flex items-center space-x-2 p-2 bg-gray-700 rounded hover:bg-gray-600 cursor-pointer"
                     onClick={() => handleMaterialClick(material)}
                   >
@@ -894,7 +855,7 @@ API 시크릿: ${OPENVIDU_API_SECRET}
                     <div className="text-center text-white text-xs mb-2">
                       <span className="bg-gray-700 px-2 py-1 rounded">참가자 화면</span>
                     </div>
-                    <div 
+                    <div
                       ref={subscribersRef}
                       className="flex flex-col gap-2 h-full overflow-y-auto relative"
                     >
@@ -913,7 +874,7 @@ API 시크릿: ${OPENVIDU_API_SECRET}
                               나 (데모)
                             </div>
                           </div>
-                          
+
                           {/* 데모 참가자들 */}
                           {demoParticipants.map((participant) => (
                             <div key={participant.id} className="relative bg-gray-800 rounded-lg overflow-hidden flex-1 min-h-[120px]">
@@ -946,7 +907,7 @@ API 시크릿: ${OPENVIDU_API_SECRET}
                           </div>
                         ))
                       )}
-                      
+
                       {/* 스크롤 안내 */}
                       {(isDemoMode ? demoParticipants.length > 3 : allParticipants.length > 4) && (
                         <div className="text-center text-gray-400 text-xs py-2">
@@ -966,7 +927,7 @@ API 시크릿: ${OPENVIDU_API_SECRET}
                         className="w-full h-full"
                         title={currentPdfName}
                         onError={() => {
-                          console.error('PDF 로드 실패:', currentPdfUrl);
+                          // PDF 로드 실패 처리
                         }}
                       />
                     ) : (
@@ -986,7 +947,7 @@ API 시크릿: ${OPENVIDU_API_SECRET}
                 </div>
               ) : (
                 // 일반 모드 레이아웃
-                <div 
+                <div
                   ref={subscribersRef}
                   className="w-full h-full max-w-6xl"
                   style={{
@@ -1013,7 +974,7 @@ API 시크릿: ${OPENVIDU_API_SECRET}
                           나 (데모)
                         </div>
                       </div>
-                      
+
                       {/* 데모 참가자들 */}
                       {demoParticipants.map((participant) => (
                         <div key={participant.id} className="relative bg-gray-800 rounded-lg overflow-hidden w-full h-full">
@@ -1137,4 +1098,4 @@ API 시크릿: ${OPENVIDU_API_SECRET}
   );
 };
 
-export default VideoConferencePage;
+export default VideoConferencePage

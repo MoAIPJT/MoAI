@@ -9,7 +9,7 @@ const StudyCard: React.FC<StudyCardProps> = ({
     onClick?.(study.id)
   }
 
-  console.log('StudyCard 렌더링:', study)
+
 
   return (
     <div
@@ -44,7 +44,7 @@ const StudyCard: React.FC<StudyCardProps> = ({
               {study.description}
             </p>
           )}
-          <div 
+          <div
             className="text-sm text-gray-600"
             style={{
               display: '-webkit-box',
@@ -62,4 +62,4 @@ const StudyCard: React.FC<StudyCardProps> = ({
   )
 }
 
-export default StudyCard 
+export default StudyCard

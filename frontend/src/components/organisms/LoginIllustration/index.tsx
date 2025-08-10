@@ -1,5 +1,5 @@
-import React from 'react';
-import bgImage from '@/assets/background.png';
+import React from 'react'
+import bgImage from '@/assets/background.png'
 
 const LoginIllustration: React.FC = () => {
   return (
@@ -7,7 +7,7 @@ const LoginIllustration: React.FC = () => {
       <img src={bgImage} alt="Moai illustration" className="object-cover w-full h-full" />
 
     </div>
-  );
-};
+  )
+}
 
-export default LoginIllustration; 
+export default LoginIllustration
