@@ -2,6 +2,7 @@ package com.foureyes.moai.backend.domain.document.repository;
 
 import com.foureyes.moai.backend.domain.document.entity.DocumentCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -32,4 +33,7 @@ public interface DocumentCategoryRepository extends JpaRepository<DocumentCatego
         where dc.document.id in :docIds
     """)
     List<Object[]> findNamesByDocumentIds(@Param("docIds") List<Integer> docIds);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    long deleteByCategory_Id(int categoryId);
 }

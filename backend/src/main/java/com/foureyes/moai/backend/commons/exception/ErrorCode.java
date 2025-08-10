@@ -11,7 +11,7 @@ public enum ErrorCode {
     ALREADY_JOINED_STUDY("이미 가입 요청중입니다.", HttpStatus.BAD_REQUEST),
     FILE_UPLOAD_FAILED("파일 업로드에 실패했습니다.", HttpStatus.BAD_REQUEST),
     STUDY_NOT_MEMBER("해당 스터디에 참여 중이지 않습니다.",    HttpStatus.BAD_REQUEST),
-
+    DUPLICATE_RESOURCE("이미 존재하는 데이터입니다.",HttpStatus.CONFLICT),
 
     // 401 Unauthorized
 

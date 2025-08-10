@@ -3,11 +3,15 @@ package com.foureyes.moai.backend.domain.document.controller;
 
 import com.foureyes.moai.backend.auth.jwt.JwtTokenProvider;
 import com.foureyes.moai.backend.commons.util.StorageService;
+import com.foureyes.moai.backend.domain.document.dto.CategoryItemDto;
+import com.foureyes.moai.backend.domain.document.dto.request.CreateCategoryRequest;
 import com.foureyes.moai.backend.domain.document.dto.request.CreateDocumentRequest;
+import com.foureyes.moai.backend.domain.document.dto.request.EditCategoryRequest;
 import com.foureyes.moai.backend.domain.document.dto.request.EditDocumentRequest;
 import com.foureyes.moai.backend.domain.document.dto.response.DocumentListItemDto;
 import com.foureyes.moai.backend.domain.document.dto.response.DocumentResponseDto;
 import com.foureyes.moai.backend.domain.document.dto.response.PresignedUrlResponse;
+import com.foureyes.moai.backend.domain.document.service.CategoryService;
 import com.foureyes.moai.backend.domain.document.service.DocumentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,6 +37,7 @@ public class DocumentController {
     private final JwtTokenProvider jwtTokenProvider;
     private final DocumentService documentService;
     private final StorageService storageService;
+    private final CategoryService categoryService;
 
     private int extractUserIdFromToken(String bearerToken) {
         String token = bearerToken.replaceFirst("^Bearer ", "").trim();
@@ -119,6 +124,65 @@ public class DocumentController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(
+        summary = "커스텀 카테고리 생성",
+        description = "스터디 관리자만 커스텀 카테고리를 생성할 수 있습니다.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PostMapping("/categories/create")
+    public ResponseEntity<Void> create(
+        @Parameter(hidden = true) @RequestHeader("Authorization") String bearerToken,
+        @RequestBody CreateCategoryRequest req
+    ) {
+        int userId = extractUserIdFromToken(bearerToken);
+        categoryService.createCategory(userId, req);
+        return ResponseEntity.status(201).build();
+    }
+
+
+    @Operation(
+        summary = "커스텀 카테고리 수정",
+        description = "스터디 관리자만 카테고리 정보를 수정할 수 있습니다.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PatchMapping("/categories/edit/{id}")
+    public ResponseEntity<Void> edit(
+        @Parameter(hidden = true) @RequestHeader("Authorization") String bearerToken,
+        @PathVariable int id,
+        @RequestBody EditCategoryRequest req
+    ) {
+        int userId = extractUserIdFromToken(bearerToken);
+        categoryService.editCategory(userId, id, req);
+        return ResponseEntity.ok().build();
+    }
+    @Operation(
+        summary = "커스텀 카테고리 삭제",
+        description = "스터디 관리자만 카테고리를 삭제할 수 있습니다.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @DeleteMapping("/categories/delete/{id}")
+    public ResponseEntity<Void> delete(
+        @Parameter(hidden = true) @RequestHeader("Authorization") String bearerToken,
+        @PathVariable int id
+    ) {
+        int userId = extractUserIdFromToken(bearerToken);
+        categoryService.deleteCategory(userId, id);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(
+        summary = "커스텀 카테고리 조회",
+        description = "해당 스터디의 커스텀 카테고리 목록을 조회합니다.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @GetMapping("/categories")
+    public ResponseEntity<List<CategoryItemDto>> list(
+        @Parameter(hidden = true) @RequestHeader("Authorization") String bearerToken,
+        @RequestParam int studyId
+    ) {
+        int userId = extractUserIdFromToken(bearerToken);
+        return ResponseEntity.ok(categoryService.getCategories(userId, studyId));
+    }
 
 }
 

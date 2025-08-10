@@ -3,6 +3,8 @@ package com.foureyes.moai.backend.domain.study.repository;
 import com.foureyes.moai.backend.domain.study.entity.StudyGroup;
 import com.foureyes.moai.backend.domain.study.entity.StudyMembership;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -53,6 +55,12 @@ public interface StudyMembershipRepository extends JpaRepository<StudyMembership
 
     long  countByStudyGroup_IdAndStatus(
         int id,
+        StudyMembership.Status status
+    );
+    boolean existsByUserIdAndStudyGroup_IdAndRoleInAndStatus(
+        int userId,
+        int studyId,
+        Collection<StudyMembership.Role> roles,
         StudyMembership.Status status
     );
 
