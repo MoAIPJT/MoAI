@@ -3,8 +3,10 @@ package com.foureyes.moai.backend.domain.document.service;
 import com.foureyes.moai.backend.commons.exception.CustomException;
 import com.foureyes.moai.backend.commons.exception.ErrorCode;
 import com.foureyes.moai.backend.commons.util.StorageService;
+import com.foureyes.moai.backend.domain.document.dto.response.DocumentRow;
 import com.foureyes.moai.backend.domain.document.dto.request.CreateDocumentRequest;
 import com.foureyes.moai.backend.domain.document.dto.request.EditDocumentRequest;
+import com.foureyes.moai.backend.domain.document.dto.response.DocumentListItemDto;
 import com.foureyes.moai.backend.domain.document.dto.response.DocumentResponseDto;
 import com.foureyes.moai.backend.domain.document.entity.Category;
 import com.foureyes.moai.backend.domain.document.entity.Document;
@@ -17,6 +19,9 @@ import com.foureyes.moai.backend.domain.study.entity.StudyMembership;
 import com.foureyes.moai.backend.domain.study.repository.StudyMembershipRepository;
 import com.foureyes.moai.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -24,8 +29,10 @@ import org.springframework.util.StringUtils;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -151,5 +158,41 @@ public class DocumentServiceImpl implements DocumentService{
                 documentCategoryRepository.saveAll(links);
             }
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true) // 조회는 readOnly 최적화
+    public List<DocumentListItemDto> getDocuments(int userId, int studyId) {
+        // 권한 체크 (예: 승인 멤버)
+        boolean allowed = studyMembershipRepository.existsByUserIdAndStudyGroup_IdAndStatus(
+            userId, studyId, StudyMembership.Status.APPROVED);
+        if (!allowed) throw new CustomException(ErrorCode.FORBIDDEN_DOCUMENT_ACCESS);
+
+        // 문서 + 업로더 최소 필드만 조회
+        List<DocumentRow> rows = documentRepository.findListByStudyId(studyId);
+        if (rows.isEmpty()) return List.of();
+
+        // 카테고리 이름 일괄 조회 후 docId → names 매핑
+        List<Integer> docIds = rows.stream().map(DocumentRow::getId).toList();
+        Map<Integer, List<String>> catMap = new HashMap<>();
+        for (Object[] r : documentCategoryRepository.findNamesByDocumentIds(docIds)) {
+            Integer docId = (Integer) r[0];
+            String name = (String) r[1];
+            catMap.computeIfAbsent(docId, k -> new ArrayList<>()).add(name);
+        }
+
+        // 응답 매핑
+        return rows.stream()
+            .map(r -> new DocumentListItemDto(
+                r.getId(),
+                r.getTitle(),
+                r.getDescription(),
+                catMap.getOrDefault(r.getId(), List.of()),
+                r.getProfileImageUrl(),
+                r.getName(),
+                r.getUpdatedAt(),   // updateDate
+                r.getCreatedAt()    // uploadDate
+            ))
+            .toList();
     }
 }

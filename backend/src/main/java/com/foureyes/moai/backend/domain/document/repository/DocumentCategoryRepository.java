@@ -2,6 +2,8 @@ package com.foureyes.moai.backend.domain.document.repository;
 
 import com.foureyes.moai.backend.domain.document.entity.DocumentCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -21,4 +23,13 @@ public interface DocumentCategoryRepository extends JpaRepository<DocumentCatego
 
 
     void deleteByDocument_Id(int documentId);
+
+
+    @Query("""
+        select dc.document.id, c.name
+        from DocumentCategory dc
+        join dc.category c
+        where dc.document.id in :docIds
+    """)
+    List<Object[]> findNamesByDocumentIds(@Param("docIds") List<Integer> docIds);
 }

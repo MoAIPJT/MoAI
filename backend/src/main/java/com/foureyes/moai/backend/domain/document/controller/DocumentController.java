@@ -5,6 +5,7 @@ import com.foureyes.moai.backend.auth.jwt.JwtTokenProvider;
 import com.foureyes.moai.backend.commons.util.StorageService;
 import com.foureyes.moai.backend.domain.document.dto.request.CreateDocumentRequest;
 import com.foureyes.moai.backend.domain.document.dto.request.EditDocumentRequest;
+import com.foureyes.moai.backend.domain.document.dto.response.DocumentListItemDto;
 import com.foureyes.moai.backend.domain.document.dto.response.DocumentResponseDto;
 import com.foureyes.moai.backend.domain.document.dto.response.PresignedUrlResponse;
 import com.foureyes.moai.backend.domain.document.service.DocumentService;
@@ -14,12 +15,15 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.List;
 
 @Tag(name = "docs API", description = "공부 자료 관리 기능")
 @RestController
@@ -70,7 +74,7 @@ public class DocumentController {
 
     @Operation(
         summary = "공부 자료 수정",
-        description = "문서 접근 권한 확인 후 제목/설명을 수정합니다.",
+        description = "문서 접근 권한 확인 후 제목/설명/카테고리를 수정합니다.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @PatchMapping("/edit/{id}")
@@ -85,5 +89,19 @@ public class DocumentController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(
+        summary = "공부 자료 목록 조회",
+        description = "스터디별 문서 목록을 조회합니다.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @GetMapping("/list")
+    public ResponseEntity<List<DocumentListItemDto>> listDocuments(
+        @Parameter(hidden = true) @RequestHeader("Authorization") String bearer,
+        @RequestParam int studyId
+    ) {
+        int userId = extractUserIdFromToken(bearer);
+        List<DocumentListItemDto> result = documentService.getDocuments(userId, studyId);
+        return ResponseEntity.ok(result);
+    }
 }
 
