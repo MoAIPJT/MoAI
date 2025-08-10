@@ -17,4 +17,5 @@ public interface CategoryRepository extends JpaRepository<Category, Integer> {
 
     // 스터디 + 카테고리 ID로 조회
     Optional<Category> findByIdAndStudyGroup_Id(int id, int studyGroupId);
+
 }

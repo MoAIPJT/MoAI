@@ -18,4 +18,7 @@ public interface DocumentCategoryRepository extends JpaRepository<DocumentCatego
 
     // 문서 + 카테고리 삭제
     void deleteByDocument_IdAndCategory_Id(int documentId, int categoryId);
+
+
+    void deleteByDocument_Id(int documentId);
 }

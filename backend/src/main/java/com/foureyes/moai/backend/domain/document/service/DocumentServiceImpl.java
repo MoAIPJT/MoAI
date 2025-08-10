@@ -4,6 +4,7 @@ import com.foureyes.moai.backend.commons.exception.CustomException;
 import com.foureyes.moai.backend.commons.exception.ErrorCode;
 import com.foureyes.moai.backend.commons.util.StorageService;
 import com.foureyes.moai.backend.domain.document.dto.request.CreateDocumentRequest;
+import com.foureyes.moai.backend.domain.document.dto.request.EditDocumentRequest;
 import com.foureyes.moai.backend.domain.document.dto.response.DocumentResponseDto;
 import com.foureyes.moai.backend.domain.document.entity.Category;
 import com.foureyes.moai.backend.domain.document.entity.Document;
@@ -22,6 +23,7 @@ import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -98,5 +100,56 @@ public class DocumentServiceImpl implements DocumentService{
 
         if (!hasAccess) throw new CustomException(ErrorCode.FORBIDDEN_DOCUMENT_ACCESS);
         return doc.getFileKey(); // DB 컬럼 file_key
+    }
+
+    @Override
+    @Transactional
+    public void updateDocument(int userId, int documentId, EditDocumentRequest req) {
+        Document doc = documentRepository.findById(documentId)
+            .orElseThrow(() -> new CustomException(ErrorCode.DOCUMENT_NOT_FOUND));
+
+        // 권한 체크(예시: 승인 멤버)
+        boolean allowed = studyMembershipRepository.existsByUserIdAndStudyGroup_IdAndStatus(
+            userId, doc.getStudyGroup().getId(), StudyMembership.Status.APPROVED);
+        if (!allowed) throw new CustomException(ErrorCode.FORBIDDEN_DOCUMENT_ACCESS);
+
+        // 제목/설명
+        if (req.getTitle() != null && !req.getTitle().isBlank()) {
+            doc.setTitle(req.getTitle().trim());
+        }
+        if (req.getDescription() != null) {
+            doc.setDescription(req.getDescription().trim());
+        }
+
+
+        // 카테고리 갱신(요청이 null이면 스킵, 빈 리스트면 모두 해제)
+        if (req.getCategoryIdList() != null) {
+            
+            List<Category> categories = req.getCategoryIdList().isEmpty()
+                ? List.of()
+                : categoryRepository.findAllById(req.getCategoryIdList());
+
+            if (categories.size() != req.getCategoryIdList().size()) {
+                throw new CustomException(ErrorCode.CATEGORY_NOT_FOUND);
+            }
+            boolean allSameStudy = categories.stream()
+                .allMatch(c -> c.getStudyGroup().getId() == doc.getStudyGroup().getId());
+            if (!allSameStudy) throw new CustomException(ErrorCode.INVALID_REQUEST);
+
+            // 기존 링크 삭제 후 신규 삽입
+            documentCategoryRepository.deleteByDocument_Id(doc.getId());
+            documentCategoryRepository.flush();
+
+            if (!categories.isEmpty()) {
+                List<DocumentCategory> links = new ArrayList<>(categories.size());
+                for (Category c : categories) {
+                    links.add(DocumentCategory.builder()
+                        .document(doc)
+                        .category(c)
+                        .build());
+                }
+                documentCategoryRepository.saveAll(links);
+            }
+        }
     }
 }

@@ -4,6 +4,7 @@ package com.foureyes.moai.backend.domain.document.controller;
 import com.foureyes.moai.backend.auth.jwt.JwtTokenProvider;
 import com.foureyes.moai.backend.commons.util.StorageService;
 import com.foureyes.moai.backend.domain.document.dto.request.CreateDocumentRequest;
+import com.foureyes.moai.backend.domain.document.dto.request.EditDocumentRequest;
 import com.foureyes.moai.backend.domain.document.dto.response.DocumentResponseDto;
 import com.foureyes.moai.backend.domain.document.dto.response.PresignedUrlResponse;
 import com.foureyes.moai.backend.domain.document.service.DocumentService;
@@ -65,6 +66,23 @@ public class DocumentController {
         String url = storageService.presignDocumentDownloadUrl(key, Duration.ofMinutes(10));
 
         return ResponseEntity.ok(new PresignedUrlResponse(url));
+    }
+
+    @Operation(
+        summary = "공부 자료 수정",
+        description = "문서 접근 권한 확인 후 제목/설명을 수정합니다.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PatchMapping("/edit/{id}")
+    public ResponseEntity<Void> editDocument(
+        @Parameter(hidden = true)
+        @RequestHeader("Authorization") String bearerToken,
+        @PathVariable int id,
+        @RequestBody EditDocumentRequest request
+    ) {
+        int userId = extractUserIdFromToken(bearerToken);
+        documentService.updateDocument(userId, id, request);
+        return ResponseEntity.noContent().build();
     }
 
 }
