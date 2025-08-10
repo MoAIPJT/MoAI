@@ -60,4 +60,11 @@ public interface AiService {
      * 기능: AI 요약 정보를 생성하고 저장한다.
      */
     AiCreateResponseDto createSummary(AiCreateRequestDto requestDto);
+
+    /**
+     * 입력: Long
+     * 출력: void
+     * 기능: AI 요약 정보를 삭제한다.
+     */
+    void deleteSummary(Long summaryId);
 }

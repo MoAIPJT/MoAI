@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,5 +36,19 @@ public class AiController {
         AiCreateResponseDto responseDto = aiService.createSummary(requestDto);
         log.info("AI 요약 생성 완료: {}", responseDto.getTitle());
         return ResponseEntity.ok(responseDto);
+    }
+
+    /**
+     * 입력: 요약본 ID
+     * 출력: 없음
+     * 기능: AI 요약 삭제를 위한 DELETE 요청을 처리한다.
+     */
+    @DeleteMapping("/delete/{id}")
+    @Operation(summary = "AI 요약 삭제", description = "AI 요약 삭제 API 입니다.")
+    public ResponseEntity<Void> deleteSummary(@PathVariable("id") Long summaryId) {
+        log.info("AI 요약 삭제 요청: id={}", summaryId);
+        aiService.deleteSummary(summaryId);
+        log.info("AI 요약 삭제 완료: id={}", summaryId);
+        return ResponseEntity.ok().build();
     }
 }

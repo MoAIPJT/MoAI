@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.foureyes.moai.backend.commons.exception.CustomException;
 import com.foureyes.moai.backend.commons.exception.ErrorCode;
+import com.foureyes.moai.backend.commons.exception.SummaryNotFoundException;
 import com.foureyes.moai.backend.domain.ai.dto.SummaryDto;
 import com.foureyes.moai.backend.domain.ai.dto.request.AiCreateRequestDto;
 import com.foureyes.moai.backend.domain.ai.dto.response.AiCreateResponseDto;
@@ -17,8 +18,10 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -28,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@Transactional
 public class AiServiceImpl implements AiService {
 
     private static final Logger log = LoggerFactory.getLogger(AiServiceImpl.class);
@@ -37,6 +41,7 @@ public class AiServiceImpl implements AiService {
     private final SummaryRepository summaryRepository;
     private final UserRepository userRepository;
 
+    @Autowired
     public AiServiceImpl(WebClient.Builder webClientBuilder,
                          @Value("${gemini.api.url}") String geminiApiUrl,
                          @Value("${gemini.api.key}") String geminiApiKey,
@@ -212,5 +217,15 @@ public class AiServiceImpl implements AiService {
                 .modelType(savedSummary.getModelType())
                 .promptType(savedSummary.getPromptType())
                 .build();
+    }
+
+    @Override
+    public void deleteSummary(Long summaryId) {
+        log.info("요약 정보 삭제 시작: id={}", summaryId);
+        Summary summary = summaryRepository.findById(summaryId)
+                .orElseThrow(SummaryNotFoundException::new);
+
+        summaryRepository.delete(summary);
+        log.info("요약 정보 삭제 완료: id={}", summaryId);
     }
 }

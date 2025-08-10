@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS documents (
 );
 
 CREATE TABLE IF NOT EXISTS ai_summaries (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     owner_id INT NOT NULL,
     title VARCHAR(255),
     description TEXT,
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS ai_summaries (
 
 CREATE TABLE IF NOT EXISTS ai_summary_documents (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    summary_id INT NOT NULL,
+    summary_id BIGINT NOT NULL,
     document_id INT NOT NULL,
     created_at DATETIME, -- 생성 시간
     FOREIGN KEY (summary_id) REFERENCES ai_summaries(id),
