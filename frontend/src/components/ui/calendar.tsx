@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import * as React from "react";
+import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -30,14 +30,14 @@ function CustomCalendar({
   onAddEvent,
   onMonthChange,
 }: CustomCalendarProps) {
-  const [currentMonth, setCurrentMonth] = React.useState(() => {
+  const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
 
-  const [selected, setSelected] = React.useState<Date | undefined>(selectedDate);
+  const [selected, setSelected] = useState<Date | undefined>(selectedDate);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (selectedDate) {
       setSelected(selectedDate);
       setCurrentMonth(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
@@ -163,10 +163,7 @@ function CustomCalendar({
           const dayEvents = getEventsForDate(day);
           const hasEvents = dayEvents.length > 0;
 
-          // 디버깅용 로그
-          if (hasEvents) {
-            console.log(`Day ${day.getDate()}: ${dayEvents.length} events`, dayEvents);
-          }
+
 
           return (
             <button

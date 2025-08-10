@@ -1,6 +1,6 @@
-import React from 'react';
-import EmailSentTemplate from '@/components/templates/EmailSentTemplate';
+import React from 'react'
+import EmailSentTemplate from '@/components/templates/EmailSentTemplate'
 
-const EmailSentPage: React.FC = () => <EmailSentTemplate />;
+const EmailSentPage: React.FC = () => <EmailSentTemplate />
 
-export default EmailSentPage; 
+export default EmailSentPage

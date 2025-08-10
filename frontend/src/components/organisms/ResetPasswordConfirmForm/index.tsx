@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import LabeledInput from '@/components/molecules/LabeledInput';
-import Button from '@/components/atoms/Button';
-import LinkText from '@/components/atoms/LinkText';
-import type { ResetPasswordConfirmFormProps, ResetPasswordConfirmData } from './types';
+import React, { useState } from 'react'
+import LabeledInput from '@/components/molecules/LabeledInput'
+import Button from '@/components/atoms/Button'
+import LinkText from '@/components/atoms/LinkText'
+import type { ResetPasswordConfirmFormProps, ResetPasswordConfirmData } from './types'
 
 const ResetPasswordConfirmForm: React.FC<ResetPasswordConfirmFormProps> = ({
   onResetPassword,
@@ -79,4 +79,4 @@ const ResetPasswordConfirmForm: React.FC<ResetPasswordConfirmFormProps> = ({
   );
 };
 
-export default ResetPasswordConfirmForm; 
+export default ResetPasswordConfirmForm

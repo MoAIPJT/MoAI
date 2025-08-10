@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import LabeledInput from '@/components/molecules/LabeledInput';
-import Button from '@/components/atoms/Button';
-import LinkText from '@/components/atoms/LinkText';
+import React, { useState } from 'react'
+import LabeledInput from '@/components/molecules/LabeledInput'
+import Button from '@/components/atoms/Button'
+import LinkText from '@/components/atoms/LinkText'
 
 interface SocialSignupFormProps {
   email: string;
@@ -10,7 +10,7 @@ interface SocialSignupFormProps {
 
 const providerIcon: Record<string, string> = {
   google: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg',
-  kakao: '/kakao-icon.png', 
+  kakao: '/kakao-icon.png',
 };
 
 const SocialSignupForm: React.FC<SocialSignupFormProps> = ({ email, provider }) => {
@@ -52,4 +52,4 @@ const SocialSignupForm: React.FC<SocialSignupFormProps> = ({ email, provider }) 
   );
 };
 
-export default SocialSignupForm; 
+export default SocialSignupForm

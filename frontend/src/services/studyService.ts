@@ -8,7 +8,6 @@ export const getStudies = async (): Promise<StudyItem[]> => {
     const response = await api.get('/studies')
     return response.data
   } catch (error) {
-    console.error('Failed to fetch studies:', error)
     // 에러 시 더미 데이터 반환 (개발용)
     return [
       {
@@ -49,7 +48,6 @@ export const getStudyById = async (studyId: string): Promise<StudyItem> => {
     const response = await api.get(`/studies/${studyId}`)
     return response.data
   } catch (error) {
-    console.error(`Failed to fetch study ${studyId}:`, error)
     // 에러 시 studyId에 따라 다른 스터디 정보 반환
     const studyData = {
       'study-1': {
@@ -107,7 +105,6 @@ export const getStudyParticipants = async (studyId: string): Promise<StudyPartic
     const response = await api.get(`/studies/${studyId}/participants`)
     return response.data
   } catch (error) {
-    console.error('Failed to fetch study participants:', error)
     // 에러 시 더미 데이터 반환 (개발용)
     return {
       id: studyId,

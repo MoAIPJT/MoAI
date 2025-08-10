@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import Button from '../components/atoms/Button';
+import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
+import Button from '../components/atoms/Button'
 
 const TestPage: React.FC = () => {
   const [studyId, setStudyId] = useState<string>('1');
@@ -9,7 +9,7 @@ const TestPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">테스트 페이지</h1>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* OpenVidu 테스트 섹션 */}
           <div className="bg-white rounded-lg shadow-md p-6">
@@ -17,7 +17,7 @@ const TestPage: React.FC = () => {
             <p className="text-gray-600 mb-4">
               OpenVidu 서버를 사용한 화상회의 기능을 테스트합니다.
             </p>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -31,7 +31,7 @@ const TestPage: React.FC = () => {
                   placeholder="스터디 ID를 입력하세요"
                 />
               </div>
-              
+
               <div className="flex gap-2">
                 <Link to={`/video-conference/${studyId}`}>
                   <Button variant="primary" size="md">
@@ -62,7 +62,7 @@ const TestPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="mt-4 p-4 bg-blue-50 rounded-md">
               <h3 className="font-medium text-blue-800 mb-2">사용 전 확인사항:</h3>
               <ul className="text-sm text-blue-700 space-y-1">
@@ -107,14 +107,14 @@ const TestPage: React.FC = () => {
                 docker run -p 7443:7443 -e OPENVIDU_SECRET=MY_SECRET -e DOMAIN_OR_PUBLIC_IP=localhost openvidu/openvidu-server:2.31.0
               </code>
             </div>
-            
+
             <div>
               <h3 className="font-medium text-gray-700 mb-2">2. 브라우저에서 SSL 인증서 허용</h3>
               <p className="text-sm text-gray-600">
                 https://localhost:7443로 접속 → "고급" → "안전하지 않음" → 계속 진행
               </p>
             </div>
-            
+
             <div>
               <h3 className="font-medium text-gray-700 mb-2">3. React 앱 실행</h3>
               <code className="block bg-gray-100 p-3 rounded text-sm">
@@ -136,4 +136,4 @@ const TestPage: React.FC = () => {
   );
 };
 
-export default TestPage;
+export default TestPage

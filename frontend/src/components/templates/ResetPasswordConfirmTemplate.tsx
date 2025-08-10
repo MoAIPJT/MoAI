@@ -1,31 +1,31 @@
-import React from 'react';
-import { useSearchParams } from 'react-router-dom';
-import LoginIllustration from '@/components/organisms/LoginIllustration';
-import ResetPasswordConfirmForm from '@/components/organisms/ResetPasswordConfirmForm';
-import { useAuth } from '@/hooks/useAuth';
-import type { ResetPasswordConfirmData } from '@/components/organisms/ResetPasswordConfirmForm/types';
+import React from 'react'
+import { useSearchParams } from 'react-router-dom'
+import LoginIllustration from '@/components/organisms/LoginIllustration'
+import ResetPasswordConfirmForm from '@/components/organisms/ResetPasswordConfirmForm'
+import { useAuth } from '@/hooks/useAuth'
+import type { ResetPasswordConfirmData } from '@/components/organisms/ResetPasswordConfirmForm/types'
 
 const ResetPasswordConfirmTemplate: React.FC = () => {
-  const [searchParams] = useSearchParams();
-  const { confirmResetPassword, loading, error } = useAuth();
-  
+  const [searchParams] = useSearchParams()
+  const { confirmResetPassword, loading, error } = useAuth()
+
   // URL에서 토큰 파라미터 가져오기
-  const token = searchParams.get('token');
+  const token = searchParams.get('token')
 
   const handleResetPassword = async (data: ResetPasswordConfirmData) => {
     if (!token) {
-      return;
+      return
     }
-    
+
     try {
       await confirmResetPassword({
         token: token,
         password: data.password
-      });
+      })
     } catch {
       // 에러는 useAuth 훅에서 처리됨
     }
-  };
+  }
 
   // 토큰이 없으면 에러 메시지 표시
   if (!token) {
@@ -40,8 +40,8 @@ const ResetPasswordConfirmTemplate: React.FC = () => {
             <p className="text-gray-600 mb-6">
               비밀번호 재설정 링크가 유효하지 않거나 만료되었습니다.
             </p>
-            <a 
-              href="/reset-password" 
+            <a
+              href="/reset-password"
               className="text-purple-600 hover:text-purple-700 font-semibold"
             >
               비밀번호 재설정 다시 요청하기
@@ -49,7 +49,7 @@ const ResetPasswordConfirmTemplate: React.FC = () => {
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -65,9 +65,9 @@ const ResetPasswordConfirmTemplate: React.FC = () => {
             error={error}
           />
         </div>
+              </div>
       </div>
-    </div>
-  );
-};
+    )
+  }
 
-export default ResetPasswordConfirmTemplate; 
+  export default ResetPasswordConfirmTemplate

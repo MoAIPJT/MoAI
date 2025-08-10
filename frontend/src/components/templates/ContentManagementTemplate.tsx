@@ -108,15 +108,6 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
     }))
 
   const handleModalSubmit = async () => {
-    const selectedContents = contents.filter(content => content.isSelected)
-    console.log('AI 요약본 생성 요청:', {
-      title: modalTitle,
-      description: modalDescription,
-      model: selectedModel,
-      prompt: prompt,
-      selectedContents: selectedContents.map(c => ({ id: c.id, title: c.title }))
-    })
-
     // 여기에 실제 AI 요약본 생성 API 호출 로직 추가
     await new Promise(resolve => setTimeout(resolve, 2000)) // 임시 지연
 
