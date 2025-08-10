@@ -36,4 +36,9 @@ public class Summary {
         this.modelType = modelType;
         this.promptType = promptType;
     }
+
+    public void updateSummary(String title, String description) {
+        this.title = title;
+        this.description = description;
+    }
 }

@@ -1,6 +1,7 @@
 package com.foureyes.moai.backend.domain.ai.controller;
 
 import com.foureyes.moai.backend.domain.ai.dto.request.AiCreateRequestDto;
+import com.foureyes.moai.backend.domain.ai.dto.request.AiUpdateRequestDto;
 import com.foureyes.moai.backend.domain.ai.dto.response.AiCreateResponseDto;
 import com.foureyes.moai.backend.domain.ai.service.AiService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -9,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -50,5 +52,22 @@ public class AiController {
         aiService.deleteSummary(summaryId);
         log.info("AI 요약 삭제 완료: id={}", summaryId);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 입력: 요약본 ID, 변경된 요약본 타이틀, 요약본 설명
+     * 출력: 변경된 AI 요약 정보(AiCreateResponseDto)
+     * 기능: AI 요약 수정을 위한 PATCH 요청을 처리한다.
+     */
+    @PatchMapping("/edit/{id}")
+    @Operation(summary = "AI 요약 수정", description = "AI 요약 수정 API 입니다.")
+    public ResponseEntity<AiCreateResponseDto> updateSummary(
+        @PathVariable("id") Long summaryId,
+        @RequestBody AiUpdateRequestDto requestDto) {
+        log.info("AI 요약 수정 요청: id={}", summaryId);
+        requestDto.setId(summaryId);
+        AiCreateResponseDto responseDto = aiService.updateSummary(requestDto);
+        log.info("AI 요약 수정 완료: id={}", responseDto.getSummaryId());
+        return ResponseEntity.ok(responseDto);
     }
 }

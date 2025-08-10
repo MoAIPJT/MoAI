@@ -9,6 +9,7 @@ import com.foureyes.moai.backend.commons.exception.ErrorCode;
 import com.foureyes.moai.backend.commons.exception.SummaryNotFoundException;
 import com.foureyes.moai.backend.domain.ai.dto.SummaryDto;
 import com.foureyes.moai.backend.domain.ai.dto.request.AiCreateRequestDto;
+import com.foureyes.moai.backend.domain.ai.dto.request.AiUpdateRequestDto;
 import com.foureyes.moai.backend.domain.ai.dto.response.AiCreateResponseDto;
 import com.foureyes.moai.backend.domain.ai.entity.Summary;
 import com.foureyes.moai.backend.domain.ai.repository.SummaryRepository;
@@ -220,6 +221,7 @@ public class AiServiceImpl implements AiService {
     }
 
     @Override
+    @Transactional
     public void deleteSummary(Long summaryId) {
         log.info("요약 정보 삭제 시작: id={}", summaryId);
         Summary summary = summaryRepository.findById(summaryId)
@@ -227,5 +229,25 @@ public class AiServiceImpl implements AiService {
 
         summaryRepository.delete(summary);
         log.info("요약 정보 삭제 완료: id={}", summaryId);
+    }
+
+    @Override
+    @Transactional
+    public AiCreateResponseDto updateSummary(AiUpdateRequestDto requestDto) {
+        log.info("요약 정보 업데이트 시작: id={}", requestDto.getId());
+        Summary summary = summaryRepository.findById(requestDto.getId())
+                .orElseThrow(SummaryNotFoundException::new);
+
+        summary.updateSummary(requestDto.getTitle(), requestDto.getDescription());
+        Summary updatedSummary = summaryRepository.save(summary);
+        log.info("요약 정보 업데이트 완료: id={}", updatedSummary.getId());
+
+        return AiCreateResponseDto.builder()
+                .summaryId(updatedSummary.getId())
+                .title(updatedSummary.getTitle())
+                .description(updatedSummary.getDescription())
+                .modelType(updatedSummary.getModelType())
+                .promptType(updatedSummary.getPromptType())
+                .build();
     }
 }
