@@ -124,7 +124,7 @@ public class DocumentServiceImpl implements DocumentService{
 
         // 카테고리 갱신(요청이 null이면 스킵, 빈 리스트면 모두 해제)
         if (req.getCategoryIdList() != null) {
-            
+
             List<Category> categories = req.getCategoryIdList().isEmpty()
                 ? List.of()
                 : categoryRepository.findAllById(req.getCategoryIdList());
