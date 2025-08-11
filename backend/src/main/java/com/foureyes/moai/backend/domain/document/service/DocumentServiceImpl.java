@@ -44,55 +44,73 @@ public class DocumentServiceImpl implements DocumentService{
     private final UserRepository userRepository;
     private final StorageService storageService;
     private final StudyMembershipRepository studyMembershipRepository;
+
     @Override
     @Transactional
-    public DocumentResponseDto uploadDocument(int uploaderId, CreateDocumentRequest req) throws IOException, IOException {
+    public DocumentResponseDto uploadDocument(int uploaderId, CreateDocumentRequest req) throws IOException {
         // 1) 기본 검증
         if (req.getFile() == null || req.getFile().isEmpty()) {
             throw new IllegalArgumentException("파일이 비어있습니다.");
         }
-        if (!StringUtils.hasText(req.getTitle())) {
+        if (!org.springframework.util.StringUtils.hasText(req.getTitle())) {
             throw new IllegalArgumentException("제목은 필수입니다.");
         }
+        if (req.getCategoryId() == null || req.getCategoryId().isEmpty()) {
+            throw new IllegalArgumentException("카테고리는 최소 1개 이상 선택해야 합니다.");
+        }
 
-        // 2) 카테고리 조회 (스터디 식별)
-        Category category = categoryRepository.findById(req.getCategoryId())
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카테고리입니다."));
-        StudyGroup study = category.getStudyGroup();
+        // 2) 카테고리 조회 (+ 중복 제거)
+        List<Integer> catIds = req.getCategoryId().stream()
+            .filter(java.util.Objects::nonNull)
+            .distinct()
+            .toList();
+
+        var categories = categoryRepository.findAllById(catIds);
+        if (categories.size() != catIds.size()) {
+            throw new IllegalArgumentException("존재하지 않는 카테고리가 포함되어 있습니다.");
+        }
+
+        // 2-1) 모든 카테고리가 같은 스터디에 속하는지 검증
+        int studyId = categories.get(0).getStudyGroup().getId();
+        boolean sameStudy = categories.stream()
+            .allMatch(c -> c.getStudyGroup().getId() == studyId);
+        if (!sameStudy) {
+            throw new IllegalArgumentException("서로 다른 스터디의 카테고리가 섞여 있습니다.");
+        }
 
         // 3) 스토리지 업로드 (PDF만 허용 / 비공개 버킷 / key 반환)
-        //    StorageService에서 contentType 검사(application/pdf) 및 예외 처리
-        String storedKey = storageService.uploadDocument(req.getFile(), study.getId());
+        String storedKey = storageService.uploadDocument(req.getFile(), studyId);
 
         // 4) 문서 저장
         Document doc = Document.builder()
-            .studyGroup(study)
+            .studyGroup(categories.get(0).getStudyGroup())
             .uploader(userRepository.getReferenceById(uploaderId))
-            .title(req.getTitle())
+            .title(req.getTitle().trim())
             .description(req.getDescription())
-            .fileKey(storedKey) // URL이 아닌 key 저장
+            .fileKey(storedKey)
             .build();
         Document saved = documentRepository.save(doc);
 
-        // 5) 문서-카테고리 매핑 (Unique(document, category) 가정)
-        if (!documentCategoryRepository.existsByDocument_IdAndCategory_Id(saved.getId(), category.getId())) {
-            documentCategoryRepository.save(
-                DocumentCategory.builder()
+        // 5) 문서-카테고리 매핑 (요청 중복 제거했으므로 그대로 삽입)
+        if (!categories.isEmpty()) {
+            List<DocumentCategory> links = categories.stream()
+                .map(c -> DocumentCategory.builder()
                     .document(saved)
-                    .category(category)
-                    .build()
-            );
+                    .category(c)
+                    .build())
+                .toList();
+            documentCategoryRepository.saveAll(links);
         }
 
         // 6) 응답
         return DocumentResponseDto.builder()
             .id(saved.getId())
-            .studyId(study.getId())
+            .studyId(studyId)
             .title(saved.getTitle())
             .description(saved.getDescription())
-            .fileKey(saved.getFileKey()) // key 그대로 반환
-            .categoryIds(List.of(category.getId()))
-            .createdAt(LocalDateTime.now()) // DB default 사용하는 경우 간단 대체
+            .fileKey(saved.getFileKey())       // URL이 아니라 key
+            .categoryIds(catIds)               // 요청 리스트(중복 제거)
+            .createdAt(saved.getCreatedAt() != null ? saved.getCreatedAt() : java.time.LocalDateTime.now())
             .build();
     }
 
