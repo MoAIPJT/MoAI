@@ -14,8 +14,6 @@ import com.foureyes.moai.backend.domain.user.repository.UserRepository;
 import com.foureyes.moai.backend.commons.exception.CustomException;
 import com.foureyes.moai.backend.commons.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,7 +25,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ScheduleServiceImpl implements ScheduleService {
 
-    private static final Logger log = LoggerFactory.getLogger(ScheduleServiceImpl.class);
+    // SLF4J Logger snippet 적용
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ScheduleServiceImpl.class);
 
     private final ScheduleRepository scheduleRepository;
     private final StudyGroupRepository studyGroupRepository;
@@ -35,8 +34,8 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final StudyMembershipRepository studyMembershipRepository;
 
     /**
-     * 입력: int userId (사용자 ID), CreateScheduleRequestDto request (일정 생성 정보)
-     * 출력: CreateScheduleResponseDto (생성된 일정 정보)
+     * 입력: int userId, CreateScheduleRequestDto request
+     * 출력: CreateScheduleResponseDto
      * 기능: 새로운 일정을 생성합니다.
      */
     @Override
@@ -86,6 +85,11 @@ public class ScheduleServiceImpl implements ScheduleService {
         return CreateScheduleResponseDto.from(savedSchedule);
     }
 
+    /**
+     * 입력: int userId, int scheduleId, EditScheduleRequestDto request
+     * 출력: EditScheduleResponseDto
+     * 기능: 기존 일정을 부분 수정합니다.
+     */
     @Override
     @Transactional
     public EditScheduleResponseDto editSchedule(int userId, int scheduleId, EditScheduleRequestDto request) {
@@ -125,6 +129,11 @@ public class ScheduleServiceImpl implements ScheduleService {
         return EditScheduleResponseDto.from(updated);
     }
 
+    /**
+     * 입력: int userId, int scheduleId
+     * 출력: GetScheduleResponseDto
+     * 기능: 일정 단건 조회
+     */
     @Override
     @Transactional(readOnly = true)
     public GetScheduleResponseDto getSchedule(int userId, int scheduleId) {
@@ -149,6 +158,11 @@ public class ScheduleServiceImpl implements ScheduleService {
         return GetScheduleResponseDto.from(schedule);
     }
 
+    /**
+     * 입력: int userId, int studyId, LocalDateTime from, LocalDateTime to
+     * 출력: List<GetScheduleListDto>
+     * 기능: 스터디 기간 내 일정 목록 조회
+     */
     @Override
     @Transactional(readOnly = true)
     public List<GetScheduleListDto> listByRange(int userId, int studyId,
@@ -180,6 +194,11 @@ public class ScheduleServiceImpl implements ScheduleService {
         return list.stream().map(GetScheduleListDto::from).toList();
     }
 
+    /**
+     * 입력: int userId, LocalDateTime from, LocalDateTime to
+     * 출력: List<MyScheduleListDto>
+     * 기능: 마이페이지 일정 목록 조회
+     */
     @Override
     @Transactional(readOnly = true)
     public List<MyScheduleListDto> listMySchedules(int userId, LocalDateTime from, LocalDateTime to) {
@@ -196,6 +215,11 @@ public class ScheduleServiceImpl implements ScheduleService {
         return list.stream().map(MyScheduleListDto::from).toList();
     }
 
+    /**
+     * 입력: int userId, int scheduleId
+     * 출력: void
+     * 기능: 일정 삭제
+     */
     @Override
     @Transactional
     public void deleteSchedule(int userId, int scheduleId) {

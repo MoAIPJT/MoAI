@@ -37,12 +37,12 @@ public class ScheduleController {
      * 출력: CreateScheduleResponseDto (생성된 일정 정보)
      * 기능: 새로운 일정을 생성
      */
+    @PostMapping("/register")
     @Operation(
         summary = "일정 생성",
         description = "새로운 일정을 생성합니다.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
-    @PostMapping("/register")
     public ResponseEntity<CreateScheduleResponseDto> registerEvent(
             @RequestHeader("Authorization") String accessToken,
             @Valid @RequestBody CreateScheduleRequestDto request) {
@@ -56,12 +56,17 @@ public class ScheduleController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * 입력: EditScheduleRequestDto (일정 수정 정보)
+     * 출력: EditScheduleResponseDto (수정된 일정 정보)
+     * 기능: 기존 일정을 부분 수정
+     */
+    @PatchMapping("/edit/{id}")
     @Operation(
         summary = "일정 수정",
         description = "기존 일정을 부분 수정합니다.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
-    @PatchMapping("/edit/{id}")
     public ResponseEntity<EditScheduleResponseDto> editEvent(
         @RequestHeader("Authorization") String accessToken,
         @Parameter(name = "id", description = "수정할 일정 ID", in = ParameterIn.PATH)
@@ -69,16 +74,23 @@ public class ScheduleController {
         @Valid @RequestBody EditScheduleRequestDto request
     ) {
         int userId = jwtTokenProvider.getUserId(accessToken.substring(7));
+        log.info("일정 수정 API 호출: scheduleId={}, userId={}", scheduleId, userId);
         EditScheduleResponseDto response = scheduleService.editSchedule(userId, scheduleId, request);
+        log.info("일정 수정 완료: scheduleId={}, userId={}", scheduleId, userId);
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * 입력: 일정 ID (PathVariable)
+     * 출력: GetScheduleResponseDto (일정 정보)
+     * 기능: 일정 단건 조회
+     */
+    @GetMapping("/{id}")
     @Operation(
         summary = "일정 단건 조회",
         description = "일정 ID로 단일 일정을 조회합니다. 스터디 멤버만 접근 가능합니다.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
-    @GetMapping("/{id}")
     public ResponseEntity<GetScheduleResponseDto> getSchedule(
         @RequestHeader("Authorization") String accessToken,
         @Parameter(name = "id", description = "조회할 일정 ID", in = ParameterIn.PATH)
@@ -91,12 +103,17 @@ public class ScheduleController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * 입력: studyId (PathVariable), from~to (RequestParam)
+     * 출력: List<GetScheduleListDto> (일정 목록)
+     * 기능: 스터디 기간 내 일정 목록 조회
+     */
+    @GetMapping("/{studyId}/list")
     @Operation(
         summary = "일정 목록 조회(스터디 스크린)",
         description = "스터디 페이지에서 기간(from~to)에 겹치는 일정을 조회합니다.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
-    @GetMapping("/{studyId}/list")
     public ResponseEntity<List<GetScheduleListDto>> listByRange(
         @RequestHeader("Authorization") String accessToken,
         @PathVariable @NotNull int studyId,
@@ -111,12 +128,17 @@ public class ScheduleController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * 입력: from~to (RequestParam)
+     * 출력: List<MyScheduleListDto> (마이페이지 일정 목록)
+     * 기능: 마이페이지 일정 목록 조회
+     */
+    @GetMapping("/list")
     @Operation(
         summary = "일정 목록 조회(마이페이지)",
         description = "해당 사용자가 가입 승인된 모든 스터디의 일정들을 from~to 기간으로 조회합니다.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
-    @GetMapping("/list")
     public ResponseEntity<List<MyScheduleListDto>> listMySchedule(
         @RequestHeader("Authorization") String accessToken,
         @RequestParam @NotNull @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
@@ -127,12 +149,17 @@ public class ScheduleController {
         return ResponseEntity.ok(scheduleService.listMySchedules(userId, from, to));
     }
 
+    /**
+     * 입력: 일정 ID (PathVariable)
+     * 출력: 없음 (204 No Content)
+     * 기능: 일정 삭제
+     */
+    @DeleteMapping("/delete/{id}")
     @Operation(
         summary = "일정 삭제",
         description = "일정을 삭제합니다. 스터디 관리자만 가능.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
-    @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteSchedule(
         @RequestHeader("Authorization") String accessToken,
         @Parameter(name = "id", description = "삭제할 일정 ID", in = ParameterIn.PATH)
