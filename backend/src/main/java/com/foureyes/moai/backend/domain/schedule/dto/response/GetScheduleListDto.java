@@ -16,12 +16,6 @@ public class GetScheduleListDto {
     @Schema(description = "일정 ID", example = "1")
     private int id;
 
-    @Schema(description = "스터디 ID", example = "5")
-    private int studyId;
-
-    @Schema(description = "작성자 사용자 ID", example = "3")
-    private int userId;
-
     @Schema(description = "시작 시간", example = "2025-12-08T09:00:00")
     private LocalDateTime startDatetime;
 
@@ -31,14 +25,16 @@ public class GetScheduleListDto {
     @Schema(description = "제목", example = "주간 회의")
     private String title;
 
+    @Schema(description = "메모", example = "주간 진행 상황 공유")
+    private String memo;
+
     public static GetScheduleListDto from(Schedule s) {
         return GetScheduleListDto.builder()
             .id(s.getId())
-            .studyId(s.getStudyGroup().getId())
-            .userId(s.getUser().getId())
             .startDatetime(s.getStartDatetime())
             .endDatetime(s.getEndDatetime())
             .title(s.getTitle())
+            .memo(s.getMemo())
             .build();
     }
 }

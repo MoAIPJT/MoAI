@@ -45,7 +45,7 @@ public class ScheduleController {
         description = "새로운 일정을 생성합니다.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
-    @PostMapping("/{studyId}/schedules")
+    @PostMapping("/register")
     public ResponseEntity<CreateScheduleResponseDto> registerEvent(
             @RequestHeader("Authorization") String accessToken,
             @Valid @RequestBody CreateScheduleRequestDto request) {
@@ -64,7 +64,7 @@ public class ScheduleController {
         description = "기존 일정을 부분 수정합니다.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
-    @PatchMapping("/{studyId}/schedules/{id}")
+    @PatchMapping("/edit/{id}")
     public ResponseEntity<EditScheduleResponseDto> editEvent(
         @RequestHeader("Authorization") String accessToken,
         @Parameter(name = "id", description = "수정할 일정 ID", in = ParameterIn.PATH)
@@ -95,14 +95,14 @@ public class ScheduleController {
     }
 
     @Operation(
-        summary = "일정 목록 조회(기간 기반)",
-        description = "studyId와 기간(from~to)에 겹치는 일정을 조회합니다.",
+        summary = "일정 목록 조회(스터디 스크린)",
+        description = "스터디 페이지에서 기간(from~to)에 겹치는 일정을 조회합니다.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
-    @GetMapping("/list")
+    @GetMapping("/{studyId}/list")
     public ResponseEntity<List<GetScheduleListDto>> listByRange(
         @RequestHeader("Authorization") String accessToken,
-        @RequestParam @NotNull int studyId,
+        @PathVariable @NotNull int studyId,
         @RequestParam @NotNull @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
         @RequestParam @NotNull @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to
     ) {
@@ -119,7 +119,7 @@ public class ScheduleController {
         description = "일정을 삭제합니다. 스터디 관리자만 가능.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteSchedule(
         @RequestHeader("Authorization") String accessToken,
         @Parameter(name = "id", description = "삭제할 일정 ID", in = ParameterIn.PATH)

@@ -176,7 +176,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
 
         // 겹치는 일정 조회: start < to AND end > from
-        List<Schedule> list = scheduleRepository.findOverlapping(
+        List<Schedule> list = scheduleRepository.findOverlappingByStudy(
             studyId, from, to);
 
         log.info("일정 기간 조회 완료: count={}", list.size());

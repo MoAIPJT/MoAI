@@ -20,7 +20,9 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
         and s.endDatetime   > :from
       order by s.startDatetime asc
     """)
-    List<Schedule> findOverlapping(@Param("studyId") Integer studyId,
-                                   @Param("from") LocalDateTime from,
-                                   @Param("to") LocalDateTime to);
+    List<Schedule> findOverlappingByStudy(
+        @Param("studyId") int studyId,
+        @Param("from") LocalDateTime from,
+        @Param("to")   LocalDateTime to
+    );
 }
