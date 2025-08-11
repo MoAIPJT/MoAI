@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
 import { userKeys } from './queryKeys'
 import * as usersService from '@/services/usersService'
 import { useAppStore } from '@/store/appStore'
@@ -38,7 +37,6 @@ export const useMe = () => {
 export const useLogin = () => {
   const setAuth = useAppStore((state) => state.auth.setAuth)
   const queryClient = useQueryClient()
-  const navigate = useNavigate()
 
   return useMutation({
     mutationFn: usersService.login,
@@ -61,9 +59,6 @@ export const useLogin = () => {
       })
       // Invalidate and refetch user profile
       queryClient.invalidateQueries({ queryKey: userKeys.me() })
-
-      // 로그인 성공 후 dashboard로 이동
-      navigate('/dashboard')
     }
   })
 }
@@ -71,7 +66,6 @@ export const useLogin = () => {
 export const useSocialLogin = () => {
   const setAuth = useAppStore((state) => state.auth.setAuth)
   const queryClient = useQueryClient()
-  const navigate = useNavigate()
 
   return useMutation({
     mutationFn: usersService.socialLogin,
@@ -82,27 +76,13 @@ export const useSocialLogin = () => {
       })
       // Invalidate and refetch user profile
       queryClient.invalidateQueries({ queryKey: userKeys.me() })
-
-      // 소셜 로그인 성공 후 dashboard로 이동
-      navigate('/dashboard')
     }
   })
 }
 
 export const useSignup = () => {
-  const navigate = useNavigate()
-
   return useMutation({
-    mutationFn: usersService.signup,
-    onSuccess: (response, variables) => {
-      // 회원가입 성공 후 email-sent 페이지로 이동
-      navigate('/email-sent', {
-        state: {
-          message: '회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료해주세요.',
-          email: variables.email
-        }
-      })
-    }
+    mutationFn: usersService.signup
   })
 }
 
@@ -196,19 +176,8 @@ export const useVerifyEmail = () => {
 }
 
 export const useResetPasswordRequest = () => {
-  const navigate = useNavigate()
-
   return useMutation({
-    mutationFn: usersService.resetPasswordRequest,
-    onSuccess: (response, email) => {
-      // 비밀번호 재설정 요청 성공 후 password-sent 페이지로 이동
-      navigate('/password-sent', {
-        state: {
-          message: '비밀번호 재설정 메일이 전송되었습니다.',
-          email: email
-        }
-      })
-    }
+    mutationFn: usersService.resetPasswordRequest
   })
 }
 

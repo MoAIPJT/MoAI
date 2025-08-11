@@ -9,7 +9,8 @@ import { fetchSummaryList, type StudyWithSummaries } from '../services/summarySe
 import { dummySummaryData } from '../types/summary'
 import type { ProfileData } from '../components/organisms/ProfileSettingsModal/types'
 // import type { ChangePasswordData } from '../components/organisms/ChangePasswordModal/types'
-import { useAuth } from '../hooks/useAuth'
+import { useAppStore } from '../store/appStore'
+import { useNavigate } from 'react-router-dom'
 
 const AISummaryPage: React.FC = () => {
   const [activeItem, setActiveItem] = useState<string>('')
@@ -25,7 +26,9 @@ const AISummaryPage: React.FC = () => {
     email: 'dksejrqus2@gmail.com',
     profileImage: ''
   })
-  const { logout } = useAuth()
+
+  const clearAuth = useAppStore((state) => state.auth.clearAuth)
+  const navigate = useNavigate()
   // const [error, setError] = useState<string | null>(null)
 
   // AI 요약본 목록 조회
@@ -115,7 +118,8 @@ const AISummaryPage: React.FC = () => {
   }
 
   const handleLogout = () => {
-    logout()
+    clearAuth()
+    navigate('/login')
   }
 
   const handleUpdateProfile = (data: Partial<ProfileData>) => {

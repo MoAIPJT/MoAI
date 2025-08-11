@@ -1,27 +1,53 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LoginTemplate from '@/components/templates/LoginTemplate'
-import { useLogin, useSocialLogin } from '@/hooks/useUsers'
-import { useNavigate } from 'react-router-dom'
 import type { LoginFormData } from '@/components/organisms/LoginForm/types'
-import apiClient from '@/services/api'
-import { extractAxiosErrorMessage } from '@/utils/errorHandler'
+import { useLogin } from '@/hooks/useUsers'
+import { useAppStore } from '@/store/appStore'
 
 const LoginPage: React.FC = () => {
+  const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
-  const loginMutation = useLogin()
-  const socialLoginMutation = useSocialLogin()
+  const setAuth = useAppStore((state) => state.auth.setAuth)
 
-  const handleLogin = (data: LoginFormData) => {
-    loginMutation.mutate(data)
+  const loginMutation = useLogin()
+
+  const handleLogin = async (data: LoginFormData) => {
+    setError(null)
+
+    try {
+      const response = await loginMutation.mutateAsync({
+        email: data.email,
+        password: data.password,
+      })
+
+      // Zustand store에 토큰 저장
+      setAuth({
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
+      })
+
+      // 이메일 기억하기 옵션
+      if (data.rememberEmail) {
+        localStorage.setItem('rememberedEmail', data.email)
+      } else {
+        localStorage.removeItem('rememberedEmail')
+      }
+
+      // 로그인 성공 후 리다이렉트
+      navigate('/dashboard')
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError('로그인에 실패했습니다.')
+      }
+    }
   }
 
   const handleKakaoLogin = () => {
-    // 카카오 로그인 URL로 리다이렉트
-    const kakaoClientId = import.meta.env.VITE_KAKAO_CLIENT_ID
-    const redirectUri = `${window.location.origin}/auth/kakao/callback`
-    const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${kakaoClientId}&redirect_uri=${redirectUri}&response_type=code`
-    window.location.href = kakaoAuthUrl
+    const backendUrl = import.meta.env.VITE_BACKEND_URL
+    window.location.href = `${backendUrl}/oauth2/authorization/kakao`
   }
 
   const handleGoogleLogin = () => {
@@ -35,7 +61,7 @@ const LoginPage: React.FC = () => {
       onKakaoLogin={handleKakaoLogin}
       onGoogleLogin={handleGoogleLogin}
       loading={loginMutation.isPending}
-      error={loginMutation.error ? '로그인에 실패했습니다.' : null}
+      error={error}
     />
   )
 }
