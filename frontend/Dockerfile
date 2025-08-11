@@ -5,7 +5,7 @@ FROM node:20
 WORKDIR /app
 
 # 3. package.json과 lock 파일 복사
-COPY package*.json ./
+COPY frontend/package*.json ./
 
 # 4. 의존성 설치
 RUN npm install
