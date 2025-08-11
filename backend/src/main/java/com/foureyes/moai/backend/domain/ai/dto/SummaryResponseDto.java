@@ -1,3 +1,4 @@
+
 package com.foureyes.moai.backend.domain.ai.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;

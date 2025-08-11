@@ -19,11 +19,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -59,16 +59,15 @@ public class AiServiceImpl implements AiService {
      * 기능: PDF 파일을 받아 텍스트 추출, 프롬프트 생성, Gemini API 호출, 응답 파싱을 통해 요약 결과를 반환한다.
      */
     @Override
-    public List<SummaryDto> summarizePdf(MultipartFile pdfFile) throws IOException {
-        log.info("PDF 요약 시작: {}", pdfFile.getOriginalFilename());
-        String textForPrompt = extractTextFromPdf(pdfFile);
+    public List<SummaryDto> summarizePdf(InputStream pdfInputStream, String fileName) throws IOException {
+        log.info("PDF 요약 시작: {}", fileName);
+        String textForPrompt = extractTextFromPdf(pdfInputStream, fileName);
         String prompt = createPrompt(textForPrompt);
 
-        // API 호출 및 파싱 과정에서 발생할 수 있는 다른 예외들을 처리합니다.
         try {
             String summaryJson = callGeminiApi(prompt).block();
             List<SummaryDto> summary = parseSummaryResponse(summaryJson);
-            log.info("PDF 요약 완료: {}", pdfFile.getOriginalFilename());
+            log.info("PDF 요약 완료: {}", fileName);
             return summary;
         } catch (Exception e) {
             log.error("AI 요약 생성 중 오류 발생", e);
@@ -81,21 +80,23 @@ public class AiServiceImpl implements AiService {
      * 출력: String
      * 기능: PDF 파일에서 페이지 번호와 함께 텍스트를 추출한다.
      */
-    public String extractTextFromPdf(MultipartFile file) throws IOException {
-        log.info("PDF 텍스트 추출 시작: {}", file.getOriginalFilename());
+
+    public String extractTextFromPdf(InputStream inputStream, String fileName) throws IOException {
+        log.info("PDF 텍스트 추출 시작: {}", fileName);
         StringBuilder fullText = new StringBuilder();
-        // try-with-resources 구문은 IOException을 자동으로 처리해줍니다.
-        try (PDDocument document = PDDocument.load(file.getInputStream())) {
+
+        try (PDDocument document = PDDocument.load(inputStream)) {
             PDFTextStripper stripper = new PDFTextStripper();
             for (int pageNum = 1; pageNum <= document.getNumberOfPages(); pageNum++) {
                 stripper.setStartPage(pageNum);
                 stripper.setEndPage(pageNum);
                 String pageText = stripper.getText(document);
-                fullText.append("---").append(" Page ").append(pageNum).append("---").append(" ");
+                fullText.append("--- Page ").append(pageNum).append(" --- ");
                 fullText.append(pageText).append(" ");
             }
         }
-        log.info("PDF 텍스트 추출 완료: {}", file.getOriginalFilename());
+
+        log.info("PDF 텍스트 추출 완료: {}", fileName);
         return fullText.toString();
     }
 

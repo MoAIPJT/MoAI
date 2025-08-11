@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import com.foureyes.moai.backend.domain.ai.dto.request.AiCreateRequestDto;
@@ -17,14 +18,15 @@ public interface AiService {
      * 출력: List<SummaryDto>
      * 기능: PDF 파일을 요약한다.
      */
-    List<SummaryDto> summarizePdf(MultipartFile pdfFile) throws IOException;
+    List<SummaryDto> summarizePdf(InputStream pdfInputStream, String fileName) throws IOException;
 
     /**
      * 입력: MultipartFile
      * 출력: String
      * 기능: PDF 파일에서 텍스트를 추출한다.
      */
-    String extractTextFromPdf(MultipartFile file) throws IOException;
+    public String extractTextFromPdf(InputStream inputStream, String fileName) throws IOException;
+
 
     /**
      * 입력: String
