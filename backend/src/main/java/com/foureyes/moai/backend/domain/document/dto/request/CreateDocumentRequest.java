@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -12,7 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class CreateDocumentRequest {
 
     @Schema(description = "카테고리 ID", example = "101", requiredMode = Schema.RequiredMode.REQUIRED)
-    private int categoryId;
+    private List<Integer> categoryId;
 
     @Schema(description = "파일 표시 이름(제목)", example = "네트워크 정리.pdf", requiredMode = Schema.RequiredMode.REQUIRED)
     private String title;
