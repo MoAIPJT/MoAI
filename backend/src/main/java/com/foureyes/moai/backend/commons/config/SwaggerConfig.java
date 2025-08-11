@@ -17,8 +17,8 @@ public class SwaggerConfig {
 
         return new OpenAPI()
             .info(new Info()
-                .title("User API")
-                .description("회원 관리 API (JWT 인증 적용)")
+                .title("MoAI API")
+                .description("자료 공유 및 AI 요약이 가능한 화상 스터디 서비스 MoAI의 API")
                 .version("v1.0.0"))
             .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
             .components(new Components()

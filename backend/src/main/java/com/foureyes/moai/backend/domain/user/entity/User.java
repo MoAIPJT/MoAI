@@ -42,4 +42,8 @@ public class User {
 
     @Column(name = "refresh_token")
     private String refreshToken;
+
+    @Column(name = "is_verified")
+    private boolean isVerified = false;
+
 }
