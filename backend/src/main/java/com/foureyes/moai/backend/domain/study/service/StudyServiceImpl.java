@@ -119,6 +119,7 @@ public class StudyServiceImpl implements StudyService {
             .imageUrl(saved.getImageUrl())
             .createdBy(saved.getCreatedBy())
             .createdAt(saved.getCreatedAt())
+            .hashId(saved.getHashId())
             .build();
     }
 
