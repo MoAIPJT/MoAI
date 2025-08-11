@@ -2,10 +2,7 @@ package com.foureyes.moai.backend.domain.schedule.service;
 
 import com.foureyes.moai.backend.domain.schedule.dto.request.CreateScheduleRequestDto;
 import com.foureyes.moai.backend.domain.schedule.dto.request.EditScheduleRequestDto;
-import com.foureyes.moai.backend.domain.schedule.dto.response.CreateScheduleResponseDto;
-import com.foureyes.moai.backend.domain.schedule.dto.response.EditScheduleResponseDto;
-import com.foureyes.moai.backend.domain.schedule.dto.response.GetScheduleListDto;
-import com.foureyes.moai.backend.domain.schedule.dto.response.GetScheduleResponseDto;
+import com.foureyes.moai.backend.domain.schedule.dto.response.*;
 import com.foureyes.moai.backend.domain.schedule.entity.Schedule;
 import com.foureyes.moai.backend.domain.schedule.repository.ScheduleRepository;
 import com.foureyes.moai.backend.domain.study.entity.StudyGroup;
@@ -181,6 +178,22 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         log.info("일정 기간 조회 완료: count={}", list.size());
         return list.stream().map(GetScheduleListDto::from).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MyScheduleListDto> listMySchedules(int userId, LocalDateTime from, LocalDateTime to) {
+        if (from == null || to == null || !from.isBefore(to)) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+        if (Duration.between(from, to).toDays() > 93) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+
+        List<Schedule> list = scheduleRepository.findMyOverlapping(
+            userId, StudyMembership.Status.APPROVED, from, to);
+
+        return list.stream().map(MyScheduleListDto::from).toList();
     }
 
     @Override

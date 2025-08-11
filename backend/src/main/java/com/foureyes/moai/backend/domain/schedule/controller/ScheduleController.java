@@ -3,10 +3,7 @@ package com.foureyes.moai.backend.domain.schedule.controller;
 import com.foureyes.moai.backend.auth.jwt.JwtTokenProvider;
 import com.foureyes.moai.backend.domain.schedule.dto.request.CreateScheduleRequestDto;
 import com.foureyes.moai.backend.domain.schedule.dto.request.EditScheduleRequestDto;
-import com.foureyes.moai.backend.domain.schedule.dto.response.CreateScheduleResponseDto;
-import com.foureyes.moai.backend.domain.schedule.dto.response.EditScheduleResponseDto;
-import com.foureyes.moai.backend.domain.schedule.dto.response.GetScheduleListDto;
-import com.foureyes.moai.backend.domain.schedule.dto.response.GetScheduleResponseDto;
+import com.foureyes.moai.backend.domain.schedule.dto.response.*;
 import com.foureyes.moai.backend.domain.schedule.service.ScheduleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -115,6 +112,22 @@ public class ScheduleController {
     }
 
     @Operation(
+        summary = "일정 목록 조회(마이페이지)",
+        description = "해당 사용자가 가입 승인된 모든 스터디의 일정들을 from~to 기간으로 조회합니다.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @GetMapping("/list")
+    public ResponseEntity<List<MyScheduleListDto>> listMySchedule(
+        @RequestHeader("Authorization") String accessToken,
+        @RequestParam @NotNull @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+        @RequestParam @NotNull @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to
+    ) {
+        int userId = jwtTokenProvider.getUserId(accessToken.substring(7));
+        log.info("마이페이지 일정 목록 조회: userId={}, from={}, to={}", userId, from, to);
+        return ResponseEntity.ok(scheduleService.listMySchedules(userId, from, to));
+    }
+
+    @Operation(
         summary = "일정 삭제",
         description = "일정을 삭제합니다. 스터디 관리자만 가능.",
         security = @SecurityRequirement(name = "bearerAuth")
@@ -131,6 +144,5 @@ public class ScheduleController {
         scheduleService.deleteSchedule(userId, scheduleId);
         return ResponseEntity.noContent().build(); // 204
     }
-
 }
 
