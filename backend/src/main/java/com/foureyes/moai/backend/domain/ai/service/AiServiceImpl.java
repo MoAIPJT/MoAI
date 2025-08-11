@@ -4,17 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.foureyes.moai.backend.commons.exception.CustomException;
-import com.foureyes.moai.backend.commons.exception.ErrorCode;
-import com.foureyes.moai.backend.commons.exception.SummaryNotFoundException;
 import com.foureyes.moai.backend.domain.ai.dto.SummaryDto;
-import com.foureyes.moai.backend.domain.ai.dto.request.AiCreateRequestDto;
-import com.foureyes.moai.backend.domain.ai.dto.request.AiUpdateRequestDto;
-import com.foureyes.moai.backend.domain.ai.dto.response.AiCreateResponseDto;
-import com.foureyes.moai.backend.domain.ai.entity.Summary;
-import com.foureyes.moai.backend.domain.ai.repository.SummaryRepository;
+import com.foureyes.moai.backend.domain.ai.repository.AiSummaryRepository;
 import com.foureyes.moai.backend.domain.user.entity.User;
 import com.foureyes.moai.backend.domain.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.slf4j.Logger;
@@ -23,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -34,27 +27,16 @@ import java.util.Map;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class AiServiceImpl implements AiService {
 
     private static final Logger log = LoggerFactory.getLogger(AiServiceImpl.class);
     private final WebClient webClient;
     private final String geminiApiKey;
     private final ObjectMapper objectMapper;
-    private final SummaryRepository summaryRepository;
+    private final AiSummaryRepository summaryRepository;
     private final UserRepository userRepository;
 
-    @Autowired
-    public AiServiceImpl(WebClient.Builder webClientBuilder,
-                         @Value("${gemini.api.url}") String geminiApiUrl,
-                         @Value("${gemini.api.key}") String geminiApiKey,
-                         SummaryRepository summaryRepository,
-                         UserRepository userRepository) {
-        this.webClient = webClientBuilder.baseUrl(geminiApiUrl).build();
-        this.geminiApiKey = geminiApiKey;
-        this.objectMapper = new ObjectMapper();
-        this.summaryRepository = summaryRepository;
-        this.userRepository = userRepository;
-    }
 
 
     /**  Demo 시연시 사용한 코드 변환 Start **/
@@ -120,9 +102,9 @@ public class AiServiceImpl implements AiService {
             출력 형식은 다음 JSON 리스트 형식과 정확히 일치해야 합니다:
             [
               {
-                "summary_sentence": "요약된 문장입니다.",
-                "original_quote": "요약의 근거가 되는 원본 텍스트의 구절입니다.",
-                "page_number": 페이지 번호
+                "summarySentence": "요약된 문장입니다.",
+                "originalQuote": "요약의 근거가 되는 원본 텍스트의 구절입니다.",
+                "pageNumber": 페이지 번호
               },
               ...
             ]
@@ -186,70 +168,5 @@ public class AiServiceImpl implements AiService {
             log.error("AI 응답 파싱 실패: {}", jsonResponse, e);
             throw new RuntimeException("AI 응답 파싱에 실패했습니다.", e);
         }
-    }
-
-
-
-    /**    데모 END    */
-    /**
-     * 입력: requestDto
-     * 출력: AiCreateResponseDto
-     * 기능: 요약 요청 정보를 받아 DB에 저장하고, 생성된 요약 정보 DTO를 반환한다.
-     */
-    @Override
-    public AiCreateResponseDto createSummary(AiCreateRequestDto requestDto) {
-        log.info("요약 정보 저장 시작: {}", requestDto.getTitle());
-        User user = userRepository.findById(requestDto.getId())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        Summary summary = Summary.builder()
-                .user(user)
-                .title(requestDto.getTitle())
-                .description(requestDto.getDescription())
-                .modelType(requestDto.getModelType())
-                .promptType(requestDto.getPromptType())
-                .build();
-
-        Summary savedSummary = summaryRepository.save(summary);
-        log.info("요약 정보 저장 완료: id={}", savedSummary.getId());
-
-        return AiCreateResponseDto.builder()
-                .summaryId(savedSummary.getId())
-                .title(savedSummary.getTitle())
-                .description(savedSummary.getDescription())
-                .modelType(savedSummary.getModelType())
-                .promptType(savedSummary.getPromptType())
-                .build();
-    }
-
-    @Override
-    @Transactional
-    public void deleteSummary(int summaryId) {
-        log.info("요약 정보 삭제 시작: id={}", summaryId);
-        Summary summary = summaryRepository.findById((long) summaryId)
-                .orElseThrow(SummaryNotFoundException::new);
-
-        summaryRepository.delete(summary);
-        log.info("요약 정보 삭제 완료: id={}", summaryId);
-    }
-
-    @Override
-    @Transactional
-    public AiCreateResponseDto updateSummary(AiUpdateRequestDto requestDto) {
-        log.info("요약 정보 업데이트 시작: id={}", requestDto.getId());
-        Summary summary = summaryRepository.findById((long) requestDto.getId())
-                .orElseThrow(SummaryNotFoundException::new);
-
-        summary.updateSummary(requestDto.getTitle(), requestDto.getDescription());
-        Summary updatedSummary = summaryRepository.save(summary);
-        log.info("요약 정보 업데이트 완료: id={}", updatedSummary.getId());
-
-        return AiCreateResponseDto.builder()
-                .summaryId(updatedSummary.getId())
-                .title(updatedSummary.getTitle())
-                .description(updatedSummary.getDescription())
-                .modelType(updatedSummary.getModelType())
-                .promptType(updatedSummary.getPromptType())
-                .build();
     }
 }

@@ -115,7 +115,7 @@ CREATE TABLE IF NOT EXISTS ai_summaries (
     description TEXT,
     model_type VARCHAR(100),
     prompt_type VARCHAR(100),
-    file_path VARCHAR(1000),
+    summary_json JSON,
     created_at DATETIME,
     FOREIGN KEY (owner_id) REFERENCES users(id)
 );
