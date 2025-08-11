@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface AiSummaryRepository extends JpaRepository<AiSummary, Integer> {
     List<AiSummary> findByOwner_IdOrderByCreatedAtDesc(int ownerId);
     Optional<AiSummary> findByIdAndOwner_Id(int id, int ownerId);
+
 }

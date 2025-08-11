@@ -5,6 +5,8 @@ import com.foureyes.moai.backend.commons.util.StorageService;
 import com.foureyes.moai.backend.domain.ai.dto.SummaryDto;
 import com.foureyes.moai.backend.domain.ai.dto.request.CreateAiSummaryRequest;
 import com.foureyes.moai.backend.domain.ai.dto.response.CreateAiSummaryResponse;
+import com.foureyes.moai.backend.domain.ai.dto.response.DashboardSummariesResponse;
+import com.foureyes.moai.backend.domain.ai.dto.response.SidebarSummariesResponse;
 import com.foureyes.moai.backend.domain.ai.entity.AiSummaryDocument;
 import com.foureyes.moai.backend.domain.ai.service.AiService;
 import com.foureyes.moai.backend.domain.document.service.DocumentService;
@@ -74,4 +76,21 @@ public class AiController {
         return ResponseEntity.status(201).body(resp);
     }
 
+    @Operation(summary = "내 요약본 목록(대시보드)")
+    @GetMapping("/dashboard")
+    public ResponseEntity<DashboardSummariesResponse> dashboard(
+        @Parameter(hidden = true) @RequestHeader("Authorization") String bearerToken
+    ) {
+        int ownerId = extractUserIdFromToken(bearerToken);
+        return ResponseEntity.ok(aiService.getDashboardList(ownerId));
+    }
+
+    @Operation(summary = "내 요약본 목록(사이드바)")
+    @GetMapping("/sidebar")
+    public ResponseEntity<SidebarSummariesResponse> sidebar(
+        @Parameter(hidden = true) @RequestHeader("Authorization") String bearerToken
+    ) {
+        int ownerId = extractUserIdFromToken(bearerToken);
+        return ResponseEntity.ok(aiService.getSidebarList(ownerId));
+    }
 }

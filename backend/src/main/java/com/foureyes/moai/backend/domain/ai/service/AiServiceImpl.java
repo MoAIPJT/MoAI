@@ -8,6 +8,8 @@ import com.foureyes.moai.backend.commons.util.StorageService;
 import com.foureyes.moai.backend.domain.ai.dto.SummaryDto;
 import com.foureyes.moai.backend.domain.ai.dto.request.CreateAiSummaryRequest;
 import com.foureyes.moai.backend.domain.ai.dto.response.CreateAiSummaryResponse;
+import com.foureyes.moai.backend.domain.ai.dto.response.DashboardSummariesResponse;
+import com.foureyes.moai.backend.domain.ai.dto.response.SidebarSummariesResponse;
 import com.foureyes.moai.backend.domain.ai.entity.AiSummary;
 import com.foureyes.moai.backend.domain.ai.entity.AiSummaryDocument;
 import com.foureyes.moai.backend.domain.ai.internal.*;
@@ -122,5 +124,62 @@ public class AiServiceImpl implements AiService {
             log.error("AI 요약 생성 실패", e);
             throw new RuntimeException("AI 요약 생성에 실패했습니다.", e);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DashboardSummariesResponse getDashboardList(int ownerId) {
+        var list = aiSummaryRepository.findByOwner_IdOrderByCreatedAtDesc(ownerId);
+        var items = list.stream()
+            .map(s -> DashboardSummariesResponse.Item.builder()
+                .summaryId(s.getId())
+                .title(s.getTitle())
+                .description(s.getDescription())
+                .createdAt(s.getCreatedAt())
+                .build())
+            .toList();
+
+        return DashboardSummariesResponse.builder()
+            .summaries(items)
+            .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SidebarSummariesResponse getSidebarList(int ownerId) {
+        var rows = aiSummaryDocumentRepository.findSidebarRows(ownerId);
+
+        // studyId 기준 그룹핑 + 같은 summaryId 중복 제거
+        Map<Integer, SidebarSummariesResponse.StudyBlock> studies = new LinkedHashMap<>();
+        for (var r : rows) {
+            var block = studies.computeIfAbsent(
+                r.getStudyId(),
+                id -> SidebarSummariesResponse.StudyBlock.builder()
+                    .studyId(r.getStudyId())
+                    .name(r.getStudyName())
+                    .studyImg(r.getStudyImg()) // StudyGroup.imageUrl 매핑
+                    .summaries(new ArrayList<>())
+                    .build()
+            );
+
+            boolean exists = block.getSummaries().stream()
+                .anyMatch(x -> x.getSummaryId() == r.getSummaryId());
+            if (!exists) {
+                block.getSummaries().add(
+                    SidebarSummariesResponse.SummaryItem.builder()
+                        .summaryId(r.getSummaryId())
+                        .title(r.getTitle())
+                        .description(r.getDescription())
+                        .modelType(r.getModelType())
+                        .promptType(r.getPromptType())
+                        .createdAt(r.getCreatedAt())
+                        .build()
+                );
+            }
+        }
+
+        return SidebarSummariesResponse.builder()
+            .studies(new ArrayList<>(studies.values()))
+            .build();
     }
 }
