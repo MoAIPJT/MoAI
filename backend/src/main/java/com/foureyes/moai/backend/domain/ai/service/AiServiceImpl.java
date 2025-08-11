@@ -7,6 +7,7 @@ import com.foureyes.moai.backend.commons.exception.ErrorCode;
 import com.foureyes.moai.backend.commons.util.StorageService;
 import com.foureyes.moai.backend.domain.ai.dto.SummaryDto;
 import com.foureyes.moai.backend.domain.ai.dto.request.CreateAiSummaryRequest;
+import com.foureyes.moai.backend.domain.ai.dto.request.EditAiSummaryRequest;
 import com.foureyes.moai.backend.domain.ai.dto.response.CreateAiSummaryResponse;
 import com.foureyes.moai.backend.domain.ai.dto.response.DashboardSummariesResponse;
 import com.foureyes.moai.backend.domain.ai.dto.response.SidebarSummariesResponse;
@@ -195,5 +196,23 @@ public class AiServiceImpl implements AiService {
         aiSummaryDocumentRepository.deleteBySummary_Id(summaryId);
 
         aiSummaryRepository.delete(summary);
+    }
+
+    @Override
+    @Transactional
+    public void editSummary(int userId, int summaryId, EditAiSummaryRequest request) {
+        AiSummary summary = aiSummaryRepository.findById(summaryId)
+            .orElseThrow(() -> new CustomException(ErrorCode.SUMMARY_NOT_FOUND));
+
+        // 권한 확인
+        if (summary.getOwner().getId() != userId) {
+            throw new CustomException(ErrorCode.FORBIDDEN_SUMMARY_ACCESS);
+        }
+
+        // 변경
+        summary.setTitle(request.getTitle().trim());
+        summary.setDescription(request.getDescription() != null ? request.getDescription().trim() : null);
+
+        aiSummaryRepository.save(summary);
     }
 }

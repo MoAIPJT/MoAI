@@ -4,6 +4,7 @@ import com.foureyes.moai.backend.auth.jwt.JwtTokenProvider;
 import com.foureyes.moai.backend.commons.util.StorageService;
 import com.foureyes.moai.backend.domain.ai.dto.SummaryDto;
 import com.foureyes.moai.backend.domain.ai.dto.request.CreateAiSummaryRequest;
+import com.foureyes.moai.backend.domain.ai.dto.request.EditAiSummaryRequest;
 import com.foureyes.moai.backend.domain.ai.dto.response.CreateAiSummaryResponse;
 import com.foureyes.moai.backend.domain.ai.dto.response.DashboardSummariesResponse;
 import com.foureyes.moai.backend.domain.ai.dto.response.SidebarSummariesResponse;
@@ -12,6 +13,7 @@ import com.foureyes.moai.backend.domain.ai.service.AiService;
 import com.foureyes.moai.backend.domain.document.service.DocumentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,7 +98,7 @@ public class AiController {
 
     @Operation(
         summary = "AI 요약본 삭제",
-        description = "요약본의 소유자만 삭제할 수 있습니다. 성공 시 200을 반환합니다."
+        description = "요약본의 소유자만 삭제할 수 있습니다."
     )
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteSummary(
@@ -105,6 +107,22 @@ public class AiController {
     ) {
         int ownerId = extractUserIdFromToken(bearerToken);
         aiService.deleteSummary(ownerId, id);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(
+        summary = "AI 요약본 수정",
+        description = "제목과 설명을 수정합니다."
+    )
+    @PatchMapping("/edit/{id}")
+    public ResponseEntity<Void> editAiSummary(
+        @Parameter(hidden = true)
+        @RequestHeader("Authorization") String bearerToken,
+        @PathVariable int id,
+        @Valid @RequestBody EditAiSummaryRequest request
+    ) {
+        int userId = extractUserIdFromToken(bearerToken);;
+        aiService.editSummary(userId, id, request);
         return ResponseEntity.ok().build();
     }
 }
