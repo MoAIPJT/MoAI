@@ -17,6 +17,7 @@ import InviteLinkModal from '../components/organisms/InviteLinkModal'
 import { fetchSummaryList } from '../services/summaryService'
 import { useLogout, useMe, usePatchProfile } from '@/hooks/useUsers'
 import { useAppStore } from '@/store/appStore'
+import { createStudy, getAllStudies } from '@/services/studyService'
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate()
@@ -35,7 +36,6 @@ const DashboardPage: React.FC = () => {
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [expandedStudy, setExpandedStudy] = useState(false)
-  const [activeStudyId, setActiveStudyId] = useState<string | null>(null)
   const [calendarEvents] = useState<CalendarEvent[]>([
     {
       date: new Date(new Date().getFullYear(), new Date().getMonth(), 15),
@@ -125,16 +125,27 @@ const DashboardPage: React.FC = () => {
     try {
       setIsLoading(true)
 
-      // 실제 API 호출 (현재는 주석 처리)
-      // const response = await fetch('/api/studies')
-      // const data = await response.json()
-      // setStudies(data)
+      // 실제 API 호출
+      const studiesData = await getAllStudies()
 
-      // 임시로 로딩 시뮬레이션
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // API 응답을 기존 Study 타입에 맞게 변환
+      const convertedStudies: Study[] = studiesData.map(study => ({
+        id: study.studyId,
+        name: study.name,
+        description: study.description || '',
+        imageUrl: study.imageUrl || '',
+        createdBy: 1, // API에서 제공하지 않는 경우 기본값
+        createdAt: new Date().toISOString().split('T')[0], // API에서 제공하지 않는 경우 기본값
+        inviteUrl: `${window.location.origin}/study/${study.hashId}` // hashId를 사용하여 초대 링크 생성
+      }))
 
-      // 더미 데이터 설정
-      const dummyStudies = [
+      setStudies(convertedStudies)
+    } catch (error) {
+      console.error('스터디 목록 로드 실패:', error)
+
+      // 백엔드가 실행되지 않은 경우 임시 더미데이터 사용
+      console.log('백엔드 연결 실패, 임시 더미데이터 사용')
+      const dummyStudies: Study[] = [
         {
           id: 1,
           name: '싸피 알고리즘',
@@ -142,7 +153,7 @@ const DashboardPage: React.FC = () => {
           imageUrl: '',
           createdBy: 1,
           createdAt: '2024-01-01',
-          inviteUrl: 'https://example.com/invite/1'
+          inviteUrl: `${window.location.origin}/study/demo1`
         },
         {
           id: 2,
@@ -151,31 +162,10 @@ const DashboardPage: React.FC = () => {
           imageUrl: '',
           createdBy: 1,
           createdAt: '2024-01-02',
-          inviteUrl: 'https://example.com/invite/2'
-        },
-        {
-          id: 3,
-          name: '면접 화상 스터디',
-          description: '취뽀가자',
-          imageUrl: '',
-          createdBy: 1,
-          createdAt: '2024-01-03',
-          inviteUrl: 'https://example.com/invite/3'
-        },
-        {
-          id: 4,
-          name: '대전맛집탐방',
-          description: '맛있는 것만 취급합니다',
-          imageUrl: '',
-          createdBy: 1,
-          createdAt: '2024-01-04',
-          inviteUrl: 'https://example.com/invite/4'
+          inviteUrl: `${window.location.origin}/study/demo2`
         }
       ]
-
       setStudies(dummyStudies)
-    } catch {
-      setStudies([]) // 에러 시에는 빈 배열
     } finally {
       setIsLoading(false)
     }
@@ -297,91 +287,72 @@ const DashboardPage: React.FC = () => {
 
   const handleCreateStudy = async (data: CreateStudyData) => {
     try {
-      // 스터디 생성 로직
+      console.log('스터디 생성 요청 데이터:', data)
 
       // API 스펙에 맞는 Request Body 구성
-      // const requestBody = {
-      //   id: 1, // 실제로는 현재 로그인한 유저의 ID를 사용해야 함
-      //   name: data.name,
-      //   description: data.description,
-      //   image_url: data.image ? await convertImageToBase64(data.image) : null
-      // }
-
-      // 실제 API 호출 (현재는 주석 처리)
-      // const response = await fetch('/register', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${accessToken}` // 실제 access token 사용
-      //   },
-      //   body: JSON.stringify(requestBody)
-      // })
-
-      // if (response.status === 201) {
-      //   const responseData = await response.json()
-      //   const newStudy: Study = {
-      //     id: responseData.study_id,
-      //     name: responseData.name,
-      //     description: responseData.description,
-      //     imageUrl: responseData.image_url || '',
-      //     createdBy: responseData.created_by,
-      //     createdAt: responseData.created_at,
-      //     inviteUrl: responseData.invite_url || `https://duckfac.com/B201-nice-team`
-      //   }
-      //   setStudies(prevStudies => [newStudy, ...prevStudies])
-      //
-      //   // 초대 링크 모달 표시
-      //   setCurrentInviteUrl(newStudy.inviteUrl)
-      //   setIsInviteModalOpen(true)
-      // } else {
-      //   throw new Error('스터디 생성에 실패했습니다.')
-      // }
-
-      // 임시로 프론트엔드에서 즉시 스터디 목록에 추가
-      const newStudy: Study = {
-        id: Date.now(), // 임시 ID 생성
+      const requestBody = {
         name: data.name,
         description: data.description,
-        imageUrl: data.image ? URL.createObjectURL(data.image) : '',
-        createdBy: 1, // 임시 사용자 ID
-        createdAt: new Date().toISOString().split('T')[0],
-        inviteUrl: `https://duckfac.com/B201-nice-team` // 임시 초대 링크
+        image: data.image || undefined, // null을 undefined로 변환
+        maxCapacity: data.maxCapacity
       }
 
-      setStudies(prevStudies => [newStudy, ...prevStudies])
+      console.log('API 요청 데이터:', requestBody)
 
-      // 초대 링크 모달 표시
-      setCurrentInviteUrl(newStudy.inviteUrl || '')
+      // 실제 API 호출
+      const response = await createStudy(requestBody)
+
+      console.log('API 응답:', response)
+
+      // 성공적으로 스터디가 생성되면 초대 링크 모달 표시
+      const inviteUrl = `${window.location.origin}/study/${response.hashId}`
+      setCurrentInviteUrl(inviteUrl)
       setIsInviteModalOpen(true)
-    } catch {
-      alert('스터디 생성에 실패했습니다.')
+
+      // 스터디 목록 새로고침
+      await fetchStudies()
+
+      alert('스터디가 성공적으로 생성되었습니다!')
+    } catch (error) {
+      console.error('스터디 생성 실패 상세:', error)
+
+      // 백엔드가 실행되지 않은 경우 임시로 프론트엔드에서 처리
+      if (error && typeof error === 'object' && 'code' in error && error.code === '500') {
+        console.log('백엔드 연결 실패, 임시로 프론트엔드에서 스터디 추가')
+
+        // 임시 스터디 생성
+        const tempStudy: Study = {
+          id: Date.now(),
+          name: data.name,
+          description: data.description,
+          imageUrl: data.image ? URL.createObjectURL(data.image) : '',
+          createdBy: 1,
+          createdAt: new Date().toISOString().split('T')[0],
+          inviteUrl: `${window.location.origin}/study/demo${Date.now()}`
+        }
+
+        setStudies(prevStudies => [tempStudy, ...prevStudies])
+
+        // 초대 링크 모달 표시
+        setCurrentInviteUrl(tempStudy.inviteUrl || '')
+        setIsInviteModalOpen(true)
+
+        alert('백엔드 연결 실패로 임시로 스터디가 생성되었습니다.\n실제 데이터는 저장되지 않습니다.')
+        return
+      }
+
+      // 더 자세한 에러 메시지 표시
+      let errorMessage = '스터디 생성에 실패했습니다.'
+      if (error && typeof error === 'object' && 'message' in error) {
+        errorMessage += `\n에러: ${error.message}`
+      }
+      if (error && typeof error === 'object' && 'code' in error) {
+        errorMessage += `\n코드: ${error.code}`
+      }
+
+      alert(errorMessage)
     }
   }
-
-  // 이미지를 Base64로 변환하는 헬퍼 함수
-  // const convertImageToBase64 = (file: File): Promise<string> => {
-  //   return new Promise((resolve, reject) => {
-  //     const reader = new FileReader()
-  //     reader.onload = () => {
-  //       const result = reader.result as string
-  //       // Base64 문자열에서 data:image/...;base64, 부분 제거
-  //       const base64 = result.split(',')[1]
-  //       resolve(base64)
-  //     }
-  //     reader.onerror = reject
-  //     reader.readAsDataURL(file)
-  //   })
-  // }
-
-  // const handleStudyClick = (studyId: number) => {
-  //   // 스터디 상세 페이지로 이동
-  //   navigate(`/study/${studyId}`)
-  // }
-
-  // const handleSummaryClick = (summaryId: number) => {
-  //   // AI 요약본 상세 페이지로 이동
-  //   // navigate(`/ai-summary/${summaryId}`)
-  // }
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date)
@@ -408,10 +379,16 @@ const DashboardPage: React.FC = () => {
           icon: '📚'
         }))}
         onItemClick={handleItemClick}
-        activeStudyId={activeStudyId}
+        activeStudyId={null}
         onStudyClick={(studyId) => {
-          setActiveStudyId(studyId)
-          navigate(`/study/${studyId}`)
+          // studyId는 실제로는 hashId여야 함
+          const study = studies.find(s => s.id.toString() === studyId)
+          if (study && study.inviteUrl) {
+            const hashId = study.inviteUrl.split('/').pop()
+            if (hashId) {
+              navigate(`/study/${hashId}`)
+            }
+          }
         }}
         onLogout={handleLogout}
         onSettingsClick={handleSettingsClick}
@@ -419,6 +396,8 @@ const DashboardPage: React.FC = () => {
       <div className="flex-1 flex flex-col ml-64">
         <TopBar userName={displayName} />
         <div className="flex-1 overflow-auto">
+
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
             {/* 왼쪽 열 - 스터디 목록과 AI 요약본 */}
             <div className="lg:col-span-2 space-y-6">
@@ -426,7 +405,16 @@ const DashboardPage: React.FC = () => {
                 studies={studies}
                 isLoading={isLoading}
                 onCreateStudy={handleCreateStudy}
-                onStudyClick={() => {}}
+                onStudyClick={(studyId) => {
+                  // hashId를 사용하여 스터디 상세 페이지로 이동
+                  const study = studies.find(s => s.id === studyId)
+                  if (study && study.inviteUrl) {
+                    const hashId = study.inviteUrl.split('/').pop() // URL에서 hashId 추출
+                    if (hashId) {
+                      navigate(`/study/${hashId}`)
+                    }
+                  }
+                }}
               />
               <AISummaryList
                 summaries={summaries}

@@ -21,6 +21,7 @@ interface StudyDetailTemplateProps {
   currentStudy: StudyItem | null
   participants?: Array<{ id: string; name: string; avatar: string }>
   studyParticipants?: StudyParticipantsResponse | null
+  userName?: string
   // Content Management 관련 props
   categories: Category[]
   selectedCategories: string[]
@@ -65,6 +66,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   currentStudy,
   participants = [],
   studyParticipants,
+  userName,
   // Content Management 관련 props
   categories,
   selectedCategories,
@@ -137,7 +139,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
             {/* 왼쪽: 공지사항과 화상회의 (6/10) */}
             <div className="col-span-6 flex flex-col h-full">
               <div className="mb-6">
-                <StudyNoticeBox onEdit={onEditNotice} />
+                <StudyNoticeBox onEdit={onEditNotice} userName={userName} />
               </div>
               <div className="flex-1">
                 <StudyVideoConference

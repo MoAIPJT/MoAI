@@ -7,10 +7,12 @@ import type { Category, ContentItem } from '../types/content'
 import type { UploadData } from '../components/organisms/UploadDataModal/types'
 import { getStudies, getStudyById, getStudyParticipants } from '../services/studyService'
 import type { StudyParticipantsResponse } from '../types/study'
+import { useMe } from '@/hooks/useUsers'
 
 const StudyDetailPage: React.FC = () => {
   const navigate = useNavigate()
   const { studyId } = useParams<{ studyId: string }>()
+  const { data: userProfile, isLoading: isProfileLoading } = useMe()
 
   const [expandedStudy, setExpandedStudy] = useState(true)
   const [activeStudyId, setActiveStudyId] = useState<string | null>(studyId || null)
@@ -365,6 +367,7 @@ const StudyDetailPage: React.FC = () => {
         onSettingsClick={handleSettingsClick}
         participants={dummyParticipants}
         studyParticipants={participants}
+        userName={userProfile?.name || ''}
         // Content Management 관련 props
         categories={categories}
         selectedCategories={selectedCategories}
