@@ -55,6 +55,7 @@ api.interceptors.response.use(
     return response
   },
   async (error) => {
+<<<<<<< HEAD
     const originalRequest = error.config
 
     // 401 에러이고 아직 재시도하지 않은 경우
@@ -74,6 +75,23 @@ api.interceptors.response.use(
         localStorage.removeItem('refreshToken')
         window.location.href = '/login'
         return Promise.reject(refreshError)
+=======
+    const originalRequest = error.config;
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        const refreshToken = localStorage.getItem('refreshToken');
+        const { data } = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/refresh`, { refreshToken });
+        const { accessToken } = data;
+        localStorage.setItem('accessToken', accessToken);
+        api.defaults.headers.common['Authorization'] = 'Bearer ' + accessToken;
+        return api(originalRequest);
+      } catch (refreshError) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+>>>>>>> 961674954876c6d3312259409f061f635ee4abc7
       }
     }
 

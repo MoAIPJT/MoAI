@@ -6,6 +6,7 @@ import { useLogin } from '@/hooks/useUsers'
 import { useAppStore } from '@/store/appStore'
 
 const LoginPage: React.FC = () => {
+<<<<<<< HEAD
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
   const setAuth = useAppStore((state) => state.auth.setAuth)
@@ -42,6 +43,11 @@ const LoginPage: React.FC = () => {
       } else {
         setError('로그인에 실패했습니다.')
       }
+=======
+  const { login, loading, error } = useAuth(); const handleLogin = async (data: LoginFormData) => {
+    try { await login(data); } catch {
+      // 에러는 useAuth 훅에서 처리됨
+>>>>>>> 961674954876c6d3312259409f061f635ee4abc7
     }
   }
 
@@ -51,8 +57,11 @@ const LoginPage: React.FC = () => {
   }
 
   const handleGoogleLogin = () => {
-    const backendUrl = import.meta.env.VITE_BACKEND_URL
-    window.location.href = `${backendUrl}/oauth2/authorization/google`
+    const googleClientId = import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID;
+    const redirectUri = `http://localhost:5173/auth/google/callback`;
+    const scope = `https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid`;
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
+    window.location.href = googleAuthUrl;
   }
 
   return (
