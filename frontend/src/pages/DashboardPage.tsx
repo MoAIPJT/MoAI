@@ -15,9 +15,11 @@ import type { ProfileData } from '../components/organisms/ProfileSettingsModal/t
 import type { CalendarEvent } from '../components/ui/calendar'
 import InviteLinkModal from '../components/organisms/InviteLinkModal'
 import { fetchSummaryList } from '../services/summaryService'
+import { useLogout } from '@/hooks/useUsers'
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate()
+  const logoutMutation = useLogout()
   const [studies, setStudies] = useState<Study[]>([])
   const [summaries, setSummaries] = useState<AISummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -230,7 +232,7 @@ const DashboardPage: React.FC = () => {
   }
 
   const handleLogout = () => {
-    // TODO: 로그아웃 로직 구현
+    logoutMutation.mutate()
   }
 
   const handleSettingsClick = () => {

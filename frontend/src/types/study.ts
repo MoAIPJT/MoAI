@@ -1,12 +1,122 @@
-export interface StudyParticipant {
-  member: string
-  role: string
-  email?: string
-  avatar?: string
+// 백엔드 DTO 기반 프론트엔드 타입 정의
+
+// 스터디 생성 요청
+export interface CreateStudyReq {
+  name: string
+  description?: string
+  image?: File
+  maxCapacity: number
 }
 
-export interface StudyParticipantsResponse {
-  id: string
-  study_id: string
-  participants: StudyParticipant[]
-} 
+// 스터디 생성 응답 (StudyResponseDto)
+export interface CreateStudyRes {
+  id: number
+  name: string
+  description: string
+  imageUrl: string
+  createdBy: number
+  createdAt: string
+  hashId: string
+}
+
+// 스터디 목록 아이템 (StudyListResponseDto 기반)
+export interface StudyListItem {
+  studyId: number
+  hashId: string
+  name: string
+  description: string
+  imageUrl: string
+  creatorName: string
+  status: 'PENDING' | 'APPROVED'
+}
+
+// 전체 스터디 아이템 (사용자별)
+export interface StudyAllItem {
+  studyId: number
+  hashId: string
+  name: string
+  description: string
+  imageUrl: string
+  creatorName: string
+  status: 'PENDING' | 'APPROVED' | 'LEFT' | 'REJECTED'
+  role?: 'ADMIN' | 'DELEGATE' | 'MEMBER'
+}
+
+// 스터디 상세 정보 (StudyDetailResponseDto 기반)
+export interface StudyDetail {
+  name: string
+  imageUrl: string
+  status: 'PENDING' | 'APPROVED' | 'LEFT' | 'REJECTED'
+  role?: 'ADMIN' | 'DELEGATE' | 'MEMBER'
+  description?: string
+  userCount?: number
+}
+
+// 스터디 멤버 (StudyMemberListResponseDto 기반)
+export interface Member {
+  member: string // 사용자 이름
+  role: string // 권한
+  imageUrl: string // 프로필 이미지
+  email: string // 이메일
+}
+
+// 스터디 탈퇴 요청
+export interface LeaveStudyReq {
+  studyId: number
+  userId: number
+}
+
+// 스터디 멤버 삭제 요청
+export interface DeleteMemberReq {
+  studyId: number
+  userId: number
+}
+
+// 스터디 멤버 역할 변경 요청
+export interface ChangeMemberRoleReq {
+  studyId: number
+  userId: number
+  role: 'ADMIN' | 'DELEGATE' | 'MEMBER'
+}
+
+// 스터디 가입 요청 수락
+export interface AcceptJoinRequestReq {
+  studyId: number
+  userId: number
+}
+
+// 스터디 가입 요청 거절
+export interface RejectJoinRequestReq {
+  studyId: number
+  userId: number
+}
+
+// 스터디 공지사항 업데이트
+export interface UpdateStudyNoticeReq {
+  studyId: number
+  notice: string
+}
+
+// API 에러 타입
+export interface ApiError {
+  code: string
+  message: string
+}
+
+// 기존 타입들 (하위 호환성을 위해 유지)
+export interface Study {
+  id: number
+  name: string
+  description: string
+  imageUrl: string
+  createdBy: number
+  createdAt: string
+  inviteUrl: string
+}
+
+export interface CreateStudyData {
+  name: string
+  description: string
+  image?: File
+  maxCapacity: number
+}
