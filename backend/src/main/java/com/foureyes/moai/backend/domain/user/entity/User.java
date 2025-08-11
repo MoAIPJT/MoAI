@@ -9,6 +9,9 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
+import lombok.Getter;
+import lombok.Setter;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -16,7 +19,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "users")
 public class User {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
@@ -30,7 +33,7 @@ public class User {
     @Column(nullable = false)
     private String name;
 
-    @Column(name = "provider_type", nullable = false)
+    @Column(name = "provider_type", nullable = false) // Local, Google, Kakao
     private String providerType;
 
     @CreationTimestamp
