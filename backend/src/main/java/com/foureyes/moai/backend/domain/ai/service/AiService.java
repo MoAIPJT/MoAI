@@ -65,11 +65,11 @@ public interface AiService {
     AiCreateResponseDto createSummary(AiCreateRequestDto requestDto);
 
     /**
-     * 입력: Long
+     * 입력: int
      * 출력: void
      * 기능: AI 요약 정보를 삭제한다.
      */
-    void deleteSummary(Long summaryId);
+    void deleteSummary(int summaryId);
 
     /**
      * 입력: AiUpdateRequestDto

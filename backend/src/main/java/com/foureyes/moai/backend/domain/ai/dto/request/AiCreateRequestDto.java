@@ -12,10 +12,10 @@ import java.util.List;
 @AllArgsConstructor
 public class AiCreateRequestDto {
     @Schema(description = "사용자 ID", example = "1")
-    private Long id;
+    private int id;
 
     @Schema(description = "파일 ID 리스트", example = "[1, 2, 3]")
-    private List<Long> fileId;
+    private List<Integer> fileId;
 
     @Schema(description = "요약 제목", example = "AI 모델에 대한 보고서 요약")
     private String title;

@@ -199,7 +199,7 @@ public class AiServiceImpl implements AiService {
     @Override
     public AiCreateResponseDto createSummary(AiCreateRequestDto requestDto) {
         log.info("요약 정보 저장 시작: {}", requestDto.getTitle());
-        User user = userRepository.findById(requestDto.getId().intValue())
+        User user = userRepository.findById(requestDto.getId())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         Summary summary = Summary.builder()
@@ -224,9 +224,9 @@ public class AiServiceImpl implements AiService {
 
     @Override
     @Transactional
-    public void deleteSummary(Long summaryId) {
+    public void deleteSummary(int summaryId) {
         log.info("요약 정보 삭제 시작: id={}", summaryId);
-        Summary summary = summaryRepository.findById(summaryId)
+        Summary summary = summaryRepository.findById((long) summaryId)
                 .orElseThrow(SummaryNotFoundException::new);
 
         summaryRepository.delete(summary);
@@ -237,7 +237,7 @@ public class AiServiceImpl implements AiService {
     @Transactional
     public AiCreateResponseDto updateSummary(AiUpdateRequestDto requestDto) {
         log.info("요약 정보 업데이트 시작: id={}", requestDto.getId());
-        Summary summary = summaryRepository.findById(requestDto.getId())
+        Summary summary = summaryRepository.findById((long) requestDto.getId())
                 .orElseThrow(SummaryNotFoundException::new);
 
         summary.updateSummary(requestDto.getTitle(), requestDto.getDescription());

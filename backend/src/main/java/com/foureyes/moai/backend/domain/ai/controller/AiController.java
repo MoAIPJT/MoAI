@@ -1,21 +1,23 @@
 package com.foureyes.moai.backend.domain.ai.controller;
 
+import com.foureyes.moai.backend.auth.jwt.JwtTokenProvider;
+import com.foureyes.moai.backend.commons.util.StorageService;
+import com.foureyes.moai.backend.domain.ai.dto.SummaryDto;
 import com.foureyes.moai.backend.domain.ai.dto.request.AiCreateRequestDto;
 import com.foureyes.moai.backend.domain.ai.dto.request.AiUpdateRequestDto;
 import com.foureyes.moai.backend.domain.ai.dto.response.AiCreateResponseDto;
 import com.foureyes.moai.backend.domain.ai.service.AiService;
+import com.foureyes.moai.backend.domain.document.service.DocumentService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,7 +26,14 @@ public class AiController {
 
     private static final Logger log = LoggerFactory.getLogger(AiController.class);
     private final AiService aiService;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final StorageService storageService;
+    private final DocumentService documentService;
 
+    private int extractUserIdFromToken(String bearerToken) {
+        String token = bearerToken.replaceFirst("^Bearer ", "").trim();
+        return jwtTokenProvider.getUserId(token);
+    }
     /**
      * 입력: 클라이언트로부터 받은 AI 요약 생성 요청(AiCreateRequestDto)
      * 출력: 생성된 AI 요약 정보(AiCreateResponseDto)
@@ -47,7 +56,7 @@ public class AiController {
      */
     @DeleteMapping("/delete/{id}")
     @Operation(summary = "AI 요약 삭제", description = "AI 요약 삭제 API 입니다.")
-    public ResponseEntity<Void> deleteSummary(@PathVariable("id") Long summaryId) {
+    public ResponseEntity<Void> deleteSummary(@PathVariable("id") int summaryId) {
         log.info("AI 요약 삭제 요청: id={}", summaryId);
         aiService.deleteSummary(summaryId);
         log.info("AI 요약 삭제 완료: id={}", summaryId);
@@ -62,7 +71,7 @@ public class AiController {
     @PatchMapping("/edit/{id}")
     @Operation(summary = "AI 요약 수정", description = "AI 요약 수정 API 입니다.")
     public ResponseEntity<AiCreateResponseDto> updateSummary(
-        @PathVariable("id") Long summaryId,
+        @PathVariable("id") int summaryId,
         @RequestBody AiUpdateRequestDto requestDto) {
         log.info("AI 요약 수정 요청: id={}", summaryId);
         requestDto.setId(summaryId);
@@ -70,4 +79,28 @@ public class AiController {
         log.info("AI 요약 수정 완료: id={}", responseDto.getSummaryId());
         return ResponseEntity.ok(responseDto);
     }
+
+
+    /*test api*/
+    /**
+     * 입력: 요약본
+     * 출력: 요약된 문서
+     * 기능: 데모 버전 실행
+     */
+    @GetMapping("/demo/{id}")
+    @Operation(summary = "AI 데모")
+    public ResponseEntity<List<SummaryDto>> demoAiSummary(
+        @Parameter(hidden = true) @RequestHeader("Authorization") String bearerToken,
+        @PathVariable("id") int summaryId){
+        log.info("AI 요약 수정 요청: id={}", summaryId);
+
+        int userId = extractUserIdFromToken(bearerToken);
+        String fileKey = documentService.getDocumentKeyIfAllowed(userId,summaryId);
+        try (var in = storageService.openDocumentStream(fileKey)) {
+            return ResponseEntity.ok(aiService.summarizePdf(in, "source.pdf"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }

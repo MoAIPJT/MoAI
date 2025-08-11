@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 public class AiCreateResponseDto {
     @Schema(description = "생성된 요약 ID", example = "101")
     @JsonProperty("summary_id")
-    private Long summaryId;
+    private int summaryId;
 
     @Schema(description = "요약 제목", example = "AI 모델에 대한 보고서 요약")
     private String title;

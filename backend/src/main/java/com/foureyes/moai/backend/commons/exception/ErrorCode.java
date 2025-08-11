@@ -28,10 +28,10 @@ public enum ErrorCode {
     STUDY_GROUP_NOT_FOUND("존재하지 않는 스터디 그룹입니다.", HttpStatus.NOT_FOUND),
     STUDY_MEMBERSHIP_NOT_FOUND("스터디 멤버 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     SUMMARY_NOT_FOUND("존재하지 않는 요약본입니다.", HttpStatus.NOT_FOUND),
-
     DOCUMENT_NOT_FOUND("파일을 찾을 수 없습니다",HttpStatus.NOT_FOUND ),
     CATEGORY_NOT_FOUND("카테고리를 찾을 수 없습니다.",HttpStatus.NOT_FOUND ),
     // 500 Internal Server Error
+    FILE_DOWNLOAD_FAILED("파일 다운 실패",HttpStatus.INTERNAL_SERVER_ERROR ),
     DATABASE_ERROR("데이터베이스 처리 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     INTERNAL_SERVER_ERROR("서버 내부 오류입니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     FILE_DELETE_FAILED("파일삭제 실패",HttpStatus.INTERNAL_SERVER_ERROR );

@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AiUpdateRequestDto {
     @Schema(description = "요약본 ID", example = "1")
-    private Long id;
+    private int id;
 
     @Schema(description = "변경될 요약본 타이틀", example = "새로운 AI 모델 보고서 요약")
     private String title;
