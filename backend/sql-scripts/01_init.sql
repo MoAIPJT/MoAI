@@ -124,7 +124,6 @@ CREATE TABLE IF NOT EXISTS ai_summary_documents (
     id INT AUTO_INCREMENT PRIMARY KEY,
     summary_id INT NOT NULL,
     document_id INT NOT NULL,
-    created_at DATETIME, -- 생성 시간
     FOREIGN KEY (summary_id) REFERENCES ai_summaries(id),
     FOREIGN KEY (document_id) REFERENCES documents(id)
 );

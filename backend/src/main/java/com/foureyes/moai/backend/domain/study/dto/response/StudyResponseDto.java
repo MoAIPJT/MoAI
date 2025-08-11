@@ -30,4 +30,6 @@ public class StudyResponseDto {
 
     @Schema(description = "생성 시각", example = "2025-08-05T10:00:00")
     private LocalDateTime createdAt;
+
+
 }
