@@ -14,13 +14,13 @@ import java.time.LocalDateTime;
 public class GetScheduleResponseDto {
 
     @Schema(description = "일정 ID", example = "1")
-    private Long id;
+    private int id;
 
     @Schema(description = "스터디 ID", example = "1")
-    private Long studyId;
+    private int studyId;
 
     @Schema(description = "작성자 사용자 ID", example = "3")
-    private Long userId;
+    private int userId;
 
     @Schema(description = "시작 시간", example = "2025-08-05T10:00:00")
     private LocalDateTime startDatetime;
@@ -37,8 +37,8 @@ public class GetScheduleResponseDto {
     public static GetScheduleResponseDto from(Schedule s) {
         return GetScheduleResponseDto.builder()
             .id(s.getId())
-            .studyId((long) s.getStudyGroup().getId())
-            .userId((long) s.getUser().getId())
+            .studyId(s.getStudyGroup().getId())
+            .userId(s.getUser().getId())
             .startDatetime(s.getStartDatetime())
             .endDatetime(s.getEndDatetime())
             .title(s.getTitle())

@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Schema(description = "일정 생성 응답 DTO")
 public class CreateScheduleResponseDto {
     @Schema(description = "일정 ID", example = "1")
-    private Long id;
+    private int id;
 
     @Schema(description = "스터디 ID", example = "1")
     private Long studyId;

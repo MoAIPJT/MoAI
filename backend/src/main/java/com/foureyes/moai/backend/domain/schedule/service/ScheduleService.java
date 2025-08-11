@@ -12,24 +12,24 @@ import java.util.List;
 
 public interface ScheduleService {
     public CreateScheduleResponseDto registerSchedule(
-        Long userId,
+        int userId,
         CreateScheduleRequestDto request);
     public EditScheduleResponseDto editSchedule(
-        Long userId,
-        Long scheduleId,
+        int userId,
+        int scheduleId,
         EditScheduleRequestDto request);
 
     GetScheduleResponseDto getSchedule(
-        Long userId,
-        Long scheduleId);
+        int userId,
+        int scheduleId);
 
     List<GetScheduleListDto> listByRange(
-        Long userId,
-        Long studyId,
+        int userId,
+        int studyId,
         LocalDateTime from,
         LocalDateTime to);
 
     void deleteSchedule(
-        Long userId,
-        Long scheduleId);
+        int userId,
+        int scheduleId);
 }

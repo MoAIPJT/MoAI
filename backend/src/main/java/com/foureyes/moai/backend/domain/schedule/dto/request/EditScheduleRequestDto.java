@@ -11,9 +11,9 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class EditScheduleRequestDto {
-    @Schema(description = "스터디 ID", example = "1", required = true)
+    @Schema(description = "스터디 ID", example = "1")
     @NotNull(message = "스터디 ID는 필수입니다.")
-    private Long studyId;
+    private int studyId;
 
     @Schema(description = "시작 시간(선택)", example = "2025-08-05T10:00:00")
     @Future(message = "시작 시간은 현재 시간 이후여야 합니다.")

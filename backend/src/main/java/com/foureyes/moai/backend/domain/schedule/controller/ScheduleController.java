@@ -28,7 +28,7 @@ import java.util.List;
 @Tag(name = "Schedule API", description = "일정 관리 기능")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/study")
+@RequestMapping("/schedules")
 public class ScheduleController {
 
     private static final Logger log = LoggerFactory.getLogger(ScheduleController.class);
@@ -50,7 +50,7 @@ public class ScheduleController {
             @RequestHeader("Authorization") String accessToken,
             @Valid @RequestBody CreateScheduleRequestDto request) {
         log.info("일정 생성 API 호출: studyId={}", request.getStudyId());
-        Long userId = Long.valueOf(jwtTokenProvider.getUserId(accessToken.substring(7)));
+        int userId = jwtTokenProvider.getUserId(accessToken.substring(7));
         CreateScheduleResponseDto response = scheduleService.registerSchedule(
             userId,
             request
@@ -68,10 +68,10 @@ public class ScheduleController {
     public ResponseEntity<EditScheduleResponseDto> editEvent(
         @RequestHeader("Authorization") String accessToken,
         @Parameter(name = "id", description = "수정할 일정 ID", in = ParameterIn.PATH)
-        @PathVariable("id") Long scheduleId,
+        @PathVariable("id") int scheduleId,
         @Valid @RequestBody EditScheduleRequestDto request
     ) {
-        Long userId = Long.valueOf(jwtTokenProvider.getUserId(accessToken.substring(7)));
+        int userId = jwtTokenProvider.getUserId(accessToken.substring(7));
         EditScheduleResponseDto response = scheduleService.editSchedule(userId, scheduleId, request);
         return ResponseEntity.ok(response);
     }
@@ -85,9 +85,9 @@ public class ScheduleController {
     public ResponseEntity<GetScheduleResponseDto> getSchedule(
         @RequestHeader("Authorization") String accessToken,
         @Parameter(name = "id", description = "조회할 일정 ID", in = ParameterIn.PATH)
-        @PathVariable("id") Long scheduleId
+        @PathVariable("id") int scheduleId
     ) {
-        Long userId = Long.valueOf(jwtTokenProvider.getUserId(accessToken.substring(7)));
+        int userId = jwtTokenProvider.getUserId(accessToken.substring(7));
         log.info("일정 단건 조회 API 호출: scheduleId={}, userId={}", scheduleId, userId);
 
         GetScheduleResponseDto response = scheduleService.getSchedule(userId, scheduleId);
@@ -102,11 +102,11 @@ public class ScheduleController {
     @GetMapping("/list")
     public ResponseEntity<List<GetScheduleListDto>> listByRange(
         @RequestHeader("Authorization") String accessToken,
-        @RequestParam @NotNull Long studyId,
+        @RequestParam @NotNull int studyId,
         @RequestParam @NotNull @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
         @RequestParam @NotNull @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to
     ) {
-        Long userId = Long.valueOf(jwtTokenProvider.getUserId(accessToken.substring(7)));
+        int userId = jwtTokenProvider.getUserId(accessToken.substring(7));
         log.info("일정 목록 조회 API 호출: studyId={}, userId={}, from={}, to={}",
             studyId, userId, from, to);
 
@@ -123,9 +123,9 @@ public class ScheduleController {
     public ResponseEntity<Void> deleteSchedule(
         @RequestHeader("Authorization") String accessToken,
         @Parameter(name = "id", description = "삭제할 일정 ID", in = ParameterIn.PATH)
-        @PathVariable("id") Long scheduleId
+        @PathVariable("id") int scheduleId
     ) {
-        Long userId = Long.valueOf(jwtTokenProvider.getUserId(accessToken.substring(7)));
+        int userId = jwtTokenProvider.getUserId(accessToken.substring(7));
         log.info("일정 삭제 API 호출: scheduleId={}, userId={}", scheduleId, userId);
 
         scheduleService.deleteSchedule(userId, scheduleId);

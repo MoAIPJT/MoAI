@@ -38,22 +38,22 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final StudyMembershipRepository studyMembershipRepository;
 
     /**
-     * 입력: Long userId (사용자 ID), CreateScheduleRequestDto request (일정 생성 정보)
+     * 입력: int userId (사용자 ID), CreateScheduleRequestDto request (일정 생성 정보)
      * 출력: CreateScheduleResponseDto (생성된 일정 정보)
      * 기능: 새로운 일정을 생성합니다.
      */
     @Override
     @Transactional
-    public CreateScheduleResponseDto registerSchedule(Long userId, CreateScheduleRequestDto request) {
+    public CreateScheduleResponseDto registerSchedule(int userId, CreateScheduleRequestDto request) {
         log.info("일정 등록 시작: userId={}, studyId={}", userId, request.getStudyId());
 
-        User user = userRepository.findById(userId.intValue())
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
                     log.warn("사용자를 찾을 수 없음: userId={}", userId);
                     return new CustomException(ErrorCode.USER_NOT_FOUND);
                 });
 
-        StudyGroup studyGroup = studyGroupRepository.findById(request.getStudyId().intValue())
+        StudyGroup studyGroup = studyGroupRepository.findById(request.getStudyId())
                 .orElseThrow(() -> {
                     log.warn("스터디 그룹을 찾을 수 없음: studyId={}", request.getStudyId());
                     return new CustomException(ErrorCode.STUDY_GROUP_NOT_FOUND);
@@ -91,7 +91,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     @Transactional
-    public EditScheduleResponseDto editSchedule(Long userId, Long scheduleId, EditScheduleRequestDto request) {
+    public EditScheduleResponseDto editSchedule(int userId, int scheduleId, EditScheduleRequestDto request) {
         log.info("일정 수정 시작: userId={}, scheduleId={}", userId, scheduleId);
 
         if (request.hasNoChanges()) {
@@ -99,7 +99,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             throw new CustomException(ErrorCode.BAD_REQUEST); // 프로젝트의 공통 에러코드 사용
         }
 
-        User user = userRepository.findById(userId.intValue())
+        User user = userRepository.findById(userId)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         Schedule schedule = scheduleRepository.findById(scheduleId)
@@ -130,7 +130,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     @Transactional(readOnly = true)
-    public GetScheduleResponseDto getSchedule(Long userId, Long scheduleId) {
+    public GetScheduleResponseDto getSchedule(int userId, int scheduleId) {
         log.info("일정 단건 조회 시작: userId={}, scheduleId={}", userId, scheduleId);
 
         Schedule schedule = scheduleRepository.findById(scheduleId)
@@ -141,7 +141,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         // 스터디 멤버만 조회 가능
         boolean isMember = studyMembershipRepository.existsByUserIdAndStudyGroup_Id(
-            userId.intValue(), schedule.getStudyGroup().getId());
+            userId, schedule.getStudyGroup().getId());
 
         if (!isMember) {
             log.warn("스터디 멤버가 아님: userId={}, studyId={}", userId, schedule.getStudyGroup().getId());
@@ -154,7 +154,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<GetScheduleListDto> listByRange(Long userId, Long studyId,
+    public List<GetScheduleListDto> listByRange(int userId, int studyId,
                                                 LocalDateTime from, LocalDateTime to) {
         log.info("일정 기간 조회 시작: userId={}, studyId={}, from={}, to={}",
             userId, studyId, from, to);
@@ -169,7 +169,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         // 스터디 멤버만 조회 가능
         boolean isMember = studyMembershipRepository
-            .existsByUserIdAndStudyGroup_Id(userId.intValue(), studyId.intValue());
+            .existsByUserIdAndStudyGroup_Id(userId, studyId);
         if (!isMember) {
             log.warn("스터디 멤버가 아님: userId={}, studyId={}", userId, studyId);
             throw new CustomException(ErrorCode.STUDY_NOT_MEMBER);
@@ -185,7 +185,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     @Transactional
-    public void deleteSchedule(Long userId, Long scheduleId) {
+    public void deleteSchedule(int userId, int scheduleId) {
         log.info("일정 삭제 시작: userId={}, scheduleId={}", userId, scheduleId);
 
         // 1) 일정 존재 확인
@@ -200,14 +200,14 @@ public class ScheduleServiceImpl implements ScheduleService {
         // 2) 승인(APPROVED) 멤버십 조회 (role 확인을 위해 엔티티로 조회)
         StudyMembership membership = studyMembershipRepository
             .findByUserIdAndStudyGroup_IdAndStatus(
-                userId.intValue(),
+                userId,
                 studyId,
                 StudyMembership.Status.APPROVED
             )
             .orElseGet(() -> {
                 // 승인 멤버십이 없다면: 멤버인지 자체를 확인해서 에러를 구분
                 boolean isMemberAnyStatus = studyMembershipRepository
-                    .existsByUserIdAndStudyGroup_Id(userId.intValue(), studyId);
+                    .existsByUserIdAndStudyGroup_Id(userId, studyId);
                 if (isMemberAnyStatus) {
                     log.warn("승인되지 않은 멤버 상태: userId={}, studyId={}", userId, studyId);
                     throw new CustomException(ErrorCode.FORBIDDEN); // 미승인/탈퇴/거절 등
