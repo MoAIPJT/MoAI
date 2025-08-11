@@ -27,6 +27,8 @@ public enum ErrorCode {
     USER_NOT_FOUND("등록되지 않은 이메일입니다.", HttpStatus.NOT_FOUND),
     STUDY_GROUP_NOT_FOUND("존재하지 않는 스터디 그룹입니다.", HttpStatus.NOT_FOUND),
     STUDY_MEMBERSHIP_NOT_FOUND("스터디 멤버 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    SUMMARY_NOT_FOUND("존재하지 않는 요약본입니다.", HttpStatus.NOT_FOUND),
+
     DOCUMENT_NOT_FOUND("파일을 찾을 수 없습니다",HttpStatus.NOT_FOUND ),
     CATEGORY_NOT_FOUND("카테고리를 찾을 수 없습니다.",HttpStatus.NOT_FOUND ),
     // 500 Internal Server Error

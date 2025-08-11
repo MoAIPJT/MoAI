@@ -2,6 +2,7 @@ package com.foureyes.moai.backend.domain.ai.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.foureyes.moai.backend.domain.ai.dto.SummaryDto;
+import com.foureyes.moai.backend.domain.ai.dto.request.AiUpdateRequestDto;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
 
@@ -62,4 +63,18 @@ public interface AiService {
      * 기능: AI 요약 정보를 생성하고 저장한다.
      */
     AiCreateResponseDto createSummary(AiCreateRequestDto requestDto);
+
+    /**
+     * 입력: Long
+     * 출력: void
+     * 기능: AI 요약 정보를 삭제한다.
+     */
+    void deleteSummary(Long summaryId);
+
+    /**
+     * 입력: AiUpdateRequestDto
+     * 출력: AiCreateResponseDto
+     * 기능: AI 요약 정보를 업데이트한다.
+     */
+    AiCreateResponseDto updateSummary(AiUpdateRequestDto requestDto);
 }
