@@ -1,6 +1,7 @@
 package com.foureyes.moai.backend.commons.config;
 
 import com.foureyes.moai.backend.auth.jwt.JwtAuthenticationFilter;
+import com.foureyes.moai.backend.domain.user.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,7 +9,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -27,6 +27,7 @@ import java.util.Arrays;
 public class WebSecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomUserDetailsService customUserDetailsService;
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
         return new BCryptPasswordEncoder();
@@ -46,7 +47,10 @@ public class WebSecurityConfig {
                     "/users/signup",
                     "/users/login",
                     "/users/hello",
+                    "/users/verify-email",
                     "/users/oauth/**",
+                    "/users/reset-password/request",
+                    "/users/reset-password",
                     "/swagger-ui.html",
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
@@ -54,6 +58,7 @@ public class WebSecurityConfig {
                 .permitAll() // 회원가입, 로그인, 소셜로그인 API는 인증 없이 접근 가능
                 .anyRequest().authenticated() // 나머지는 인증 필요
             )
+            .userDetailsService(customUserDetailsService)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -79,3 +84,4 @@ public class WebSecurityConfig {
 
 
 }
+ 

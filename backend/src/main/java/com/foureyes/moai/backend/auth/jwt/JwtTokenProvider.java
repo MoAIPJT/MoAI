@@ -7,18 +7,13 @@ import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.Date;
-import java.util.Set;
 
 @RequiredArgsConstructor
 @Service
@@ -76,20 +71,6 @@ public class JwtTokenProvider {
         return false;
     }
 
-    // 토큰 기반으로 인증 정보를 가져오는 메서드
-    public Authentication getAuthentication(String token) {
-        Claims claims = getClaims(token);
-        Set<SimpleGrantedAuthority> authorities = Collections.singleton(
-            new SimpleGrantedAuthority("ROLE_USER") // <- 여기도 생각해봐야함 ㅇㅇ
-        );
-
-        // Spring Security의 UserDetails 객체 생성
-        org.springframework.security.core.userdetails.User principal =
-            new org.springframework.security.core.userdetails.User(
-                claims.getSubject(), "", authorities);
-
-        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
-    }
 
     // 토큰 기반으로 유저 ID를 가져오는 메서드
     public int getUserId(String token) {

@@ -8,6 +8,24 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - shared-network
+
+  redis:
+    image: redis:latest
+    env_file:
+      - .env
+    container_name: redis-moai
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - shared-network
 
@@ -15,11 +33,6 @@ services:
     image: 'mysql:8.0'
     env_file:
       - .env
-    environment:
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
     ports:
       - '5050:3306'
     volumes:
@@ -34,6 +47,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
     networks:
       - shared-network
 
