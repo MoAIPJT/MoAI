@@ -22,6 +22,7 @@ public enum ErrorCode {
     // 403 Forbidden
     FORBIDDEN_DOCUMENT_ACCESS("문서에 접근할 권한이 없습니다.",HttpStatus.FORBIDDEN),
     FORBIDDEN("권한이 없습니다.", HttpStatus.FORBIDDEN),
+    FORBIDDEN_SUMMARY_ACCESS("요약본에 대한 권한이 없습니다.", HttpStatus.FORBIDDEN),
 
     // 404 Not Found
     USER_NOT_FOUND("등록되지 않은 이메일입니다.", HttpStatus.NOT_FOUND),

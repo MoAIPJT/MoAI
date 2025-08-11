@@ -19,4 +19,5 @@ public interface AiService {
     CreateAiSummaryResponse createSummary(int ownerId, CreateAiSummaryRequest req);
     DashboardSummariesResponse getDashboardList(int ownerId);
     SidebarSummariesResponse getSidebarList(int ownerId);
+    void deleteSummary(int ownerId, int summaryId);
 }

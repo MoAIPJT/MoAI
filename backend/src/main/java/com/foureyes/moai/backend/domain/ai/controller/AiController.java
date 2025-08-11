@@ -93,4 +93,18 @@ public class AiController {
         int ownerId = extractUserIdFromToken(bearerToken);
         return ResponseEntity.ok(aiService.getSidebarList(ownerId));
     }
+
+    @Operation(
+        summary = "AI 요약본 삭제",
+        description = "요약본의 소유자만 삭제할 수 있습니다. 성공 시 200을 반환합니다."
+    )
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Void> deleteSummary(
+        @Parameter(hidden = true) @RequestHeader("Authorization") String bearerToken,
+        @Parameter(description = "요약본 ID", example = "123") @PathVariable int id
+    ) {
+        int ownerId = extractUserIdFromToken(bearerToken);
+        aiService.deleteSummary(ownerId, id);
+        return ResponseEntity.ok().build();
+    }
 }

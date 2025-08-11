@@ -25,4 +25,5 @@ public interface AiSummaryDocumentRepository extends JpaRepository<AiSummaryDocu
         order by s.createdAt desc
     """)
     List<SidebarRow> findSidebarRows(@Param("ownerId") int ownerId);
+
 }

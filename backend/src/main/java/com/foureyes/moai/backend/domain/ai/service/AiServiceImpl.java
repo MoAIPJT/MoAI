@@ -182,4 +182,18 @@ public class AiServiceImpl implements AiService {
             .studies(new ArrayList<>(studies.values()))
             .build();
     }
+
+    @Override
+    public void deleteSummary(int ownerId, int summaryId) {
+        var summary = aiSummaryRepository.findById(summaryId)
+            .orElseThrow(() -> new CustomException(ErrorCode.SUMMARY_NOT_FOUND));
+
+        if (summary.getOwner() == null || summary.getOwner().getId() != ownerId) {
+            throw new CustomException(ErrorCode.FORBIDDEN_SUMMARY_ACCESS);
+        }
+
+        aiSummaryDocumentRepository.deleteBySummary_Id(summaryId);
+
+        aiSummaryRepository.delete(summary);
+    }
 }
