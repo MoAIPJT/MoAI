@@ -14,6 +14,7 @@ const DashboardPage = React.lazy(() => import('@/pages/DashboardPage'))
 const TestPage = React.lazy(() => import('@/pages/TestPage'))
 const StudyDetailPage = React.lazy(() => import('@/pages/StudyDetailPage'))
 const VideoConferencePage = React.lazy(() => import('@/pages/VideoConferencePage'))
+const GoogleCallback = React.lazy(() => import('@/pages/GoogleCallback'))
 
 // Loading component for Suspense fallback
 const LoadingSpinner: React.FC = () => (
@@ -41,6 +42,7 @@ const Router: React.FC = () => {
         <Route path="/study/:studyId" element={<StudyDetailPage />} />
         <Route path="/video-conference" element={<VideoConferencePage />} />
         <Route path="/video-conference/:studyId" element={<VideoConferencePage />} />
+        <Route path="/auth/google/callback" element={<GoogleCallback />} />
       </Routes>
     </Suspense>
   )

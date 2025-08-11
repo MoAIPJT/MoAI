@@ -15,6 +15,7 @@ public enum ErrorCode {
     PASSWORD_CONFIRM_MISMATCH("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.", HttpStatus.BAD_REQUEST),
     PASSWORD_SAME_AS_OLD("새 비밀번호는 현재 비밀번호와 달라야 합니다.", HttpStatus.BAD_REQUEST),
     EMAIL_VERIFICATION_FAILED("이메일 인증 코드가 잘못되었거나 만료되었습니다.", HttpStatus.BAD_REQUEST),
+    OAUTH2_TOKEN_ERROR("OAuth2 토큰 처리 중 오류가 발생했습니다.", HttpStatus.BAD_REQUEST),
 
     // 401 Unauthorized
     INVALID_TOKEN("유효하지 않은 토큰입니다.", HttpStatus.UNAUTHORIZED),
@@ -33,6 +34,7 @@ public enum ErrorCode {
 
     // 500 Internal Server Error
     DATABASE_ERROR("데이터베이스 처리 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    OAUTH2_PROCESSING_ERROR("OAuth2 처리 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     INTERNAL_SERVER_ERROR("서버 내부 오류입니다.", HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final String message;
