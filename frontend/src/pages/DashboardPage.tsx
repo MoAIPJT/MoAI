@@ -15,14 +15,11 @@ import type { ProfileData } from '../components/organisms/ProfileSettingsModal/t
 import type { CalendarEvent } from '../components/ui/calendar'
 import InviteLinkModal from '../components/organisms/InviteLinkModal'
 import { fetchSummaryList } from '../services/summaryService'
-import { useMe, usePatchProfile } from '../hooks/useUsers'
-import { useAppStore } from '../store/appStore'
+import { useLogout } from '@/hooks/useUsers'
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate()
-  const { data: userProfile, isLoading: isProfileLoading } = useMe()
-  const patchProfileMutation = usePatchProfile()
-  const setProfile = useAppStore((state) => state.auth.setProfile)
+  const logoutMutation = useLogout()
   const [studies, setStudies] = useState<Study[]>([])
   const [summaries, setSummaries] = useState<AISummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -249,7 +246,7 @@ const DashboardPage: React.FC = () => {
   }
 
   const handleLogout = () => {
-    // TODO: 로그아웃 로직 구현
+    logoutMutation.mutate()
   }
 
   const handleSettingsClick = () => {

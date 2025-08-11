@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Profile } from '../types/users'
+import type { Profile } from '@/types/users'
 
 interface AuthState {
   accessToken?: string
@@ -51,8 +51,8 @@ export const useAppStore = create<AppState>((set) => ({
     setAuth: (tokens) =>
       set((state) => {
         // 빈 값 저장 방지
-        if (!tokens.accessToken) {
-          console.error('빈 accessToken으로 setAuth 호출됨:', tokens)
+        if (!tokens.accessToken || !tokens.refreshToken) {
+          console.error('빈 토큰으로 setAuth 호출됨:', tokens)
           return state
         }
 

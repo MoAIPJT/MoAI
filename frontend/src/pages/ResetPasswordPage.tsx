@@ -1,23 +1,19 @@
 import React from 'react'
 import ResetPasswordTemplate from '@/components/templates/ResetPasswordTemplate'
-import { useAuth } from '@/hooks/useAuth'
+import { useResetPasswordRequest } from '@/hooks/useUsers'
 
 const ResetPasswordPage: React.FC = () => {
-  const { requestResetPassword, loading, error } = useAuth();
+  const resetPasswordMutation = useResetPasswordRequest()
 
-  const handleResetPassword = async (email: string) => {
-    try {
-      await requestResetPassword(email)
-    } catch {
-      // 에러는 useAuth 훅에서 처리됨
-    }
+  const handleResetPassword = (email: string) => {
+    resetPasswordMutation.mutate(email)
   }
 
   return (
     <ResetPasswordTemplate
       onResetPassword={handleResetPassword}
-      loading={loading}
-      error={error}
+      loading={resetPasswordMutation.isPending}
+      error={resetPasswordMutation.error ? '비밀번호 재설정 요청에 실패했습니다.' : null}
     />
   )
 }

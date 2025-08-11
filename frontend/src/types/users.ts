@@ -1,14 +1,3 @@
-export interface Profile {
-  id: number
-  email: string
-  name: string
-  nickname?: string
-  profileImageUrl?: string
-  providerType?: string
-  isVerified?: boolean
-  createdAt?: string
-}
-
 export interface LoginReq {
   email: string
   password: string
@@ -19,21 +8,19 @@ export interface TokenRes {
   refreshToken: string
 }
 
-export interface SignupReq {
-  email: string
-  password: string
+export interface Profile {
+  id?: number
   name: string
-  nickname?: string
-}
-
-export interface SignupRes {
-  user_id: number
-  message: string
+  email: string
+  profileImageUrl?: string
+  providerType?: string
+  createdAt?: string
 }
 
 export interface ChangePasswordReq {
   currentPassword: string
   newPassword: string
+  confirmNewPassword: string
 }
 
 export interface ResetPasswordReq {
@@ -42,19 +29,18 @@ export interface ResetPasswordReq {
 
 export interface ResetPasswordVerifyReq {
   email: string
-  verificationCode: string
+  code: string
 }
 
 export interface ResetPasswordUpdateReq {
   email: string
-  verificationCode: string
+  code: string
   newPassword: string
 }
 
 export interface SocialSignupReq {
   email: string
   name: string
-  nickname?: string
   providerType: string
   providerId: string
 }
@@ -62,6 +48,23 @@ export interface SocialSignupReq {
 export interface SocialLoginReq {
   providerType: string
   providerId: string
+}
+
+export interface SignupReq {
+  email: string
+  name: string
+  password: string
+}
+
+export interface VerifyEmailReq {
+  email: string
+  code: string
+}
+
+export interface SignupRes {
+  email: string
+  name: string
+  message: string
 }
 
 export interface ApiError {
