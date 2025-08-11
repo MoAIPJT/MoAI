@@ -10,6 +10,7 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
 }) => {
   const [studyName, setStudyName] = useState('')
   const [studyDescription, setStudyDescription] = useState('')
+  const [maxCapacity, setMaxCapacity] = useState<number>(8)
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string>('')
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -31,16 +32,23 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
       alert('스터디 이름을 입력해주세요.')
       return
     }
-    
+
+    if (maxCapacity < 2 || maxCapacity > 8) {
+      alert('최대 인원은 2명 이상 8명 이하로 설정해주세요.')
+      return
+    }
+
     onSubmit({
       name: studyName,
       description: studyDescription,
-      image: selectedImage
+      image: selectedImage,
+      maxCapacity: maxCapacity
     })
-    
+
     // 폼 초기화
     setStudyName('')
     setStudyDescription('')
+    setMaxCapacity(8)
     setSelectedImage(null)
     setPreviewUrl('')
     onClose()
@@ -49,6 +57,7 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
   const handleClose = () => {
     setStudyName('')
     setStudyDescription('')
+    setMaxCapacity(8)
     setSelectedImage(null)
     setPreviewUrl('')
     onClose()
@@ -75,9 +84,9 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
             <div className="w-48 h-48 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors"
                  onClick={() => fileInputRef.current?.click()}>
               {previewUrl ? (
-                <img 
-                  src={previewUrl} 
-                  alt="스터디 이미지 미리보기" 
+                <img
+                  src={previewUrl}
+                  alt="스터디 이미지 미리보기"
                   className="w-full h-full rounded-full object-cover"
                 />
               ) : (
@@ -123,6 +132,22 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
                 className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
               />
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                인원 <span className="text-gray-500 text-xs">최대 8인</span>
+              </label>
+              <div className="w-24">
+                <input
+                  type="number"
+                  value={maxCapacity}
+                  onChange={(e) => setMaxCapacity(Math.max(2, Math.min(8, parseInt(e.target.value) || 2)))}
+                  min={2}
+                  max={8}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-center"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -149,4 +174,4 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
   )
 }
 
-export default CreateStudyModal 
+export default CreateStudyModal
