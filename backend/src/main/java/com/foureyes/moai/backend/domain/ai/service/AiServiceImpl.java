@@ -1,172 +1,126 @@
+
 package com.foureyes.moai.backend.domain.ai.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.foureyes.moai.backend.commons.exception.CustomException;
+import com.foureyes.moai.backend.commons.exception.ErrorCode;
+import com.foureyes.moai.backend.commons.util.StorageService;
 import com.foureyes.moai.backend.domain.ai.dto.SummaryDto;
+import com.foureyes.moai.backend.domain.ai.dto.request.CreateAiSummaryRequest;
+import com.foureyes.moai.backend.domain.ai.dto.response.CreateAiSummaryResponse;
+import com.foureyes.moai.backend.domain.ai.entity.AiSummary;
+import com.foureyes.moai.backend.domain.ai.entity.AiSummaryDocument;
+import com.foureyes.moai.backend.domain.ai.internal.*;
+import com.foureyes.moai.backend.domain.ai.repository.AiSummaryDocumentRepository;
 import com.foureyes.moai.backend.domain.ai.repository.AiSummaryRepository;
+import com.foureyes.moai.backend.domain.document.entity.Document;
+import com.foureyes.moai.backend.domain.document.repository.DocumentRepository;
+import com.foureyes.moai.backend.domain.document.service.DocumentService;
 import com.foureyes.moai.backend.domain.user.entity.User;
 import com.foureyes.moai.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.text.PDFTextStripper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class AiServiceImpl implements AiService {
 
-    private static final Logger log = LoggerFactory.getLogger(AiServiceImpl.class);
-    private final WebClient webClient;
-    private final String geminiApiKey;
-    private final ObjectMapper objectMapper;
-    private final AiSummaryRepository summaryRepository;
     private final UserRepository userRepository;
+    private final DocumentRepository documentRepository;
+    private final AiSummaryRepository aiSummaryRepository;
+    private final AiSummaryDocumentRepository aiSummaryDocumentRepository;
 
+    private final DocumentService documentService;
+    private final StorageService storageService;
 
+    // 역할별 컴포넌트
+    private final PdfTextExtractor pdfTextExtractor;
+    private final PromptBuilder promptBuilder;
+    private final ModelResolver modelResolver;
+    private final GeminiApiClient geminiApiClient;
+    private final SummaryParser summaryParser;
+    private final ObjectMapper objectMapper;
 
-    /**  Demo 시연시 사용한 코드 변환 Start **/
-
-
-    /**
-     * 입력: pdfFile
-     * 출력: List<SummaryDto>
-     * 기능: PDF 파일을 받아 텍스트 추출, 프롬프트 생성, Gemini API 호출, 응답 파싱을 통해 요약 결과를 반환한다.
-     */
     @Override
-    public List<SummaryDto> summarizePdf(InputStream pdfInputStream, String fileName) throws IOException {
-        log.info("PDF 요약 시작: {}", fileName);
-        String textForPrompt = extractTextFromPdf(pdfInputStream, fileName);
-        String prompt = createPrompt(textForPrompt);
+    public CreateAiSummaryResponse createSummary(int ownerId, CreateAiSummaryRequest req) {
+        if (req.getFileId() == null || req.getFileId().isEmpty()) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
+
+        User owner = userRepository.findById(ownerId)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 문서 검증
+        List<Integer> docIds = req.getFileId().stream()
+            .filter(Objects::nonNull).distinct().toList();
+        List<Document> docs = documentRepository.findAllById(docIds);
+        if (docs.size() != docIds.size()) throw new CustomException(ErrorCode.DOCUMENT_NOT_FOUND);
 
         try {
-            String summaryJson = callGeminiApi(prompt).block();
-            List<SummaryDto> summary = parseSummaryResponse(summaryJson);
-            log.info("PDF 요약 완료: {}", fileName);
-            return summary;
-        } catch (Exception e) {
-            log.error("AI 요약 생성 중 오류 발생", e);
-            throw new RuntimeException("AI 요약 생성 중 오류가 발생했습니다.", e);
-        }
-    }
-
-    /**
-     * 입력: file
-     * 출력: String
-     * 기능: PDF 파일에서 페이지 번호와 함께 텍스트를 추출한다.
-     */
-
-    public String extractTextFromPdf(InputStream inputStream, String fileName) throws IOException {
-        log.info("PDF 텍스트 추출 시작: {}", fileName);
-        StringBuilder fullText = new StringBuilder();
-
-        try (PDDocument document = PDDocument.load(inputStream)) {
-            PDFTextStripper stripper = new PDFTextStripper();
-            for (int pageNum = 1; pageNum <= document.getNumberOfPages(); pageNum++) {
-                stripper.setStartPage(pageNum);
-                stripper.setEndPage(pageNum);
-                String pageText = stripper.getText(document);
-                fullText.append("--- Page ").append(pageNum).append(" --- ");
-                fullText.append(pageText).append(" ");
+            // 1) 문서 텍스트 → DOC 블록
+            List<String> docBlocks = new ArrayList<>(docs.size());
+            for (Document d : docs) {
+                String key = documentService.getDocumentKeyIfAllowed(ownerId, d.getId());
+                try (InputStream in = storageService.openDocumentStream(key)) {
+                    String text = pdfTextExtractor.extractTextWithPages(in, Optional.ofNullable(d.getTitle()).orElse("document-" + d.getId()));
+                    String clipped = promptBuilder.clip(text, 12000);
+                    docBlocks.add(promptBuilder.formatDocBlock(d.getId(), d.getTitle(), clipped));
+                }
             }
-        }
+            String joinedBlocks = String.join("\n\n", docBlocks);
 
-        log.info("PDF 텍스트 추출 완료: {}", fileName);
-        return fullText.toString();
-    }
+            // 2) 프롬프트 생성(사용자 프롬프트 병합)
+            String prompt = promptBuilder.buildMultiDocPrompt(joinedBlocks, req.getPromptType());
 
-    /**
-     * 입력: textToSummarize
-     * 출력: String
-     * 기능: Gemini API에 전달할 프롬프트를 생성한다. JSON 출력 형식을 지정한다.
-     */
-    public String createPrompt(String textToSummarize) {
-        return String.format("""
-            당신은 전문적인 문서 요약가입니다. 다음 텍스트를 핵심 문장을 중요 키워드와 함께 요약해 주세요.
-            각 요약된 문장에 대해, 그 내용의 근거가 되는 원본 텍스트의 '정확한 구절'과 '페이지 번호'를 반드시 포함해야 합니다.
+            // 3) 모델 선택 → API URL 구성 → 호출
+            String model = modelResolver.resolveModel(req.getModelType());
+            String apiUrl = modelResolver.buildApiUrl(model);
+            String summaryJson = geminiApiClient.generateContent(apiUrl, prompt).block();
 
-            출력 형식은 다음 JSON 리스트 형식과 정확히 일치해야 합니다:
-            [
-              {
-                "summarySentence": "요약된 문장입니다.",
-                "originalQuote": "요약의 근거가 되는 원본 텍스트의 구절입니다.",
-                "pageNumber": 페이지 번호
-              },
-              ...
-            ]
+            // 4) JSON 파싱 검증
+            List<SummaryDto> parsed = summaryParser.parse(summaryJson);
+            log.info("AI 요약 파싱 결과: {} items", parsed.size());
 
-            다음은 페이지 번호와 내용으로 구성된 문서입니다:
-            ---
-            %s
-            ---
-            """, textToSummarize);
-    }
+            // 5) 요약 저장
+            AiSummary summary = AiSummary.builder()
+                .owner(owner)
+                .title(Optional.ofNullable(req.getTitle()).orElse("").trim())
+                .description(Optional.ofNullable(req.getDescription()).orElse("").trim())
+                .modelType(model)
+                .promptType(Optional.ofNullable(req.getPromptType()).orElse("").trim())
+                .summaryJson(objectMapper.readTree(summaryJson))
+                .build();
+            aiSummaryRepository.save(summary);
 
-    /**
-     * 입력: prompt
-     * 출력: Mono<String>
-     * 기능: WebClient를 사용하여 Gemini API를 비동기적으로 호출하고, 응답을 Mono<String>으로 반환한다.
-     */
-    public Mono<String> callGeminiApi(String prompt) {
-        log.info("Gemini API 호출");
-        Map<String, Object> requestBody = Map.of(
-            "contents", List.of(
-                Map.of("parts", List.of(
-                    Map.of("text", prompt)
-                ))
-            )
-        );
+            // 6) 링크 저장
+            for (Document d : docs) {
+                if (!aiSummaryDocumentRepository.existsBySummary_IdAndDocument_Id(summary.getId(), d.getId())) {
+                    aiSummaryDocumentRepository.save(
+                        AiSummaryDocument.builder().summary(summary).document(d).build()
+                    );
+                }
+            }
 
-        return webClient.post()
-            .uri(uriBuilder -> uriBuilder.queryParam("key", geminiApiKey).build())
-            .bodyValue(requestBody)
-            .retrieve()
-            .bodyToMono(JsonNode.class)
-            .map(this::extractTextFromGeminiResponse);
-    }
+            return CreateAiSummaryResponse.builder()
+                .summary_id(summary.getId())
+                .title(summary.getTitle())
+                .description(summary.getDescription())
+                .model_type(summary.getModelType())
+                .prompt_type(summary.getPromptType())
+                .build();
 
-    /**
-     * 입력: response
-     * 출력: String
-     * 기능: Gemini API의 JSON 응답에서 요약 텍스트 부분을 추출한다.
-     */
-    public String extractTextFromGeminiResponse(JsonNode response) {
-        try {
-            String rawText = response.get("candidates").get(0).get("content").get("parts").get(0).get("text").asText();
-            return rawText.trim().replace("```json", "").replace("```", "");
+        } catch (CustomException e) {
+            throw e;
         } catch (Exception e) {
-            return "[]";
-        }
-    }
-
-    /**
-     * 입력: jsonResponse
-     * 출력: List<SummaryDto>
-     * 기능: JSON 형식의 요약 응답 문자열을 List<SummaryDto> 객체로 파싱한다.
-     */
-    public List<SummaryDto> parseSummaryResponse(String jsonResponse) {
-        try {
-            log.info("AI 응답 파싱 시작");
-            List<SummaryDto> result = objectMapper.readValue(jsonResponse, new TypeReference<List<SummaryDto>>() {});
-            log.info("AI 응답 파싱 완료");
-            return result;
-        } catch (JsonProcessingException e) {
-            log.error("AI 응답 파싱 실패: {}", jsonResponse, e);
-            throw new RuntimeException("AI 응답 파싱에 실패했습니다.", e);
+            log.error("AI 요약 생성 실패", e);
+            throw new RuntimeException("AI 요약 생성에 실패했습니다.", e);
         }
     }
 }
