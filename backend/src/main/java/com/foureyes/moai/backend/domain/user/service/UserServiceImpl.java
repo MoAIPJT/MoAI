@@ -62,13 +62,7 @@ public class UserServiceImpl implements UserService {
             user.setName(request.getName());
             user.setProviderType("LOCAL");
             user.setVerified(false);
-            User user = new User();
-            user.setEmail(request.getEmail());
-            user.setPassword(encodedPw);
-            user.setName(request.getName());
-            user.setProviderType("LOCAL");
-            user.setVerified(false);
-
+            user.setRefreshToken(null); // 초기에는 리프레시 토큰 없음
             userRepository.save(user);
             // 회원가입 성공 시 userId만 디버그로 남김
             log.debug("[signup] user persisted: id={}", user.getId());
