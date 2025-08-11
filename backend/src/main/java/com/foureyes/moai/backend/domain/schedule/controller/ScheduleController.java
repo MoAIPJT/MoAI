@@ -131,5 +131,6 @@ public class ScheduleController {
         scheduleService.deleteSchedule(userId, scheduleId);
         return ResponseEntity.noContent().build(); // 204
     }
+
 }
 
