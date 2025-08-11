@@ -35,4 +35,3 @@ export const scheduleKeys = {
   byStudyMonth: (studyId: number, y: number, m: number) => ['schedule', 'byStudyMonth', { studyId, y, m }] as const,
   myMonthly: (userId: number, y: number, m: number) => ['schedule', 'myMonthly', { userId, y, m }] as const,
 }
-

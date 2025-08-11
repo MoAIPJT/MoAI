@@ -1,14 +1,30 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import * as authService from '@/services/authService'
 import type { LoginFormData } from '@/components/organisms/LoginForm/types'
 import type { SignupRequest, ResetPasswordConfirmRequest, SocialSignupRequest, SocialLoginRequest } from '@/services/authService'
 import { extractAxiosErrorMessage } from '@/utils/errorHandler'
 
+interface User {
+  email: string
+}
+
 export const useAuth = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
   const navigate = useNavigate()
+
+  // 컴포넌트 마운트 시 인증 상태 확인
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken')
+    if (token) {
+      setIsAuthenticated(true)
+      // 간단한 사용자 정보 설정 (토큰에서 추출하거나 기본값)
+      setUser({ email: localStorage.getItem('rememberedEmail') || '사용자' })
+    }
+  }, [])
 
   const login = async (data: LoginFormData) => {
     setLoading(true)
@@ -18,8 +34,8 @@ export const useAuth = () => {
       const response = await authService.login(data)
 
       // 토큰 저장
-      localStorage.setItem('accessToken', response.access_token)
-      localStorage.setItem('refreshToken', response.refresh_token)
+      localStorage.setItem('accessToken', response.accessToken)
+      localStorage.setItem('refreshToken', response.refreshToken)
 
       // 이메일 기억하기 옵션
       if (data.rememberEmail) {
@@ -28,11 +44,16 @@ export const useAuth = () => {
         localStorage.removeItem('rememberedEmail')
       }
 
+      // 인증 상태 업데이트
+      setIsAuthenticated(true)
+      setUser({ email: data.email })
+
       // 로그인 성공 후 리다이렉트
       navigate('/dashboard')
       return response
     } catch (err: unknown) {
-      setError(extractAxiosErrorMessage(err, '로그인에 실패했습니다.'))
+      const errorMessage = extractAxiosErrorMessage(err, '로그인에 실패했습니다.')
+      setError(errorMessage)
       throw err
     } finally {
       setLoading(false)
@@ -99,12 +120,21 @@ export const useAuth = () => {
 
     try {
       const response = await authService.kakaoLogin(code)
-      localStorage.setItem('accessToken', response.access_token)
-      localStorage.setItem('refreshToken', response.refresh_token)
+
+      // 토큰 저장
+      localStorage.setItem('accessToken', response.accessToken)
+      localStorage.setItem('refreshToken', response.refreshToken)
+
+      // 인증 상태 업데이트
+      setIsAuthenticated(true)
+      setUser({ email: response.email })
+
+      // 로그인 성공 후 리다이렉트
       navigate('/dashboard')
       return response
     } catch (err: unknown) {
-      setError(extractAxiosErrorMessage(err, '카카오 로그인에 실패했습니다.'))
+      const errorMessage = extractAxiosErrorMessage(err, '카카오 로그인에 실패했습니다.')
+      setError(errorMessage)
       throw err
     } finally {
       setLoading(false)
@@ -117,12 +147,21 @@ export const useAuth = () => {
 
     try {
       const response = await authService.googleLogin(code)
-      localStorage.setItem('accessToken', response.access_token)
-      localStorage.setItem('refreshToken', response.refresh_token)
+
+      // 토큰 저장
+      localStorage.setItem('accessToken', response.accessToken)
+      localStorage.setItem('refreshToken', response.refreshToken)
+
+      // 인증 상태 업데이트
+      setIsAuthenticated(true)
+      setUser({ email: response.email })
+
+      // 로그인 성공 후 리다이렉트
       navigate('/dashboard')
       return response
     } catch (err: unknown) {
-      setError(extractAxiosErrorMessage(err, '구글 로그인에 실패했습니다.'))
+      const errorMessage = extractAxiosErrorMessage(err, '구글 로그인에 실패했습니다.')
+      setError(errorMessage)
       throw err
     } finally {
       setLoading(false)
@@ -153,10 +192,15 @@ export const useAuth = () => {
 
     try {
       const response = await authService.socialLogin(data)
-      // 소셜 로그인 응답에는 access_token이 없고 refresh_token만 있음
-      // refresh_token을 access_token으로 사용하고, 별도로 refresh_token도 저장
-      localStorage.setItem('accessToken', response.refresh_token)
-      localStorage.setItem('refreshToken', response.refresh_token)
+      // 소셜 로그인 응답에는 accessToken이 없고 refreshToken만 있음
+      // refreshToken을 accessToken으로 사용하고, 별도로 refreshToken도 저장
+      localStorage.setItem('accessToken', response.refreshToken)
+      localStorage.setItem('refreshToken', response.refreshToken)
+
+      // 인증 상태 업데이트
+      setIsAuthenticated(true)
+      setUser({ email: response.email })
+
       navigate('/dashboard')
       return response
     } catch (err: unknown) {
@@ -185,14 +229,23 @@ export const useAuth = () => {
     }
   }
 
-  const logout = async () => {
-    try {
-      await authService.logout()
-    } catch {
-      // 로그아웃 실패해도 로컬 토큰은 삭제
-    } finally {
-      navigate('/login')
-    }
+  const logout = () => {
+    // 로컬 스토리지 정리
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
+
+    // 인증 상태 초기화
+    setIsAuthenticated(false)
+    setUser(null)
+
+    // 로그인 페이지로 이동
+    navigate('/login')
+  }
+
+  // 간단한 인증 체크 함수
+  const checkAuth = () => {
+    const token = localStorage.getItem('accessToken')
+    return !!token
   }
 
   return {
@@ -205,8 +258,11 @@ export const useAuth = () => {
     kakaoLogin,
     googleLogin,
     logout,
+    checkAuth,
     loading,
     error,
+    isAuthenticated,
+    user,
     clearError: () => setError(null)
   }
 }

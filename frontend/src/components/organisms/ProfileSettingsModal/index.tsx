@@ -9,7 +9,8 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   profileData,
   onUpdateProfile,
   onWithdrawMembership,
-  onOpenChangePasswordModal
+  onOpenChangePasswordModal,
+  isLoading = false
 }) => {
   const [nickname, setNickname] = useState(profileData.nickname)
   const [isEditingNickname, setIsEditingNickname] = useState(false)
@@ -97,7 +98,12 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
               {/* 닉네임 */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  {isEditingNickname ? (
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+                      <span className="text-gray-500">로딩 중...</span>
+                    </div>
+                  ) : isEditingNickname ? (
                     <>
                       <InputText
                         value={nickname}

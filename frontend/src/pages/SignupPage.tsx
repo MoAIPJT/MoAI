@@ -1,23 +1,51 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import SignupTemplate from '@/components/templates/SignupTemplate'
-import { useAuth } from '@/hooks/useAuth'
 import type { SignupFormData } from '@/components/organisms/SignupForm/types'
+import apiClient from '@/services/api'
+import { extractAxiosErrorMessage } from '@/utils/errorHandler'
 
 const SignupPage: React.FC = () => {
-  const { signup, loading, error } = useAuth();
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate()
 
   const handleSignup = async (data: SignupFormData) => {
+    setLoading(true)
+    setError(null)
+
     try {
-      await signup({
+      await apiClient.post('/users/signup', {
         email: data.email,
         password: data.password,
         name: data.name,
         passwordConfirm: data.passwordConfirm
-      });
-    } catch {
-      // 에러는 useAuth 훅에서 처리됨
+      })
+
+      // 회원가입 성공 후 이메일 인증 페이지로 이동
+      navigate('/email-sent', {
+        state: {
+          message: '회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료해주세요.',
+          email: data.email
+        }
+      })
+    } catch (err: unknown) {
+      const errorMessage = extractAxiosErrorMessage(err, '회원가입에 실패했습니다.')
+      setError(errorMessage)
+
+      // 백엔드 연결 실패 시에도 테스트용으로 페이지 이동
+      if (errorMessage.includes('Network Error') || errorMessage.includes('ECONNREFUSED')) {
+        navigate('/email-sent', {
+          state: {
+            message: '회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료해주세요.',
+            email: data.email
+          }
+        })
+      }
+    } finally {
+      setLoading(false)
     }
-  };
+  }
 
   const handleKakaoSignup = () => {
     // 카카오 회원가입 URL로 리다이렉트
@@ -44,6 +72,6 @@ const SignupPage: React.FC = () => {
       error={error}
     />
   );
-  }
+}
 
-  export default SignupPage
+export default SignupPage

@@ -3,8 +3,9 @@ import { userKeys } from './queryKeys'
 import * as usersService from '@/services/usersService'
 import { useAppStore } from '@/store/appStore'
 import type {
-  TokenRes
-} from '@/types/users'
+  TokenRes,
+  Profile
+} from '../types/users'
 
 // Query hooks
 export const useMe = () => {
@@ -13,11 +14,22 @@ export const useMe = () => {
     queryFn: usersService.getProfile,
     staleTime: 60 * 1000, // 60 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
-    retry: (failureCount, error: any) => {
+    retry: (failureCount, error: unknown) => {
       // Don't retry on 404 (user not found)
-      if (error.code === '404') return false
+      if (error && typeof error === 'object' && 'code' in error && error.code === '404') return false
       return failureCount < 3
-    }
+    },
+    // 에러 발생 시 더미 데이터 반환 (개발용)
+    placeholderData: {
+      id: 1,
+      email: 'dksejrqus2@gmail.com',
+      name: '안덕현',
+      nickname: '안덕현',
+      profileImageUrl: '',
+      providerType: 'LOCAL',
+      isVerified: true,
+      createdAt: '2024-01-01'
+    } as Profile
   })
 }
 
@@ -30,8 +42,8 @@ export const useLogin = () => {
     mutationFn: usersService.login,
     onSuccess: (data: TokenRes) => {
       setAuth({
-        accessToken: data.access_token,
-        refreshToken: data.refresh_token
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken
       })
       // Invalidate and refetch user profile
       queryClient.invalidateQueries({ queryKey: userKeys.me() })
@@ -47,8 +59,8 @@ export const useSocialLogin = () => {
     mutationFn: usersService.socialLogin,
     onSuccess: (data: TokenRes) => {
       setAuth({
-        accessToken: data.access_token,
-        refreshToken: data.refresh_token
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken
       })
       // Invalidate and refetch user profile
       queryClient.invalidateQueries({ queryKey: userKeys.me() })
@@ -121,14 +133,14 @@ export const useChangePassword = () => {
     mutationFn: usersService.changePassword,
     onSuccess: (data: TokenRes | void) => {
       // If new tokens are returned, update them
-      if (data && 'access_token' in data) {
+      if (data && 'accessToken' in data) {
         setAuth({
-          accessToken: data.access_token,
-          refreshToken: data.refresh_token
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken
         })
-        // Invalidate and refetch user profile
-        queryClient.invalidateQueries({ queryKey: userKeys.me() })
       }
+      // Invalidate and refetch user profile
+      queryClient.invalidateQueries({ queryKey: userKeys.me() })
     }
   })
 }

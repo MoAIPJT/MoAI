@@ -36,7 +36,7 @@ export const useMySchedules = (year: number, month: number, userId: number) => {
 // 스케줄 생성
 export const useCreateSchedule = (studyId: number, year: number, month: number, userId: number) => {
   const queryClient = useQueryClient()
-
+  
   return useMutation({
     mutationFn: (req: CreateScheduleReq) => scheduleService.createSchedule(req),
     onSuccess: () => {
@@ -54,7 +54,7 @@ export const useCreateSchedule = (studyId: number, year: number, month: number, 
 // 스케줄 수정
 export const useEditSchedule = (studyId: number, year: number, month: number, userId: number, id: number) => {
   const queryClient = useQueryClient()
-
+  
   return useMutation({
     mutationFn: (req: EditScheduleReq) => scheduleService.editSchedule(id, req),
     onSuccess: () => {
@@ -72,7 +72,7 @@ export const useEditSchedule = (studyId: number, year: number, month: number, us
 // 스케줄 삭제
 export const useDeleteSchedule = (studyId: number, year: number, month: number, userId: number, id: number) => {
   const queryClient = useQueryClient()
-
+  
   return useMutation({
     mutationFn: (reqUser: DeleteScheduleReq) => scheduleService.deleteSchedule(id, reqUser),
     onSuccess: () => {

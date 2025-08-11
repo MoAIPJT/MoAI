@@ -68,4 +68,3 @@ export const useDeleteAiSummary = (userId: number, summaryId: number) => {
     }
   })
 }
-

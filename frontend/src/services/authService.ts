@@ -4,9 +4,9 @@ import type { LoginFormData } from '@/components/organisms/LoginForm/types'
 export interface LoginResponse {
   email: string
   name: string
-  profile_image_url: string
-  access_token: string
-  refresh_token: string
+  profileImageUrl: string
+  accessToken: string
+  refreshToken: string
 }
 
 export interface SignupRequest {
@@ -24,37 +24,37 @@ export interface SignupResponse {
 }
 
 export interface SocialSignupRequest {
-  provider_type: string
-  social_id: string
+  providerType: string
+  socialId: string
   name: string
   password: string
   email: string
-  refresh_token: string
-  profile_image: string
+  refreshToken: string
+  profileImage: string
 }
 
 export interface SocialSignupResponse {
-  social_provider: string
-  social_id: string
+  socialProvider: string
+  socialId: string
   name: string
   email: string
-  refresh_token: string
-  profile_image_url: string
-  created_at: string
+  refreshToken: string
+  profileImageUrl: string
+  createdAt: string
 }
 
 export interface SocialLoginRequest {
-  access_token: string
+  accessToken: string
 }
 
 export interface SocialLoginResponse {
-  social_provider: string
-  social_id: string
+  socialProvider: string
+  socialId: string
   name: string
   email: string
-  refresh_token: string
-  profile_image_url: string
-  created_at: string
+  refreshToken: string
+  profileImageUrl: string
+  createdAt: string
   metadata?: Record<string, unknown>
 }
 
@@ -76,11 +76,11 @@ export interface ResetPasswordConfirmResponse {
 }
 
 export interface RefreshTokenRequest {
-  refresh_token: string
+  refreshToken: string
 }
 
 export interface RefreshTokenResponse {
-  access_token: string
+  accessToken: string
 }
 
 // 일반 로그인 API
@@ -106,7 +106,7 @@ export const signup = async (data: SignupRequest): Promise<SignupResponse> => {
 export const socialSignup = async (data: SocialSignupRequest): Promise<SocialSignupResponse> => {
   const response = await apiClient.post('/social/signup', data, {
     headers: {
-      'Authorization': `Bearer ${data.refresh_token}`
+      'Authorization': `Bearer ${data.refreshToken}`
     }
   })
   return response.data
@@ -116,7 +116,7 @@ export const socialSignup = async (data: SocialSignupRequest): Promise<SocialSig
 export const socialLogin = async (data: SocialLoginRequest): Promise<SocialLoginResponse> => {
   const response = await apiClient.post('/social/login', {}, {
     headers: {
-      'Authorization': `Bearer ${data.access_token}`
+      'Authorization': `Bearer ${data.accessToken}`
     }
   })
   return response.data

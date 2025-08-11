@@ -15,9 +15,14 @@ import type { ProfileData } from '../components/organisms/ProfileSettingsModal/t
 import type { CalendarEvent } from '../components/ui/calendar'
 import InviteLinkModal from '../components/organisms/InviteLinkModal'
 import { fetchSummaryList } from '../services/summaryService'
+import { useMe, usePatchProfile } from '../hooks/useUsers'
+import { useAppStore } from '../store/appStore'
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate()
+  const { data: userProfile, isLoading: isProfileLoading } = useMe()
+  const patchProfileMutation = usePatchProfile()
+  const setProfile = useAppStore((state) => state.auth.setProfile)
   const [studies, setStudies] = useState<Study[]>([])
   const [summaries, setSummaries] = useState<AISummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -93,11 +98,25 @@ const DashboardPage: React.FC = () => {
         color: event.color
       }
     })
-  const [profileData, setProfileData] = useState<ProfileData>({
-    nickname: '안덕현',
-    email: 'dksejrqus2@gmail.com',
-    profileImage: ''
-  })
+  // 디버깅을 위한 콘솔 로그
+  console.log('useMe 결과:', { userProfile, isProfileLoading })
+
+  // 사용자 프로필 데이터를 ProfileData 형식으로 변환
+  const profileData: ProfileData = {
+    nickname: userProfile?.nickname || userProfile?.name || '안덕현',
+    email: userProfile?.email || 'dksejrqus2@gmail.com',
+    profileImage: userProfile?.profileImageUrl || ''
+  }
+
+  // 프로필 로딩 중일 때 기본값 사용
+  const displayName = isProfileLoading ? '안덕현' : (userProfile?.nickname || userProfile?.name || '안덕현')
+
+  // 프로필 정보가 로딩 완료되면 store에 저장
+  useEffect(() => {
+    if (userProfile && !isProfileLoading) {
+      setProfile(userProfile)
+    }
+  }, [userProfile, isProfileLoading, setProfile])
 
   // 스터디 목록을 가져오는 함수 (실제 API 호출)
   const fetchStudies = async () => {
@@ -237,9 +256,20 @@ const DashboardPage: React.FC = () => {
     setIsProfileModalOpen(true)
   }
 
-  const handleUpdateProfile = (data: Partial<ProfileData>) => {
-    setProfileData(prev => ({ ...prev, ...data }))
-    // TODO: API 호출로 프로필 업데이트
+  const handleUpdateProfile = async (data: Partial<ProfileData>) => {
+    try {
+      // ProfileData를 API 형식에 맞게 변환
+      const updateData = {
+        nickname: data.nickname,
+        profileImageUrl: data.profileImage
+      }
+
+      await patchProfileMutation.mutateAsync(updateData)
+      alert('프로필이 성공적으로 업데이트되었습니다.')
+    } catch (error) {
+      console.error('프로필 업데이트 에러:', error)
+      alert('프로필 업데이트에 실패했습니다.')
+    }
   }
 
   const handleChangePassword = () => {
@@ -385,7 +415,7 @@ const DashboardPage: React.FC = () => {
         onSettingsClick={handleSettingsClick}
       />
       <div className="flex-1 flex flex-col ml-64">
-        <TopBar userName="user"/>
+        <TopBar userName={displayName} />
         <div className="flex-1 overflow-auto">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
             {/* 왼쪽 열 - 스터디 목록과 AI 요약본 */}
@@ -487,6 +517,7 @@ const DashboardPage: React.FC = () => {
         onChangePassword={handleChangePassword}
         onWithdrawMembership={handleWithdrawMembership}
         onOpenChangePasswordModal={handleOpenChangePasswordModal}
+        isLoading={isProfileLoading}
       />
 
       {/* 비밀번호 변경 모달 */}
