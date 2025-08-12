@@ -5,11 +5,13 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
 
     // 400 Bad Request
+    BAD_REQUEST("잘못된 요청입니다.", HttpStatus.BAD_REQUEST),
     EMAIL_ALREADY_EXISTS("이미 존재하는 이메일입니다.", HttpStatus.BAD_REQUEST),
     INVALID_REQUEST("잘못된 요청입니다.", HttpStatus.BAD_REQUEST),
     INVALID_PASSWORD("비밀번호가 올바르지 않습니다.", HttpStatus.BAD_REQUEST),
     ALREADY_JOINED_STUDY("이미 가입 요청중입니다.", HttpStatus.BAD_REQUEST),
     FILE_UPLOAD_FAILED("파일 업로드에 실패했습니다.", HttpStatus.BAD_REQUEST),
+    INVALID_DATETIME("시작 시간이 종료 시간보다 늦을 수 없습니다.", HttpStatus.BAD_REQUEST),
     STUDY_NOT_MEMBER("해당 스터디에 참여 중이지 않습니다.",    HttpStatus.BAD_REQUEST),
     PASSWORD_CONFIRM_MISMATCH("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.", HttpStatus.BAD_REQUEST),
     PASSWORD_SAME_AS_OLD("새 비밀번호는 현재 비밀번호와 달라야 합니다.", HttpStatus.BAD_REQUEST),
@@ -31,6 +33,7 @@ public enum ErrorCode {
     USER_NOT_FOUND("등록되지 않은 이메일입니다.", HttpStatus.NOT_FOUND),
     STUDY_GROUP_NOT_FOUND("존재하지 않는 스터디 그룹입니다.", HttpStatus.NOT_FOUND),
     STUDY_MEMBERSHIP_NOT_FOUND("스터디 멤버 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    SCHEDULE_NOT_FOUND("일정 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
 
     // 500 Internal Server Error
     DATABASE_ERROR("데이터베이스 처리 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
