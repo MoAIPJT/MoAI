@@ -8,7 +8,7 @@ export const studyKeys = {
   sidebar: (userId: number) => ['studies', 'sidebar', userId] as const,
   allMine: () => ['studies', 'all'] as const,
   detail: (hashId: string) => ['studies', 'detail', hashId] as const,
-  members: (studyId: number) => ['studies', 'members', studyId] as const,
+  members: (studyId: string) => ['studies', 'members', studyId] as const,
   joinRequests: (studyId: number) => ['studies', 'joinRequests', studyId] as const,
 }
 

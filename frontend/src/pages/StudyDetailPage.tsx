@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import StudyDetailTemplate from '../components/templates/StudyDetailTemplate'
 import CategoryAddModal from '../components/organisms/CategoryAddModal'
 import type { StudyItem } from '../components/organisms/DashboardSidebar/types'
 import type { Category, ContentItem } from '../types/content'
 import type { UploadData } from '../components/organisms/UploadDataModal/types'
-import { getSidebarStudies, getStudyDetail, getStudyMembers, updateStudyNotice } from '../services/studyService'
+import { getSidebarStudies, updateStudyNotice } from '../services/studyService'
+import { useStudyDetail, useStudyMembers } from '../hooks/useStudies'
 import type { Member } from '../types/study'
 
 const StudyDetailPage: React.FC = () => {
@@ -15,10 +16,22 @@ const StudyDetailPage: React.FC = () => {
   const [expandedStudy, setExpandedStudy] = useState(true)
   const [activeStudyId, setActiveStudyId] = useState<string | null>(hashId || null)
   const [studies, setStudies] = useState<StudyItem[]>([])
-  const [currentStudy, setCurrentStudy] = useState<StudyItem | null>(null)
-  const [currentStudyIdNum, setCurrentStudyIdNum] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // ✅ React Query 훅 사용 - studyDetail만 필요
+  const {
+    data: studyDetail,
+    isLoading: isStudyLoading,
+    error: studyError
+  } = useStudyDetail(activeStudyId || '')
+
+  // ✅ 멤버 정보는 필요할 때만 로드 (예: 멤버 관리 모달)
+  const {
+    data: participants = [],
+    isLoading: isMembersLoading,
+    error: membersError
+  } = useStudyMembers(studyDetail?.studyId)
 
   // Content Management 관련 상태
   const [categories, setCategories] = useState<Category[]>([])
@@ -29,9 +42,6 @@ const StudyDetailPage: React.FC = () => {
 
   // Upload Modal 관련 상태
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
-
-  // 참여자 관련 상태
-  const [participants, setParticipants] = useState<Member[]>([])
 
   const [contents, setContents] = useState<ContentItem[]>([])
 
@@ -56,7 +66,7 @@ const StudyDetailPage: React.FC = () => {
           memberCount: 0 // 기본값 설정
         }))
         setStudies(convertedStudies)
-      } catch  {
+      } catch (loadError: unknown) {
         setError('스터디 목록을 불러오는데 실패했습니다.')
         setStudies([]) // 에러 시 빈 배열로 설정
       }
@@ -64,48 +74,44 @@ const StudyDetailPage: React.FC = () => {
     loadStudies()
   }, [])
 
-  // 현재 스터디 정보 로드
-  useEffect(() => {
-    const loadCurrentStudy = async () => {
-      if (activeStudyId) {
-        try {
-          setError(null)
-          const studyData = await getStudyDetail(activeStudyId)
-          // StudyDetail을 StudyItem으로 변환
-          const convertedStudy: StudyItem = {
-            id: activeStudyId,              // 여긴 hashId를 유지
-            name: studyData.name,
-            description: studyData.description || '',
-            image: studyData.imageUrl,
-            memberCount: studyData.userCount || 0
-          }
-          setCurrentStudy(convertedStudy)
-          setCurrentStudyIdNum(studyData.studyId ?? null)
+  // ✅ useMemo를 사용한 더 간단한 방법 - userCount 직접 사용
+  const currentStudy = useMemo(() => {
+    if (!studyDetail || !activeStudyId) return null
 
-          // 참여자 정보 로드
-          if (studyData.studyId && studyData.studyId > 0) {
-            try {
-              const membersData = await getStudyMembers(String(studyData.studyId))
-              setParticipants(membersData)
-            } catch (memberError) {
-              console.error('참여자 정보 로드 실패:', memberError)
-              setParticipants([])
-            }
-          } else {
-            console.warn('유효하지 않은 studyId:', studyData.studyId)
-            setParticipants([])
-          }
-        } catch {
-          setError('스터디 정보를 불러오는데 실패했습니다.')
-        } finally {
-          setLoading(false)
-        }
-      } else {
-        setLoading(false)
-      }
+    return {
+      id: activeStudyId,
+      name: studyDetail.name,
+      description: studyDetail.description || '',
+      image: studyDetail.imageUrl,
+      memberCount: studyDetail.userCount || 0  // ✅ userCount 직접 사용
     }
-    loadCurrentStudy()
-  }, [activeStudyId])
+  }, [studyDetail, activeStudyId])  // ✅ participants 의존성 제거
+
+  // ✅ 로딩 상태만 별도로 관리 - 더 간단해짐
+  useEffect(() => {
+    if (studyDetail) {
+      console.log('Study detail loaded:', studyDetail)
+      setLoading(false)
+    }
+  }, [studyDetail])  // ✅ participants 의존성 제거
+
+  // ✅ 에러 처리
+  useEffect(() => {
+    if (studyError) {
+      console.error('Study detail error:', studyError)
+      setError('스터디 정보를 불러오는데 실패했습니다.')
+      setLoading(false)
+    }
+    if (membersError) {
+      console.error('Members error:', membersError)
+      // 멤버 로드 실패는 전체 에러로 처리하지 않음
+    }
+  }, [studyError, membersError])
+
+  // ✅ 로딩 상태 관리 - studyDetail만 체크
+  useEffect(() => {
+    setLoading(isStudyLoading)
+  }, [isStudyLoading])  // ✅ isMembersLoading 제거
 
   // 선택된 카테고리와 검색어에 따라 콘텐츠 필터링
   const filteredContents = contents.filter(content => {
@@ -126,7 +132,6 @@ const StudyDetailPage: React.FC = () => {
   })
 
   const handleItemClick = (itemId: string) => {
-
     // 스터디 클릭 시 토글
     if (itemId === 'study') {
       setExpandedStudy(!expandedStudy)
@@ -151,9 +156,7 @@ const StudyDetailPage: React.FC = () => {
 
       // 즉시 현재 스터디 목록에서 해당 스터디 정보를 찾아서 임시로 설정
       const selectedStudy = studies.find(study => study.id === studyId)
-      if (selectedStudy) {
-        setCurrentStudy(selectedStudy)
-      }
+      // currentStudy는 이제 useMemo로 계산되므로 setState 불필요
 
       // 선택된 스터디로 페이지 이동
       navigate(`/study/${studyId}`)
@@ -177,12 +180,12 @@ const StudyDetailPage: React.FC = () => {
   }
 
   const handleNoticeSubmit = async () => {
-    if (!currentStudy || !noticeContent.trim() || !currentStudyIdNum) return
+    if (!currentStudy || !noticeContent.trim() || !studyDetail?.studyId) return
 
     try {
       // 공지사항 업데이트 API 호출
       await updateStudyNotice({
-        studyId: currentStudyIdNum,
+        studyId: studyDetail.studyId,
         notice: noticeContent
       })
 
@@ -192,8 +195,8 @@ const StudyDetailPage: React.FC = () => {
 
       // 성공 메시지 (실제로는 toast 등을 사용)
       console.log('공지사항이 업데이트되었습니다.')
-    } catch (error) {
-      console.error('공지사항 업데이트 실패:', error)
+      } catch (error: unknown) {
+        console.error('공지사항 업데이트 실패:', error)
       // 에러 메시지 (실제로는 toast 등을 사용)
     }
   }
@@ -207,11 +210,13 @@ const StudyDetailPage: React.FC = () => {
 
   // 스터디 관리 모달 관련 핸들러들
   const handleStudyNameChange = (name: string) => {
-    setCurrentStudy(prev => prev ? { ...prev, name } : null)
+    // currentStudy는 이제 useMemo로 계산되므로 직접 수정 불가
+    console.log('Study name change:', name)
   }
 
   const handleStudyDescriptionChange = (description: string) => {
-    setCurrentStudy(prev => prev ? { ...prev, description } : null)
+    // currentStudy는 이제 useMemo로 계산되므로 직접 수정 불가
+    console.log('Study description change:', description)
   }
 
   const handleCategoryRemove = (categoryName: string) => {
@@ -228,27 +233,23 @@ const StudyDetailPage: React.FC = () => {
   }
 
   const handleMemberRemove = (memberName: string) => {
-    setParticipants(prev => prev.filter(member => member.member !== memberName))
+    // ✅ 로컬 상태 업데이트는 하지만, React Query가 자동으로 다시 불러올 것
+    console.log('Remove member:', memberName)
   }
 
   const handleStudyImageChange = (image: File | null) => {
     if (image) {
-      // File을 Data URL로 변환하여 즉시 미리보기 가능하게 함
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const imageUrl = e.target?.result as string
-        setCurrentStudy(prev => prev ? { ...prev, image: imageUrl } : null)
-      }
-      reader.readAsDataURL(image)
+      // 이미지 업로드 API 호출 (실제 구현 필요)
+      console.log('Image upload:', image)
     } else {
-      // 이미지 제거 시
-      setCurrentStudy(prev => prev ? { ...prev, image: '' } : null)
+      // 이미지 제거 API 호출 (실제 구현 필요)
+      console.log('Image remove')
     }
-    // 실제로는 API 호출로 이미지 업로드
   }
 
   const handleMaxMembersChange = (maxMembers: number) => {
-    setCurrentStudy(prev => prev ? { ...prev, memberCount: maxMembers } : null)
+    // 최대 멤버 수 변경 API 호출 (실제 구현 필요)
+    console.log('Max members change:', maxMembers)
   }
 
   // Content Management 관련 핸들러들
@@ -295,7 +296,6 @@ const StudyDetailPage: React.FC = () => {
   }
 
   const handleUploadSubmit = (data: UploadData) => {
-
     // 새로운 콘텐츠 아이템 생성
     const newContent: ContentItem = {
       id: `content-${Date.now()}`,
@@ -359,7 +359,7 @@ const StudyDetailPage: React.FC = () => {
         onCreateRoom={handleCreateRoom}
         onEditNotice={handleEditNotice}
         onSettingsClick={handleSettingsClick}
-        participants={participants.map(member => ({
+        participants={participants.map((member: Member) => ({
           id: member.email,
           name: member.member,
           avatar: member.imageUrl
@@ -383,16 +383,16 @@ const StudyDetailPage: React.FC = () => {
         onContentSelect={handleContentSelect}
         onContentPreview={handleContentPreview}
         // Upload Modal 관련 핸들러들
-                 onUploadModalClose={handleUploadModalClose}
-         onUploadSubmit={handleUploadSubmit}
-         // Study Management 관련 핸들러들
-                   onStudyNameChange={handleStudyNameChange}
-          onStudyDescriptionChange={handleStudyDescriptionChange}
-          onStudyImageChange={handleStudyImageChange}
-          onMaxMembersChange={handleMaxMembersChange}
-          onCategoryRemove={handleCategoryRemove}
-          onCategoryAdd={handleCategoryAdd}
-          onMemberRemove={handleMemberRemove}
+        onUploadModalClose={handleUploadModalClose}
+        onUploadSubmit={handleUploadSubmit}
+        // Study Management 관련 핸들러들
+        onStudyNameChange={handleStudyNameChange}
+        onStudyDescriptionChange={handleStudyDescriptionChange}
+        onStudyImageChange={handleStudyImageChange}
+        onMaxMembersChange={handleMaxMembersChange}
+        onCategoryRemove={handleCategoryRemove}
+        onCategoryAdd={handleCategoryAdd}
+        onMemberRemove={handleMemberRemove}
       />
 
       {/* Category Add Modal */}

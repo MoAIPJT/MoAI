@@ -122,28 +122,48 @@ export const getAllStudies = async (): Promise<StudyAllItem[]> => {
 
 export const getStudyDetail = async (hashId: string): Promise<StudyDetail> => {
   try {
-    const response = await api.get<StudyDetail>(`/study/detail?hashId=${hashId}`)
+    const response = await api.get<any>(`/study/detail?hashId=${hashId}`)
     const data = response.data
 
-    // DB id → studyId로 매핑
-    return {
-      ...data,
-      studyId: data.studyId ?? (data as { id?: number }).id
+    console.log('Study detail API response:', data)
+
+    // ✅ DB 구조에 맞게 수정: 'id' 필드가 실제 studyId
+    const studyId = data.id  // Study 테이블의 Primary Key
+
+    console.log('Found studyId from id field:', studyId)
+
+    const result: StudyDetail = {
+      studyId: studyId,  // data.id를 studyId로 사용
+      name: data.name || '',
+      imageUrl: data.imageUrl || data.image_url || '',  // snake_case도 고려
+      status: data.status || 'PENDING',
+      role: data.role,
+      description: data.description,
+      userCount: data.userCount || data.user_count  // snake_case도 고려
     }
+
+    console.log('Converted StudyDetail:', result)
+    return result
+
   } catch (error) {
+    console.error('getStudyDetail API error:', error)
     throw normalizeError(error)
   }
 }
 
 export const getStudyMembers = async (studyId: string): Promise<Member[]> => {
   try {
+    console.log('getStudyMembers API call with studyId:', studyId)
     const response = await api.get<Member[]>(`/study/${studyId}/members`)
+    console.log('getStudyMembers API response:', response.data)
     return response.data
   } catch (error) {
+    console.error('getStudyMembers API error:', error)
     // 404 lists -> [] (empty array)
     if (error && typeof error === 'object' && 'response' in error) {
       const axiosError = error as { response?: { status?: number } }
       if (axiosError.response?.status === 404) {
+        console.log('getStudyMembers: 404 error, returning empty array')
         return []
       }
     }
