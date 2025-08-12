@@ -188,6 +188,7 @@ public class StudyServiceImpl implements StudyService {
                     .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
                 return StudyMemberListResponseDto.builder()
+                    .userId(user.getId())
                     .member(user.getName())
                     .email(user.getEmail())
                     .imageUrl(user.getProfileImageUrl())

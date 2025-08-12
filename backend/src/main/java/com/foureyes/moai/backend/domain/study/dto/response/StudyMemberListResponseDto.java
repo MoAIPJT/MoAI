@@ -9,6 +9,8 @@ import lombok.*;
 @AllArgsConstructor
 public class StudyMemberListResponseDto {
 
+    @Schema(description = "유저ID", example = "10")
+    private final int userId;
     @Schema(description = "유저이름", example = "홍길동")
     private final String member;
     @Schema(description = "권한", example = "Admin")
