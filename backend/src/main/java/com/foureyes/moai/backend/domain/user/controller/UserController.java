@@ -88,6 +88,11 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * 입력: RefreshTokenRequestDto
+     * 출력: UserLoginResponseDto
+     * 기능: 유효한 Refresh Token으로 Access/Refresh Token을 재발급
+     */
     @Operation(summary = "토큰 재발급",
         description = "유효한 Refresh Token으로 Access/Refresh Token을 재발급합니다.")
     @PostMapping("/refresh")

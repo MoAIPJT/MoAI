@@ -108,22 +108,34 @@ public class UserServiceImpl implements UserService {
         return new UserLoginResponseDto(accessToken, refreshToken);
     }
 
+    /**
+     * 입력: String refreshToken
+     * 출력: UserLoginResponseDto
+     * 기능: 유효한 Refresh Token으로 Access/Refresh Token을 재발급
+     */
     @Override
     public UserLoginResponseDto refresh(String refreshToken) {
+        log.info("[refresh] refresh token requested");
         // 1) 토큰 형식/서명/만료 검증
         if (!jwtTokenProvider.validateToken(refreshToken)) {
+            log.warn("[refresh] invalid or expired refresh token");
             throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN); // 또는 EXPIRED 등 분리
         }
 
         // 2) 토큰에서 userId 추출
         int userId = jwtTokenProvider.getUserId(refreshToken);
+        log.debug("[refresh] extracted userId from token: {}", userId);
 
         // 3) DB의 사용자 조회
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            .orElseThrow(() -> {
+                log.warn("[refresh] user not found: userId={}", userId);
+                return new CustomException(ErrorCode.USER_NOT_FOUND);
+            });
 
         // 4) DB에 저장된 refreshToken과 일치 여부 확인(로테이션/탈취 방지)
         if (user.getRefreshToken() == null || !user.getRefreshToken().equals(refreshToken)) {
+            log.warn("[refresh] refresh token mismatch for userId={}", userId);
             throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
@@ -134,6 +146,8 @@ public class UserServiceImpl implements UserService {
         // 6) DB에 새 refreshToken 저장
         user.setRefreshToken(newRefresh);
         userRepository.save(user);
+
+        log.info("[refresh] tokens reissued for userId={}", userId);
 
         // 7) 응답
         return new UserLoginResponseDto(newAccess, newRefresh);
