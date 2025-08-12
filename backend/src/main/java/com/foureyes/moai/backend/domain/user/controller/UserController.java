@@ -3,9 +3,9 @@ package com.foureyes.moai.backend.domain.user.controller;
 import com.foureyes.moai.backend.commons.mail.EmailType;
 import com.foureyes.moai.backend.commons.mail.EmailVerificationService;
 import com.foureyes.moai.backend.domain.user.dto.request.*;
-import com.foureyes.moai.backend.domain.user.dto.response.UserLoginResponse;
-import com.foureyes.moai.backend.domain.user.dto.response.UserProfileResponse;
-import com.foureyes.moai.backend.domain.user.dto.response.UserSignupResponse;
+import com.foureyes.moai.backend.domain.user.dto.response.UserLoginResponseDto;
+import com.foureyes.moai.backend.domain.user.dto.response.UserProfileResponseDto;
+import com.foureyes.moai.backend.domain.user.dto.response.UserSignupResponseDto;
 import com.foureyes.moai.backend.domain.user.security.CustomUserDetails;
 import com.foureyes.moai.backend.domain.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,10 +41,10 @@ public class UserController {
     @Operation(summary = "회원가입",
         description = "새로운 사용자를 회원가입 시킵니다.")
     @PostMapping("/signup")
-    public ResponseEntity<UserSignupResponse>
-    signup(@Valid @RequestBody UserSignupRequest request) {
+    public ResponseEntity<UserSignupResponseDto>
+    signup(@Valid @RequestBody UserSignupRequestDto request) {
         log.info("[POST] /users/signup 요청 - email={}", request.getEmail());
-        UserSignupResponse response = userService.signup(request);
+        UserSignupResponseDto response = userService.signup(request);
         log.info("회원가입 완료 - Status={}", response.getStatus());
         return ResponseEntity.ok(response);
     }
@@ -81,11 +81,24 @@ public class UserController {
     @Operation(summary = "로그인",
         description = "이메일과 비밀번호로 로그인합니다.")
     @PostMapping("/login")
-    public ResponseEntity<UserLoginResponse> login(@Valid @RequestBody UserLoginRequest request) {
+    public ResponseEntity<UserLoginResponseDto> login(@Valid @RequestBody UserLoginRequestDto request) {
         log.info("[POST] /users/login 요청 - email={}", request.getEmail());
-        UserLoginResponse response = userService.login(request);
+        UserLoginResponseDto response = userService.login(request);
         log.info("로그인 성공");
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 입력: RefreshTokenRequestDto
+     * 출력: UserLoginResponseDto
+     * 기능: 유효한 Refresh Token으로 Access/Refresh Token을 재발급
+     */
+    @Operation(summary = "토큰 재발급",
+        description = "유효한 Refresh Token으로 Access/Refresh Token을 재발급합니다.")
+    @PostMapping("/refresh")
+    public ResponseEntity<UserLoginResponseDto> refresh(
+        @Valid @RequestBody RefreshTokenRequestDto request) {
+        return ResponseEntity.ok(userService.refresh(request.getRefreshToken()));
     }
 
     /**
@@ -119,7 +132,7 @@ public class UserController {
         description = "가입된 이메일로 비밀번호 재설정 링크를 발송합니다.")
     @PostMapping("/reset-password/request")
     public ResponseEntity<String>
-        requestPasswordReset(@Valid @RequestBody PasswordResetEmailRequest request) {
+        requestPasswordReset(@Valid @RequestBody PasswordResetEmailRequestDto request) {
         log.info("[POST] /users/reset-password/request - email={}", request.getEmail());
         userService.requestPasswordReset(request.getEmail());
         return ResponseEntity.ok("비밀번호 재설정 메일을 전송했습니다.");
@@ -153,7 +166,7 @@ public class UserController {
     @Operation(summary = "비밀번호 재설정",
         description = "이메일 링크를 통해 들어온 페이지에서 비밀번호를 변경합니다.")
     @PatchMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(@Valid @RequestBody PasswordResetRequest request) {
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody PasswordResetRequestDto request) {
         log.info("[PATCH] /users/reset-password - email={}", request.getEmail());
         userService.resetPassword(request.getEmail(), request.getToken(), request.getNewPassword());
         return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
@@ -170,7 +183,7 @@ public class UserController {
         security = { @SecurityRequirement(name = "bearerAuth") }
     )
     @GetMapping("/profile")
-    public ResponseEntity<UserProfileResponse>
+    public ResponseEntity<UserProfileResponseDto>
         getProfile(@AuthenticationPrincipal CustomUserDetails user) {
         if (user == null) {
             log.warn("[GET] /users/profile - 인증 정보 없음");
@@ -191,15 +204,15 @@ public class UserController {
         security = { @SecurityRequirement(name = "bearerAuth") }
     )
     @PatchMapping("/profile")
-    public ResponseEntity<UserProfileResponse>
+    public ResponseEntity<UserProfileResponseDto>
     updateUserProfile(@AuthenticationPrincipal CustomUserDetails user,
-                      @Valid @RequestBody UserProfileUpdateRequest request) {
+                      @Valid @RequestBody UserProfileUpdateRequestDto request) {
         if (user == null) {
             log.warn("[PATCH] /users/profile - 인증 정보 없음");
             return ResponseEntity.status(401).build();
         }
         log.info("[PATCH] /users/profile - userId={}", user.getId());
-        UserProfileResponse response = userService.updateUserProfile(user.getId(), request);
+        UserProfileResponseDto response = userService.updateUserProfile(user.getId(), request);
         return ResponseEntity.ok(response);
     }
 
@@ -214,15 +227,15 @@ public class UserController {
         security = { @SecurityRequirement(name = "bearerAuth") }
     )
     @PatchMapping("/profile/change-password")
-    public ResponseEntity<UserLoginResponse>
+    public ResponseEntity<UserLoginResponseDto>
         changePassword(@AuthenticationPrincipal CustomUserDetails user,
-                       @Valid @RequestBody PasswordChangeRequest request) {
+                       @Valid @RequestBody PasswordChangeRequestDto request) {
         if (user == null) {
             log.warn("[PATCH] /users/profile/change-password - 인증 정보 없음");
             return ResponseEntity.status(401).build();
         }
         log.info("[PATCH] /users/profile/change-password - userId={}", user.getId());
-        UserLoginResponse tokens = userService.changePassword(user.getId(), request);
+        UserLoginResponseDto tokens = userService.changePassword(user.getId(), request);
         return ResponseEntity.ok(tokens);
     }
 

@@ -51,7 +51,7 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/auth/google").permitAll()
 
                 // Rule 3: Permit your other public endpoints
-                .requestMatchers("/users/signup", "/users/login", "/users/hello").permitAll()
+                .requestMatchers("/users/signup", "/users/login", "/users/refresh").permitAll()
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
 
@@ -69,7 +69,7 @@ public class WebSecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList("https://localhost", "http://localhost:5173"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(
             Arrays.asList("Authorization", "Content-Type", "X-Requested-With")
         );

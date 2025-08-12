@@ -6,7 +6,7 @@ import lombok.*;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserProfileUpdateRequest {
+public class UserProfileUpdateRequestDto {
 
     @Schema(description = "변경할 사용자 닉네임", example = "모아이")
     private String name;
