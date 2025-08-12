@@ -2,6 +2,7 @@ package com.foureyes.moai.backend.domain.study.service;
 
 
 import com.foureyes.moai.backend.domain.study.dto.request.CreateStudyRequest;
+import com.foureyes.moai.backend.domain.study.dto.request.UpdateStudyRequestDto;
 import com.foureyes.moai.backend.domain.study.dto.response.*;
 
 import java.util.List;
@@ -21,4 +22,5 @@ public interface StudyService {
     StudyDetailResponseDto getStudyDetailByHashId(int userId, String hashId);
     StudyNoticeResponseDto getStudyNotice(int userId, int studyId);
     void updateStudyNotice(int userId, int studyId, String notice);
+    void updateStudyGroup(int userId, int studyId, UpdateStudyRequestDto request);
 }
