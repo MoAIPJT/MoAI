@@ -10,11 +10,11 @@ import { getSidebarStudies, updateStudyNotice, joinStudy, leaveStudy, deleteStud
 import { useStudyDetail, useStudyMembers, useJoinRequests, useAcceptJoinRequest, useRejectJoinRequest, useChangeMemberRole, useUpdateStudy } from "../hooks/useStudies";
 import { useQueryClient } from '@tanstack/react-query'
 import type { Member } from '../types/study'
-import StudyManagementModal from '../components/molecules/StudyManagementModal'
 import { useRefFiles } from '../hooks/useRefFiles'
 import type { FileItem } from '../types/ref'
 import type { UploadData } from '../components/organisms/UploadDataModal/types'
 import { refService } from '../services/refService'
+import { useStudySchedules } from '../hooks/useSchedules'
 
 const StudyDetailPage: React.FC = () => {
   const navigate = useNavigate()
@@ -26,6 +26,10 @@ const StudyDetailPage: React.FC = () => {
   const [studies, setStudies] = useState<StudyItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [currentMonth] = useState(() => {
+    const now = new Date()
+    return { year: now.getFullYear(), month: now.getMonth() + 1 }
+  })
 
   // ✅ React Query 훅 사용 - studyDetail만 필요
   const {
@@ -39,6 +43,16 @@ const StudyDetailPage: React.FC = () => {
     data: participants = [],
     error: membersError
   } = useStudyMembers(studyDetail?.studyId)
+
+  // ✅ 스터디별 일정 조회
+  const {
+    data: studySchedules = [],
+    isLoading: isSchedulesLoading
+  } = useStudySchedules(
+    studyDetail?.studyId || 0,
+    currentMonth.year,
+    currentMonth.month
+  )
 
   // ✅ refService 훅 사용 - 카테고리 관리
   const { useCategories, useCreateCategory, useDeleteCategory, useRefList, useUploadRef } = useRefFiles()
@@ -321,8 +335,6 @@ const StudyDetailPage: React.FC = () => {
     setIsNoticeModalOpen(false)
   }
 
-  const handleSettingsClick = () => {
-  }
   const handleJoinStudy = async () => {
     if (!studyDetail?.studyId || !hashId) return
     try {
@@ -485,7 +497,7 @@ const StudyDetailPage: React.FC = () => {
     } catch (error) {
       console.error('멤버 역할 변경 실패:', error)
       if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { data?: any; status?: number } }
+        const axiosError = error as { response?: { data?: unknown; status?: number } }
         console.error('에러 상세 정보:', {
           response: axiosError.response?.data,
           status: axiosError.response?.status
@@ -576,7 +588,7 @@ const StudyDetailPage: React.FC = () => {
 
       // 상세 에러 정보 로깅
       if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { data?: any; status?: number } }
+        const axiosError = error as { response?: { data?: unknown; status?: number } }
         const status = axiosError.response?.status
         const errorData = axiosError.response?.data
 
@@ -830,7 +842,6 @@ return (
         onUploadData={handleUploadData}
         onCreateRoom={handleCreateRoom}
         onEditNotice={handleEditNotice}
-        onSettingsClick={handleSettingsClick}
         participants={participants.map((member: Member) => ({
           id: member.email,
           name: member.member,
@@ -852,6 +863,9 @@ return (
         sortOrder={sortOrder}
         // Upload Modal 관련 props
         isUploadModalOpen={isUploadModalOpen}
+        // 일정 관련 props
+        studySchedules={studySchedules}
+        isSchedulesLoading={isSchedulesLoading}
         onCategoryToggle={handleCategoryToggle}
         onAddCategory={handleAddCategory}
         onSearchChange={setSearchTerm}
@@ -878,6 +892,7 @@ return (
         onContentEdit={handleContentEdit}
         onContentDelete={handleContentDelete}
         onContentDownload={handleContentDownload}
+        studyId={studyDetail?.studyId}
       />
     )}
 

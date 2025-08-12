@@ -34,13 +34,23 @@ interface StudyDetailTemplateProps {
   sortOrder: 'newest' | 'oldest'
   // Upload Modal 관련 props
   isUploadModalOpen: boolean
+  // 일정 관련 props
+  studySchedules?: Array<{
+    id: number
+    title: string
+    startDatetime: string
+    endDatetime: string
+    memo?: string
+  }>
+  isSchedulesLoading?: boolean
+  // 스터디 ID
+  studyId?: number
   onItemClick: (itemId: string) => void
   onStudyClick: (studyId: string) => void
   onSearch: () => void
   onUploadData: () => void
   onCreateRoom: () => void
   onEditNotice: () => void
-  onSettingsClick: () => void
   onLeaveStudy?: () => void
   // Content Management 관련 핸들러들
   onCategoryToggle: (categoryId: number) => void
@@ -102,13 +112,17 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   sortOrder,
   // Upload Modal 관련 props
   isUploadModalOpen,
+  // 일정 관련 props
+  studySchedules,
+  isSchedulesLoading,
+  // 스터디 ID
+  studyId,
   onItemClick,
   onStudyClick,
   onSearch,
   onUploadData,
   onCreateRoom,
   onEditNotice,
-  onSettingsClick,
   onLeaveStudy,
   // Content Management 관련 핸들러들
   onCategoryToggle,
@@ -194,7 +208,11 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
 
             {/* 오른쪽: 캘린더 (4/10) */}
             <div className="col-span-4">
-              <StudyCalendar />
+              <StudyCalendar
+                schedules={studySchedules || []}
+                isLoading={isSchedulesLoading}
+                studyId={studyId}
+              />
             </div>
           </div>
 

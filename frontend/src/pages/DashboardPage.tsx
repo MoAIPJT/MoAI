@@ -18,6 +18,8 @@ import { fetchSummaryList } from '../services/summaryService'
 import { useLogout, useMe, usePatchProfile } from '@/hooks/useUsers'
 import { useAppStore } from '@/store/appStore'
 import { createStudy, getAllStudies } from '@/services/studyService'
+import { scheduleService } from '@/services/scheduleService'
+import type { ScheduleListResponse } from '@/services/scheduleService'
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate()
@@ -36,29 +38,9 @@ const DashboardPage: React.FC = () => {
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [expandedStudy, setExpandedStudy] = useState(false)
-  const [calendarEvents] = useState<CalendarEvent[]>([
-    {
-      date: new Date(new Date().getFullYear(), new Date().getMonth(), 15),
-      color: '#AA64FF',
-      title: '알고리즘 스터디',
-      startTime: '14:00',
-      endTime: '16:00'
-    },
-    {
-      date: new Date(new Date().getFullYear(), new Date().getMonth(), 20),
-      color: '#FF6B6B',
-      title: 'CS 면접 준비',
-      startTime: '19:00',
-      endTime: '21:00'
-    },
-    {
-      date: new Date(new Date().getFullYear(), new Date().getMonth(), 25),
-      color: '#4ECDC4',
-      title: '프로젝트 회의',
-      startTime: '10:00',
-      endTime: '12:00'
-    }
-  ])
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([])
+  const [schedules, setSchedules] = useState<ScheduleListResponse[]>([])
+  const [isScheduleLoading, setIsScheduleLoading] = useState(true)
 
   // 이벤트 제목에 따른 스터디 이름 매핑
   const getStudyNameByEvent = (eventTitle: string) => {
@@ -76,6 +58,75 @@ const DashboardPage: React.FC = () => {
     return '📅'
   }
 
+  // 일정 데이터를 가져오는 함수
+  const fetchSchedules = async () => {
+    try {
+      setIsScheduleLoading(true)
+      // 현재 월의 시작과 끝 날짜 계산
+      const now = new Date()
+      const from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+      const to = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString()
+
+      const schedulesData = await scheduleService.getMySchedules(from, to)
+      setSchedules(schedulesData) // schedules 상태 설정
+
+      // API 응답을 CalendarEvent 형식으로 변환
+      const events: CalendarEvent[] = schedulesData.map(schedule => {
+        const startDate = new Date(schedule.startDatetime)
+        const endDate = new Date(schedule.endDatetime)
+
+        // 스터디별로 다른 색상 할당
+        const getEventColor = (studyName: string) => {
+          if (studyName.includes('알고리즘')) return '#AA64FF'
+          if (studyName.includes('면접')) return '#FF6B6B'
+          if (studyName.includes('CS')) return '#4ECDC4'
+          return '#6B7280' // 기본 색상
+        }
+
+        return {
+          date: startDate, // Date 객체로 변환
+          color: getEventColor(schedule.name),
+          title: schedule.title,
+          startTime: startDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+          endTime: endDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+        }
+      })
+
+      setCalendarEvents(events)
+    } catch (error) {
+      console.error('일정 데이터 로드 실패:', error)
+
+      // 에러 시 기본 더미 데이터 사용
+      const defaultEvents: CalendarEvent[] = [
+        {
+          date: new Date(new Date().getFullYear(), new Date().getMonth(), 15),
+          color: '#AA64FF',
+          title: '알고리즘 스터디',
+          startTime: '14:00',
+          endTime: '16:00'
+        },
+        {
+          date: new Date(new Date().getFullYear(), new Date().getMonth(), 20),
+          color: '#FF6B6B',
+          title: 'CS 면접 준비',
+          startTime: '19:00',
+          endTime: '21:00'
+        },
+        {
+          date: new Date(new Date().getFullYear(), new Date().getMonth(), 25),
+          color: '#4ECDC4',
+          title: '프로젝트 회의',
+          startTime: '10:00',
+          endTime: '12:00'
+        }
+      ]
+      setCalendarEvents(defaultEvents)
+      setSchedules([]) // 빈 배열로 설정
+    } finally {
+      setIsScheduleLoading(false)
+    }
+  }
+
   // 다가오는 일정을 달력 이벤트에서 동적으로 생성
   const upcomingEvents = calendarEvents
     .filter(event => {
@@ -84,19 +135,63 @@ const DashboardPage: React.FC = () => {
       // 오늘 이후의 이벤트만 필터링
       return eventDate >= today
     })
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) // 날짜순 정렬
+    .sort((a, b) => {
+      // 먼저 날짜순으로 정렬
+      const dateComparison = new Date(a.date).getTime() - new Date(b.date).getTime()
+      if (dateComparison !== 0) return dateComparison
+
+      // 같은 날짜라면 시작 시간순으로 정렬
+      const timeA = new Date(`2000-01-01 ${a.startTime}`).getTime()
+      const timeB = new Date(`2000-01-01 ${b.startTime}`).getTime()
+      return timeA - timeB
+    })
     .slice(0, 3) // 최대 3개만 표시
     .map((event, index) => {
       const eventDate = new Date(event.date)
       const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][eventDate.getDay()]
+
+      // 실제 일정 데이터에서 스터디 정보를 찾기
+      const findStudyInfo = (eventTitle: string) => {
+        // API에서 가져온 일정 데이터에서 해당 제목의 일정을 찾아 스터디 정보 반환
+        const schedule = schedules.find(s => s.title === eventTitle)
+        if (schedule) {
+          return {
+            name: schedule.name,
+            image: schedule.image
+          }
+        }
+
+        // API 데이터에서 찾을 수 없는 경우 studies 배열에서 스터디 이름으로 찾기
+        const study = studies.find(s => {
+          if (eventTitle.includes('알고리즘')) return s.name.includes('알고리즘')
+          if (eventTitle.includes('면접')) return s.name.includes('면접')
+          if (eventTitle.includes('프로젝트') || eventTitle.includes('CS')) return s.name.includes('CS')
+          return false
+        })
+
+        if (study && study.imageUrl) {
+          return {
+            name: study.name,
+            image: study.imageUrl
+          }
+        }
+
+        // 기본값 사용
+        return {
+          name: getStudyNameByEvent(eventTitle),
+          image: getStudyImageByEvent(eventTitle)
+        }
+      }
+
+      const studyInfo = findStudyInfo(event.title || '')
 
       return {
         id: index + 1,
         title: event.title || '제목 없음',
         date: `${eventDate.getMonth() + 1}.${eventDate.getDate()}(${dayOfWeek})`,
         time: `${event.startTime} - ${event.endTime}`,
-        studyName: getStudyNameByEvent(event.title || ''),
-        studyImage: getStudyImageByEvent(event.title || ''),
+        studyName: studyInfo.name,
+        studyImage: studyInfo.image,
         color: event.color
       }
     })
@@ -105,13 +200,13 @@ const DashboardPage: React.FC = () => {
 
   // 사용자 프로필 데이터를 ProfileData 형식으로 변환
   const profileData: ProfileData = {
-    nickname: userProfile?.nickname || userProfile?.name || '안덕현',
+    nickname: userProfile?.name || '안덕현',
     email: userProfile?.email || 'dksejrqus2@gmail.com',
     profileImage: userProfile?.profileImageUrl || ''
   }
 
   // 프로필 로딩 중일 때 기본값 사용
-  const displayName = isProfileLoading ? '안덕현' : (userProfile?.nickname || userProfile?.name || '안덕현')
+  const displayName = isProfileLoading ? '안덕현' : (userProfile?.name || '안덕현')
 
   // 프로필 정보가 로딩 완료되면 store에 저장
   useEffect(() => {
@@ -226,6 +321,7 @@ const DashboardPage: React.FC = () => {
   useEffect(() => {
     fetchStudies()
     fetchSummaries()
+    fetchSchedules() // 일정 데이터 로드
   }, [])
 
   const handleItemClick = (itemId: string) => {
@@ -362,8 +458,54 @@ const DashboardPage: React.FC = () => {
     // TODO: 이벤트 추가 모달 또는 페이지로 이동
   }
 
-  const handleMonthChange = () => {
-    // TODO: 해당 월의 이벤트 데이터 로드
+  // 월 변경 시 일정 데이터 다시 로드
+  const handleMonthChange = (date: Date) => {
+    // 선택된 월의 시작과 끝 날짜 계산
+    const year = date.getFullYear()
+    const month = date.getMonth()
+    const from = new Date(year, month, 1).toISOString()
+    const to = new Date(year, month + 1, 0).toISOString()
+
+    // 해당 월의 일정 데이터 로드
+    fetchSchedulesForMonth(from, to)
+  }
+
+  // 특정 월의 일정 데이터를 가져오는 함수
+  const fetchSchedulesForMonth = async (from: string, to: string) => {
+    try {
+      setIsScheduleLoading(true)
+      const schedulesData = await scheduleService.getMySchedules(from, to)
+      setSchedules(schedulesData) // schedules 상태 설정
+
+      // API 응답을 CalendarEvent 형식으로 변환
+      const events: CalendarEvent[] = schedulesData.map(schedule => {
+        const startDate = new Date(schedule.startDatetime)
+        const endDate = new Date(schedule.endDatetime)
+
+        // 스터디별로 다른 색상 할당
+        const getEventColor = (studyName: string) => {
+          if (studyName.includes('알고리즘')) return '#AA64FF'
+          if (studyName.includes('면접')) return '#FF6B6B'
+          if (schedule.name.includes('CS')) return '#4ECDC4'
+          return '#6B7280' // 기본 색상
+        }
+
+        return {
+          date: startDate,
+          color: getEventColor(schedule.name),
+          title: schedule.title,
+          startTime: startDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+          endTime: endDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+        }
+      })
+
+      setCalendarEvents(events)
+    } catch (error) {
+      console.error('월별 일정 데이터 로드 실패:', error)
+      // 에러 시 기존 이벤트 유지
+    } finally {
+      setIsScheduleLoading(false)
+    }
   }
 
   return (
@@ -427,6 +569,7 @@ const DashboardPage: React.FC = () => {
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">일정 관리</h2>
+
                 <Calendar
                   events={calendarEvents}
                   selectedDate={selectedDate}
@@ -439,51 +582,79 @@ const DashboardPage: React.FC = () => {
                 {/* 다가오는 일정 섹션 */}
                 <div className="mt-6">
                   <h3 className="text-md font-semibold text-gray-900 mb-3">다가오는 일정</h3>
-                  <div className="space-y-3">
-                    {upcomingEvents.map((event) => (
-                      <div key={event.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        {/* 이벤트 색상 점 */}
-                        <div
-                          className="w-3 h-3 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: event.color }}
-                        />
 
-                        {/* 이벤트 정보 */}
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-gray-900 truncate">
-                            {event.title}
+                  {isScheduleLoading ? (
+                    <div className="text-center py-4 text-gray-500">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto mb-2"></div>
+                      <p className="text-sm">일정을 불러오는 중...</p>
+                    </div>
+                  ) : upcomingEvents.length > 0 ? (
+                    <div className="space-y-3">
+                      {upcomingEvents.map((event) => (
+                        <div key={event.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                          {/* 이벤트 색상 점 */}
+                          <div
+                            className="w-3 h-3 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: event.color }}
+                          />
+
+                          {/* 이벤트 정보 */}
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-gray-900 truncate">
+                              {event.title}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {event.date} {event.time}
+                            </div>
                           </div>
-                          <div className="text-xs text-gray-500">
-                            {event.date} {event.time}
+
+                          {/* 스터디 이미지와 이름 */}
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <div className="w-6 h-6 flex items-center justify-center text-xs font-medium">
+                              {event.studyImage && event.studyImage.startsWith('http') ? (
+                                // 실제 이미지 URL이 있는 경우 이미지 표시
+                                <img
+                                  src={event.studyImage}
+                                  alt={event.studyName}
+                                  className="w-6 h-6 rounded object-cover"
+                                  onError={(e) => {
+                                    // 이미지 로드 실패 시 기본 아이콘으로 대체
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    const fallback = target.nextElementSibling as HTMLElement;
+                                    if (fallback) fallback.style.display = 'flex';
+                                  }}
+                                />
+                              ) : null}
+
+                              {/* 기본 아이콘 (이미지가 없거나 로드 실패 시 표시) */}
+                              <div
+                                className={`w-6 h-6 flex items-center justify-center text-xs font-medium ${
+                                  event.studyImage === 'SSAFY' ? 'bg-blue-500 text-white rounded' :
+                                  event.studyImage === '면' ? 'bg-purple-500 text-white rounded-full' :
+                                  event.studyImage === 'CS' ? 'bg-green-500 text-white rounded' :
+                                  'bg-gray-500 text-white rounded'
+                                }`}
+                                style={{ display: event.studyImage && event.studyImage.startsWith('http') ? 'none' : 'flex' }}
+                              >
+                                {event.studyImage === 'SSAFY' ? 'S' :
+                                 event.studyImage === '면' ? '면' :
+                                 event.studyImage === 'CS' ? 'CS' :
+                                 event.studyImage || '📅'}
+                              </div>
+                            </div>
+                            <div className="text-xs text-gray-600 truncate max-w-16">
+                              {event.studyName}
+                            </div>
                           </div>
                         </div>
-
-                        {/* 스터디 이미지와 이름 */}
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <div className="w-6 h-6 flex items-center justify-center text-xs font-medium">
-                            {event.studyImage === 'SSAFY' ? (
-                              <div className="w-6 h-6 bg-blue-500 text-white rounded flex items-center justify-center text-xs font-bold">
-                                S
-                              </div>
-                            ) : event.studyImage === '면' ? (
-                              <div className="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
-                                면
-                              </div>
-                            ) : event.studyImage === 'CS' ? (
-                              <div className="w-6 h-6 bg-green-500 text-white rounded flex items-center justify-center text-xs font-bold">
-                                CS
-                              </div>
-                            ) : (
-                              <span className="text-lg">{event.studyImage}</span>
-                            )}
-                          </div>
-                          <div className="text-xs text-gray-600 truncate max-w-16">
-                            {event.studyName}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-gray-500">
+                      <p>다가오는 일정이 없습니다.</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
