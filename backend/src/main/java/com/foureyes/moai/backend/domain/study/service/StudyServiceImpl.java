@@ -495,6 +495,7 @@ public class StudyServiceImpl implements StudyService {
                 .countByStudyGroup_IdAndStatus(group.getId(), StudyMembership.Status.APPROVED);
 
             return StudyDetailResponseDto.builder()
+                .id(group.getId())
                 .name(group.getName())
                 .imageUrl(group.getImageUrl())
                 .status(StudyMembership.Status.APPROVED.name())
