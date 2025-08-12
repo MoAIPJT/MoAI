@@ -4,6 +4,7 @@ import com.foureyes.moai.backend.commons.exception.CustomException;
 import com.foureyes.moai.backend.commons.exception.ErrorCode;
 import com.foureyes.moai.backend.commons.util.StorageService;
 import com.foureyes.moai.backend.domain.study.dto.request.CreateStudyRequest;
+import com.foureyes.moai.backend.domain.study.dto.request.UpdateStudyRequestDto;
 import com.foureyes.moai.backend.domain.study.dto.response.*;
 import com.foureyes.moai.backend.domain.study.entity.StudyGroup;
 import com.foureyes.moai.backend.domain.study.entity.StudyMembership;
@@ -79,8 +80,10 @@ public class StudyServiceImpl implements StudyService {
 
         String imageUrl = null;
         try {
-            imageUrl = storageService.uploadFile(request.getImage());
-            log.info("스터디 이미지 업로드 완료: imageUrl={}", imageUrl);
+            if (request.getImage() != null){
+                imageUrl = storageService.uploadFile(request.getImage());
+                log.info("스터디 이미지 업로드 완료: imageUrl={}", imageUrl);
+            }
         } catch (IOException e) {
             log.error("스터디 이미지 업로드 실패: userId={}, error={}", userId, e.getMessage());
             throw new CustomException(ErrorCode.FILE_UPLOAD_FAILED);
@@ -185,6 +188,7 @@ public class StudyServiceImpl implements StudyService {
                     .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
                 return StudyMemberListResponseDto.builder()
+                    .userId(user.getId())
                     .member(user.getName())
                     .email(user.getEmail())
                     .imageUrl(user.getProfileImageUrl())
@@ -538,6 +542,39 @@ public class StudyServiceImpl implements StudyService {
         validateAdminMembership(userId, studyId);
 
         group.setNotice(notice == null ? null : notice.trim());
+        studyGroupRepository.save(group);
+    }
+
+    @Override
+    @Transactional
+    public void updateStudyGroup(int userId, int studyId, UpdateStudyRequestDto request) {
+        StudyGroup group = validateStudyGroupExists(studyId);
+        validateAdminMembership(userId, studyId);
+
+        // 이미지(선택)
+        if (request.getImage() != null && !request.getImage().isEmpty()) {
+            try {
+                String imageUrl = storageService.uploadFile(request.getImage());
+                group.setImageUrl(imageUrl);
+                log.info("스터디 이미지 업로드 완료: imageUrl={}", imageUrl);
+            } catch (IOException e) {
+                log.error("스터디 이미지 업로드 실패: userId={}, error={}", userId, e.getMessage());
+                throw new CustomException(ErrorCode.FILE_UPLOAD_FAILED);
+            }
+        }
+
+        if (request.getName() != null && !request.getName().isBlank()) {
+            group.setName(request.getName().trim());
+        }
+
+        if (request.getDescription() != null) {
+            group.setDescription(request.getDescription().trim());
+        }
+
+        if (request.getMaxCapacity() != 0) {
+            group.setMaxCapacity(request.getMaxCapacity());
+        }
+
         studyGroupRepository.save(group);
     }
 
