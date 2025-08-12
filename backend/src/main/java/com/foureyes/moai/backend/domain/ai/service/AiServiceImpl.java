@@ -5,9 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.foureyes.moai.backend.commons.exception.CustomException;
 import com.foureyes.moai.backend.commons.exception.ErrorCode;
 import com.foureyes.moai.backend.commons.util.StorageService;
+import com.foureyes.moai.backend.domain.ai.dto.DocsItem;
 import com.foureyes.moai.backend.domain.ai.dto.SummaryDto;
 import com.foureyes.moai.backend.domain.ai.dto.request.CreateAiSummaryRequest;
 import com.foureyes.moai.backend.domain.ai.dto.request.EditAiSummaryRequest;
+import com.foureyes.moai.backend.domain.ai.dto.response.AiSummaryResponseDto;
 import com.foureyes.moai.backend.domain.ai.dto.response.CreateAiSummaryResponse;
 import com.foureyes.moai.backend.domain.ai.dto.response.DashboardSummariesResponse;
 import com.foureyes.moai.backend.domain.ai.dto.response.SidebarSummariesResponse;
@@ -27,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
+import java.time.Duration;
 import java.util.*;
 
 @Slf4j
@@ -208,5 +211,33 @@ public class AiServiceImpl implements AiService {
         summary.setDescription(request.getDescription() != null ? request.getDescription().trim() : null);
 
         aiSummaryRepository.save(summary);
+    }
+
+    @Override
+    public AiSummaryResponseDto getSummaryDetail(int userId, int summaryId) {
+        AiSummary summary = aiSummaryRepository.findById(summaryId)
+            .orElseThrow(() -> new CustomException(ErrorCode.SUMMARY_NOT_FOUND));
+
+        // 소유자 권한 체크
+        if (summary.getOwner() == null || summary.getOwner().getId() != userId) {
+            throw new CustomException(ErrorCode.FORBIDDEN_SUMMARY_ACCESS);
+        }
+
+        List<AiSummaryDocument> links = aiSummaryDocumentRepository.findBySummary_Id(summaryId);
+
+        List<DocsItem> docsItems = links.stream().map(link -> {
+            int docId = link.getDocument().getId();
+            String key = documentService.getDocumentKeyIfAllowed(userId, docId);
+            String url = storageService.presignDocumentViewUrl(key, Duration.ofMinutes(40));
+            return DocsItem.builder()
+                .docsId(docId)
+                .url(url)
+                .build();
+        }).toList();
+
+        return AiSummaryResponseDto.builder()
+            .summaryJson(summary.getSummaryJson())
+            .docses(docsItems)
+            .build();
     }
 }

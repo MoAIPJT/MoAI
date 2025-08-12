@@ -26,4 +26,6 @@ public interface AiSummaryDocumentRepository extends JpaRepository<AiSummaryDocu
     """)
     List<SidebarRow> findSidebarRows(@Param("ownerId") int ownerId);
 
+    List<AiSummaryDocument> findBySummary_Id(int summaryId);
+
 }
