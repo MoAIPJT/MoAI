@@ -8,6 +8,8 @@ import lombok.*;
 @NoArgsConstructor @AllArgsConstructor @Builder
 public class StudyDetailResponseDto {
 
+    
+
     @Schema(description = "스터디 이름", example = "Spring Boot 스터디")
     private String name;
 

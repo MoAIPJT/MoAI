@@ -67,7 +67,6 @@ public class AiServiceImpl implements AiService {
         if (docs.size() != docIds.size()) throw new CustomException(ErrorCode.DOCUMENT_NOT_FOUND);
 
         try {
-            // 1) 문서 텍스트 → DOC 블록
             List<String> docBlocks = new ArrayList<>(docs.size());
             for (Document d : docs) {
                 String key = documentService.getDocumentKeyIfAllowed(ownerId, d.getId());
@@ -79,19 +78,15 @@ public class AiServiceImpl implements AiService {
             }
             String joinedBlocks = String.join("\n\n", docBlocks);
 
-            // 2) 프롬프트 생성(사용자 프롬프트 병합)
             String prompt = promptBuilder.buildMultiDocPrompt(joinedBlocks, req.getPromptType());
 
-            // 3) 모델 선택 → API URL 구성 → 호출
             String model = modelResolver.resolveModel(req.getModelType());
             String apiUrl = modelResolver.buildApiUrl(model);
             String summaryJson = geminiApiClient.generateContent(apiUrl, prompt).block();
 
-            // 4) JSON 파싱 검증
             List<SummaryDto> parsed = summaryParser.parse(summaryJson);
             log.info("AI 요약 파싱 결과: {} items", parsed.size());
 
-            // 5) 요약 저장
             AiSummary summary = AiSummary.builder()
                 .owner(owner)
                 .title(Optional.ofNullable(req.getTitle()).orElse("").trim())
@@ -102,7 +97,6 @@ public class AiServiceImpl implements AiService {
                 .build();
             aiSummaryRepository.save(summary);
 
-            // 6) 링크 저장
             for (Document d : docs) {
                 if (!aiSummaryDocumentRepository.existsBySummary_IdAndDocument_Id(summary.getId(), d.getId())) {
                     aiSummaryDocumentRepository.save(

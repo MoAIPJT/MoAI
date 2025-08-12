@@ -67,12 +67,30 @@ public class DocumentController {
     )
     @GetMapping("/download-url/{id}")
     public ResponseEntity<PresignedUrlResponse> getDownloadUrl(
+        @Parameter(hidden = true)
         @RequestHeader("Authorization") String bearerToken,
         @PathVariable int id
     ) {
         int userId = extractUserIdFromToken(bearerToken);
         String key = documentService.getDocumentKeyIfAllowed(userId, id);
         String url = storageService.presignDocumentDownloadUrl(key, Duration.ofMinutes(10));
+
+        return ResponseEntity.ok(new PresignedUrlResponse(url));
+    }
+    @Operation(
+        summary = "단일 문서 View URL 발급",
+        description = "문서 접근 권한 확인 후 Pre-signed URL을 발급합니다.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @GetMapping("/view-url/{id}")
+    public ResponseEntity<PresignedUrlResponse> getViewUrl(
+        @Parameter(hidden = true)
+        @RequestHeader("Authorization") String bearerToken,
+        @PathVariable int id
+    ) {
+        int userId = extractUserIdFromToken(bearerToken);
+        String key = documentService.getDocumentKeyIfAllowed(userId, id);
+        String url = storageService.presignDocumentViewUrl(key, Duration.ofMinutes(40));
 
         return ResponseEntity.ok(new PresignedUrlResponse(url));
     }
