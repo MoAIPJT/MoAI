@@ -6,7 +6,7 @@ import type { StudyItem } from '../components/organisms/DashboardSidebar/types'
 import type { Category, ContentItem } from '../types/content'
 import type { UploadData } from '../components/organisms/UploadDataModal/types'
 import { getSidebarStudies, updateStudyNotice, joinStudy } from '../services/studyService'
-import { useStudyDetail, useStudyMembers, useJoinRequests, useAcceptJoinRequest, useRejectJoinRequest  } from '../hooks/useStudies'
+import { useStudyDetail, useStudyMembers, useJoinRequests, useAcceptJoinRequest, useRejectJoinRequest, useChangeMemberRole  } from '../hooks/useStudies'
 import { useQueryClient } from '@tanstack/react-query'
 import type { Member } from '../types/study'
 
@@ -41,6 +41,7 @@ const StudyDetailPage: React.FC = () => {
   // Mutation 훅들
   const acceptJoinRequestMutation = useAcceptJoinRequest(studyDetail?.studyId || 0)
   const rejectJoinRequestMutation = useRejectJoinRequest(studyDetail?.studyId || 0)
+  const changeMemberRoleMutation = useChangeMemberRole(studyDetail?.studyId || 0)
   // Content Management 관련 상태
   const [categories, setCategories] = useState<Category[]>([])
   const [showCategoryModal, setShowCategoryModal] = useState(false)
@@ -287,6 +288,27 @@ const StudyDetailPage: React.FC = () => {
     console.log('Remove member:', memberName)
   }
 
+  const handleMemberRoleChange = async (userId: number, newRole: 'ADMIN' | 'DELEGATE' | 'MEMBER', userEmail: string) => {
+    if (!studyDetail?.studyId) return
+
+    const payload = {
+      studyId: studyDetail.studyId,
+      userEmail: userEmail, // userEmail만 사용
+      role: newRole
+    }
+
+    console.log('멤버 역할 변경 요청 데이터:', payload)
+
+    try {
+      // 멤버 역할 변경 API 호출
+      await changeMemberRoleMutation.mutateAsync(payload)
+
+      console.log('멤버 역할 변경 완료')
+    } catch (error) {
+      console.error('멤버 역할 변경 실패:', error)
+    }
+  }
+
   const handleStudyImageChange = (image: File | null) => {
     if (image) {
       // 이미지 업로드 API 호출 (실제 구현 필요)
@@ -397,8 +419,8 @@ const StudyDetailPage: React.FC = () => {
 
 return (
   <>
-    {studyDetail?.status === null ? (
-      // 가입하지 않은 상태 - 가입하기 버튼
+    {(studyDetail?.status === null || studyDetail?.status === 'REJECTED') ? (
+      // 가입하지 않은 상태 또는 거절된 상태 - 가입하기 버튼
       <div className="flex h-screen">
         {/* 사이드바 */}
         <div className="w-64 bg-white border-r">
@@ -494,6 +516,7 @@ return (
         onCategoryRemove={handleCategoryRemove}
         onCategoryAdd={handleCategoryAdd}
         onMemberRemove={handleMemberRemove}
+        onMemberRoleChange={handleMemberRoleChange}
         joinRequests={joinRequests}
         onAcceptJoinRequest={handleAcceptJoinRequest}
         onRejectJoinRequest={handleRejectJoinRequest}

@@ -114,7 +114,7 @@ export interface DeleteMemberReq {
 // 스터디 멤버 역할 변경 요청
 export interface ChangeMemberRoleReq {
   studyId: number
-  userId: number
+  userEmail: string  // email로 사용자 식별
   role: 'ADMIN' | 'DELEGATE' | 'MEMBER'
 }
 // 스터디 가입 요청

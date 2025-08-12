@@ -59,6 +59,7 @@ interface StudyDetailTemplateProps {
   onCategoryRemove?: (category: string) => void
   onCategoryAdd?: (category: string) => void
   onMemberRemove?: (memberId: string) => void
+  onMemberRoleChange?: (userId: number, newRole: 'ADMIN' | 'DELEGATE' | 'MEMBER', userEmail: string) => void
   joinRequests?: Array<{
     userID: number
     userEmail: string
@@ -113,12 +114,13 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   onStudyDescriptionChange,
   onStudyImageChange,
   onMaxMembersChange,
-  onCategoryRemove,
-  onCategoryAdd,
-  onMemberRemove,
-  joinRequests = [],
-  onAcceptJoinRequest,
-  onRejectJoinRequest,
+          onCategoryRemove,
+        onCategoryAdd,
+        onMemberRemove,
+        onMemberRoleChange,
+        joinRequests = [],
+        onAcceptJoinRequest,
+        onRejectJoinRequest,
 }) => {
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false)
   const [isManagementModalOpen, setIsManagementModalOpen] = useState(false)
@@ -216,6 +218,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
         joinRequests={joinRequests}
         onAcceptJoinRequest={onAcceptJoinRequest}
         onRejectJoinRequest={onRejectJoinRequest}
+        onMemberRoleChange={onMemberRoleChange}
       />
 
       {/* Study Management Modal */}

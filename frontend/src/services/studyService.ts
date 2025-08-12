@@ -191,7 +191,7 @@ export const deleteStudyMember = async (payload: DeleteMemberReq): Promise<void>
 
 export const changeMemberRole = async (payload: ChangeMemberRoleReq): Promise<void> => {
   try {
-    await api.patch('/study/member/role', payload)
+    await api.patch('/study/designate', payload)
   } catch (error) {
     throw normalizeError(error)
   }
@@ -212,6 +212,8 @@ export const rejectJoinRequest = async (payload: RejectJoinRequestReq): Promise<
     throw normalizeError(error)
   }
 }
+
+
 
 export const updateStudyNotice = async (payload: UpdateStudyNoticeReq): Promise<void> => {
   try {
