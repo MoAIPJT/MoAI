@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
-public class UserProfileResponse {
+public class UserProfileResponseDto {
 
     @Schema(description = "이름", example = "홍길동")
     private String name;

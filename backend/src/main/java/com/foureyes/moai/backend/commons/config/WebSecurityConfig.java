@@ -51,7 +51,7 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/auth/google").permitAll()
 
                 // Rule 3: Permit your other public endpoints
-                .requestMatchers("/users/signup", "/users/login", "/users/hello").permitAll()
+                .requestMatchers("/users/signup", "/users/login", "/users/refresh").permitAll()
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
 

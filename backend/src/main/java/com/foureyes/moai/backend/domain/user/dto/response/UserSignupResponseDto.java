@@ -6,6 +6,6 @@ import org.springframework.http.HttpStatus;
 
 @Data
 @AllArgsConstructor
-public class UserSignupResponse {
+public class UserSignupResponseDto {
     private HttpStatus status;
 }

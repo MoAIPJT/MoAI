@@ -6,25 +6,20 @@ import com.foureyes.moai.backend.commons.exception.ErrorCode;
 import com.foureyes.moai.backend.commons.mail.EmailService;
 import com.foureyes.moai.backend.commons.mail.EmailType;
 import com.foureyes.moai.backend.commons.mail.EmailVerificationService;
-import com.foureyes.moai.backend.domain.user.dto.request.PasswordChangeRequest;
-import com.foureyes.moai.backend.domain.user.dto.request.UserLoginRequest;
-import com.foureyes.moai.backend.domain.user.dto.request.UserProfileUpdateRequest;
-import com.foureyes.moai.backend.domain.user.dto.request.UserSignupRequest;
-import com.foureyes.moai.backend.domain.user.dto.response.UserLoginResponse;
-import com.foureyes.moai.backend.domain.user.dto.response.UserProfileResponse;
-import com.foureyes.moai.backend.domain.user.dto.response.UserSignupResponse;
+import com.foureyes.moai.backend.domain.user.dto.request.PasswordChangeRequestDto;
+import com.foureyes.moai.backend.domain.user.dto.request.UserLoginRequestDto;
+import com.foureyes.moai.backend.domain.user.dto.request.UserProfileUpdateRequestDto;
+import com.foureyes.moai.backend.domain.user.dto.request.UserSignupRequestDto;
+import com.foureyes.moai.backend.domain.user.dto.response.UserLoginResponseDto;
+import com.foureyes.moai.backend.domain.user.dto.response.UserProfileResponseDto;
+import com.foureyes.moai.backend.domain.user.dto.response.UserSignupResponseDto;
 import com.foureyes.moai.backend.domain.user.entity.User;
 import com.foureyes.moai.backend.domain.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import java.time.Duration;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -47,7 +42,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
-    public UserSignupResponse signup(UserSignupRequest request) {
+    public UserSignupResponseDto signup(UserSignupRequestDto request) {
     log.info("[signup] signup requested for email");
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             log.warn("[signup] email already exists");
@@ -73,7 +68,7 @@ public class UserServiceImpl implements UserService {
             // 인증 메일 발송 성공만 남김
             log.info("[signup] verification mail sent");
 
-            return new UserSignupResponse(HttpStatus.CREATED);
+            return new UserSignupResponseDto(HttpStatus.CREATED);
         } catch (Exception e) {
             log.error("[signup] internal error", e);
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
@@ -86,7 +81,7 @@ public class UserServiceImpl implements UserService {
      * 기능: 로그인 처리(비밀번호 검증, 이메일 인증 여부 확인, 토큰 발급/저장)
      */
     @Override
-    public UserLoginResponse login(UserLoginRequest request) {
+    public UserLoginResponseDto login(UserLoginRequestDto request) {
     log.info("[login] login requested");
         User user = userRepository.findByEmail(request.getEmail())
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
@@ -110,8 +105,40 @@ public class UserServiceImpl implements UserService {
     // 토큰 발급 및 저장 성공만 남김
     log.info("[login] tokens issued and refresh saved");
 
-        return new UserLoginResponse(accessToken, refreshToken);
+        return new UserLoginResponseDto(accessToken, refreshToken);
     }
+
+    @Override
+    public UserLoginResponseDto refresh(String refreshToken) {
+        // 1) 토큰 형식/서명/만료 검증
+        if (!jwtTokenProvider.validateToken(refreshToken)) {
+            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN); // 또는 EXPIRED 등 분리
+        }
+
+        // 2) 토큰에서 userId 추출
+        int userId = jwtTokenProvider.getUserId(refreshToken);
+
+        // 3) DB의 사용자 조회
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 4) DB에 저장된 refreshToken과 일치 여부 확인(로테이션/탈취 방지)
+        if (user.getRefreshToken() == null || !user.getRefreshToken().equals(refreshToken)) {
+            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        // 5) 새 토큰 발급 (로테이션 권장)
+        String newAccess = jwtTokenProvider.generateAccessToken(user);
+        String newRefresh = jwtTokenProvider.generateRefreshToken(user);
+
+        // 6) DB에 새 refreshToken 저장
+        user.setRefreshToken(newRefresh);
+        userRepository.save(user);
+
+        // 7) 응답
+        return new UserLoginResponseDto(newAccess, newRefresh);
+    }
+
 
     /**
      * 입력: Integer userId
@@ -140,12 +167,12 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
-    public UserProfileResponse getProfile(Integer userId) {
+    public UserProfileResponseDto getProfile(Integer userId) {
         log.debug("[getProfile] fetch profile: userId={}", userId);
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        return new UserProfileResponse(
+        return new UserProfileResponseDto(
             user.getName(),
             user.getEmail(),
             user.getProfileImageUrl(),
@@ -232,7 +259,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
-    public UserProfileResponse updateUserProfile(Integer userId, UserProfileUpdateRequest request) {
+    public UserProfileResponseDto updateUserProfile(Integer userId, UserProfileUpdateRequestDto request) {
         log.info("[updateUserProfile] userId={}", userId);
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
@@ -249,7 +276,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         log.debug("[updateUserProfile] updated");
-        return new UserProfileResponse(
+        return new UserProfileResponseDto(
             user.getName(),
             user.getEmail(),
             user.getProfileImageUrl(),
@@ -265,7 +292,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
-    public UserLoginResponse changePassword(Integer userId, PasswordChangeRequest request) {
+    public UserLoginResponseDto changePassword(Integer userId, PasswordChangeRequestDto request) {
     log.info("[changePassword] userId={}", userId);
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
@@ -293,7 +320,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         log.info("[changePassword] password changed and tokens reissued");
-        return new UserLoginResponse(newAccess, newRefresh);
+        return new UserLoginResponseDto(newAccess, newRefresh);
     }
 
     /**

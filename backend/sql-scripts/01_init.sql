@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
     profile_image_url VARCHAR(500),
     password VARCHAR(255),
     refresh_token VARCHAR(255),
+    is_verified TINYINT(1) NOT NULL DEFAULT 0,
     created_at DATETIME
 );
 
