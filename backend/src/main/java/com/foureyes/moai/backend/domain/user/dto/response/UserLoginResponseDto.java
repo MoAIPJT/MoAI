@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserLoginResponse {
+public class UserLoginResponseDto {
 
     @Schema(description = "Access Token")
     private String accessToken;
