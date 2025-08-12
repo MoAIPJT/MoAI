@@ -5,10 +5,11 @@ import CategoryAddModal from '../components/organisms/CategoryAddModal'
 import type { StudyItem } from '../components/organisms/DashboardSidebar/types'
 import type { Category, ContentItem } from '../types/content'
 import type { UploadData } from '../components/organisms/UploadDataModal/types'
-import { getSidebarStudies, updateStudyNotice, joinStudy } from '../services/studyService'
-import { useStudyDetail, useStudyMembers, useJoinRequests, useAcceptJoinRequest, useRejectJoinRequest, useChangeMemberRole  } from '../hooks/useStudies'
+import { getSidebarStudies, updateStudyNotice, joinStudy, leaveStudy, deleteStudyMember } from '../services/studyService'
+import { useStudyDetail, useStudyMembers, useJoinRequests, useAcceptJoinRequest, useRejectJoinRequest, useChangeMemberRole, useUpdateStudy } from "../hooks/useStudies";
 import { useQueryClient } from '@tanstack/react-query'
 import type { Member } from '../types/study'
+import StudyManagementModal from '../components/molecules/StudyManagementModal'
 
 const StudyDetailPage: React.FC = () => {
   const navigate = useNavigate()
@@ -34,9 +35,25 @@ const StudyDetailPage: React.FC = () => {
     error: membersError
   } = useStudyMembers(studyDetail?.studyId)
 
+  // 멤버 데이터 디버깅
+  console.log('=== 멤버 목록 디버깅 ===')
+  console.log('participants:', participants)
+  participants.forEach(member => {
+    console.log('Member:', {
+      userId: member.userId,
+      name: member.member,
+      role: member.role,
+      email: member.email
+    })
+  })
+  console.log('========================')
+
   const {
   data: joinRequests = []
-} = useJoinRequests(studyDetail?.studyId || 0)
+} = useJoinRequests(
+  // 관리자 권한이 있을 때만 가입 요청 목록 조회
+  studyDetail?.role === 'ADMIN' ? (studyDetail?.studyId || 0) : 0
+)
 
   // Mutation 훅들
   const acceptJoinRequestMutation = useAcceptJoinRequest(studyDetail?.studyId || 0)
@@ -59,6 +76,17 @@ const StudyDetailPage: React.FC = () => {
   const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false)
   const [noticeTitle, setNoticeTitle] = useState<string>('공지사항')
   const [noticeContent, setNoticeContent] = useState<string>('공지사항이 없습니다.')
+
+  // 공지사항을 로컬 스토리지에서 불러오기
+  useEffect(() => {
+    if (activeStudyId) {
+      const savedNotice = localStorage.getItem(`study_notice_${activeStudyId}`)
+      if (savedNotice) {
+        setNotice(savedNotice)
+        setNoticeContent(savedNotice)
+      }
+    }
+  }, [activeStudyId])
 
   // 스터디 목록 로드
   useEffect(() => {
@@ -202,10 +230,20 @@ const StudyDetailPage: React.FC = () => {
       setNotice(noticeContent)
       setIsNoticeModalOpen(false)
 
+      // 로컬 스토리지에 공지사항 저장
+      if (activeStudyId) {
+        localStorage.setItem(`study_notice_${activeStudyId}`, noticeContent)
+      }
+
       // 성공 메시지 (실제로는 toast 등을 사용)
       console.log('공지사항이 업데이트되었습니다.')
-      } catch (error: unknown) {
-        console.error('공지사항 업데이트 실패:', error)
+      // 성공 시 스터디 상세 정보 React Query 캐시 무효화
+      if (hashId) {
+        queryClient.invalidateQueries({ queryKey: ['studyDetail', hashId] })
+      }
+
+    } catch (error: unknown) {
+      console.error('공지사항 업데이트 실패:', error)
       // 에러 메시지 (실제로는 toast 등을 사용)
     }
   }
@@ -223,8 +261,9 @@ const StudyDetailPage: React.FC = () => {
       await joinStudy({ studyId: studyDetail.studyId })
 
       // 성공 시 스터디 상세 정보 React Query 캐시 무효화
-      queryClient.invalidateQueries({ queryKey: ['studyDetail', hashId] })
-      queryClient.invalidateQueries({ queryKey: ['joinRequests', studyDetail.studyId] })
+      if (hashId) {
+        queryClient.invalidateQueries({ queryKey: ['studyDetail', hashId] })
+      }
 
       console.log('가입 요청이 전송되었습니다.')
     } catch (error) {
@@ -270,6 +309,33 @@ const StudyDetailPage: React.FC = () => {
     console.log('Study description change:', description)
   }
 
+  // 스터디 수정 훅
+  const updateStudyMutation = useUpdateStudy(studyDetail?.studyId || 0)
+
+  // 스터디 수정 핸들러
+  const handleStudyUpdate = async (data: {
+    name: string
+    description: string
+    image?: File
+    maxCapacity: number
+  }) => {
+    if (!studyDetail?.studyId) return
+
+    try {
+      // useUpdateStudy 훅을 사용하여 스터디 수정
+      await updateStudyMutation.mutateAsync(data)
+
+      console.log('스터디 수정 완료')
+
+      // 성공 메시지 (실제로는 toast 등을 사용)
+      alert('스터디 정보가 수정되었습니다.')
+    } catch (error) {
+      console.error('스터디 수정 실패:', error)
+      // 에러 메시지 표시 (실제로는 toast 등을 사용)
+      alert('스터디 수정에 실패했습니다. 다시 시도해주세요.')
+    }
+  }
+
   const handleCategoryRemove = (categoryName: string) => {
     setCategories(prev => prev.filter(cat => cat.name !== categoryName))
   }
@@ -283,21 +349,44 @@ const StudyDetailPage: React.FC = () => {
     setCategories(prev => [...prev, newCategory])
   }
 
-  const handleMemberRemove = (memberName: string) => {
-    // ✅ 로컬 상태 업데이트는 하지만, React Query가 자동으로 다시 불러올 것
-    console.log('Remove member:', memberName)
+  // 멤버 삭제(강제탈퇴) 핸들러
+  const handleMemberRemove = async (userId: number) => {
+    if (!studyDetail?.studyId) return
+
+    try {
+      // 멤버 삭제 API 호출
+      await deleteStudyMember({
+        studyId: studyDetail.studyId,
+        userId: userId
+      })
+
+      console.log('멤버 강제탈퇴 완료')
+
+      // 성공 시 멤버 목록 React Query 캐시 무효화
+      if (hashId) {
+        queryClient.invalidateQueries({ queryKey: ['studyDetail', hashId] })
+      }
+    } catch (error) {
+      console.error('멤버 강제탈퇴 실패:', error)
+      alert('멤버 강제탈퇴에 실패했습니다. 다시 시도해주세요.')
+    }
   }
 
-  const handleMemberRoleChange = async (userId: number, newRole: 'ADMIN' | 'DELEGATE' | 'MEMBER', userEmail: string) => {
+      const handleMemberRoleChange = async (userId: number, newRole: 'ADMIN' | 'DELEGATE' | 'MEMBER') => {
     if (!studyDetail?.studyId) return
 
     const payload = {
       studyId: studyDetail.studyId,
-      userEmail: userEmail, // userEmail만 사용
+      userId: userId, // 백엔드에서 기대하는 필드명
       role: newRole
     }
 
-    console.log('멤버 역할 변경 요청 데이터:', payload)
+    console.log('=== 멤버 역할 변경 디버깅 ===')
+    console.log('studyDetail:', studyDetail)
+    console.log('전달받은 userId:', userId)
+    console.log('전달받은 newRole:', newRole)
+    console.log('최종 payload:', payload)
+    console.log('==============================')
 
     try {
       // 멤버 역할 변경 API 호출
@@ -306,6 +395,13 @@ const StudyDetailPage: React.FC = () => {
       console.log('멤버 역할 변경 완료')
     } catch (error) {
       console.error('멤버 역할 변경 실패:', error)
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: any; status?: number } }
+        console.error('에러 상세 정보:', {
+          response: axiosError.response?.data,
+          status: axiosError.response?.status
+        })
+      }
     }
   }
 
@@ -322,6 +418,34 @@ const StudyDetailPage: React.FC = () => {
   const handleMaxMembersChange = (maxMembers: number) => {
     // 최대 멤버 수 변경 API 호출 (실제 구현 필요)
     console.log('Max members change:', maxMembers)
+  }
+
+  // 스터디 탈퇴 핸들러
+  const handleLeaveStudy = async () => {
+    if (!studyDetail?.studyId) return
+
+    // 확인 창 표시
+    const isConfirmed = window.confirm(
+      '정말로 이 스터디를 탈퇴하시겠습니까?\n탈퇴 후에는 다시 가입해야 합니다.'
+    )
+
+    if (!isConfirmed) return
+
+    try {
+      // 스터디 탈퇴 API 호출
+      await leaveStudy({
+        studyGroupId: studyDetail.studyId
+      })
+
+      console.log('스터디 탈퇴 완료')
+
+      // 성공 시 대시보드로 이동
+      navigate('/dashboard')
+    } catch (error) {
+      console.error('스터디 탈퇴 실패:', error)
+      // 에러 메시지 표시 (실제로는 toast 등을 사용)
+      alert('스터디 탈퇴에 실패했습니다. 다시 시도해주세요.')
+    }
   }
 
   // Content Management 관련 핸들러들
@@ -517,9 +641,11 @@ return (
         onCategoryAdd={handleCategoryAdd}
         onMemberRemove={handleMemberRemove}
         onMemberRoleChange={handleMemberRoleChange}
-        joinRequests={joinRequests}
-        onAcceptJoinRequest={handleAcceptJoinRequest}
-        onRejectJoinRequest={handleRejectJoinRequest}
+        joinRequests={studyDetail?.role === 'ADMIN' ? joinRequests : []}
+        onAcceptJoinRequest={studyDetail?.role === 'ADMIN' ? handleAcceptJoinRequest : undefined}
+        onRejectJoinRequest={studyDetail?.role === 'ADMIN' ? handleRejectJoinRequest : undefined}
+        onLeaveStudy={handleLeaveStudy}
+        onStudyUpdate={handleStudyUpdate}
       />
     )}
 

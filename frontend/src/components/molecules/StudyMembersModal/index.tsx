@@ -60,10 +60,8 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
                       value={member.role}
                       onChange={(e) => {
                         const newRole = e.target.value as 'ADMIN' | 'DELEGATE' | 'MEMBER'
-                        // email을 사용하여 사용자 식별 (실제로는 userId가 필요)
-                        // TODO: userId를 얻는 방법 필요 - 현재는 email을 사용
-                        console.log('권한 변경 시도:', { member: member.member, email: member.email, newRole })
-                        onMemberRoleChange?.(0, newRole, member.email) // email로 사용자 식별
+                        console.log('권한 변경 시도:', { member: member.member, userId: member.userId, newRole })
+                        onMemberRoleChange?.(member.userId, newRole) // member.userId 사용
                       }}
                     >
                       <option value="MEMBER">MEMBER</option>

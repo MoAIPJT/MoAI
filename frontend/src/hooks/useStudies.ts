@@ -268,3 +268,19 @@ export const useUpdateStudyNotice = (studyId: number) => {
     }
   })
 }
+
+// 스터디 수정 훅 추가
+export const useUpdateStudy = (studyId: number) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: { name: string; description: string; image?: File; maxCapacity: number }) =>
+      studyService.updateStudy(studyId, data),
+    onSuccess: () => {
+      // 스터디 상세 정보, 멤버 목록, 사이드바 갱신
+      queryClient.invalidateQueries({ queryKey: studyKeys.detail(studyId.toString()) })
+      queryClient.invalidateQueries({ queryKey: studyKeys.members(String(studyId)) })
+      queryClient.invalidateQueries({ queryKey: studyKeys.allMine() })
+    }
+  })
+}
