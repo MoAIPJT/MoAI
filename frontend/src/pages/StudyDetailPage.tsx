@@ -2,14 +2,19 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import StudyDetailTemplate from '../components/templates/StudyDetailTemplate'
 import CategoryAddModal from '../components/organisms/CategoryAddModal'
+import EditFileModal from '../components/organisms/EditFileModal'
+import PDFPreviewModal from '../components/organisms/PDFPreviewModal'
 import type { StudyItem } from '../components/organisms/DashboardSidebar/types'
-import type { Category, ContentItem } from '../types/content'
-import type { UploadData } from '../components/organisms/UploadDataModal/types'
+import type { ContentItem } from '../types/content'
 import { getSidebarStudies, updateStudyNotice, joinStudy, leaveStudy, deleteStudyMember } from '../services/studyService'
 import { useStudyDetail, useStudyMembers, useJoinRequests, useAcceptJoinRequest, useRejectJoinRequest, useChangeMemberRole, useUpdateStudy } from "../hooks/useStudies";
 import { useQueryClient } from '@tanstack/react-query'
 import type { Member } from '../types/study'
 import StudyManagementModal from '../components/molecules/StudyManagementModal'
+import { useRefFiles } from '../hooks/useRefFiles'
+import type { FileItem } from '../types/ref'
+import type { UploadData } from '../components/organisms/UploadDataModal/types'
+import { refService } from '../services/refService'
 
 const StudyDetailPage: React.FC = () => {
   const navigate = useNavigate()
@@ -35,6 +40,38 @@ const StudyDetailPage: React.FC = () => {
     error: membersError
   } = useStudyMembers(studyDetail?.studyId)
 
+  // ✅ refService 훅 사용 - 카테고리 관리
+  const { useCategories, useCreateCategory, useDeleteCategory, useRefList, useUploadRef } = useRefFiles()
+
+  // 카테고리 목록 조회
+  const {
+    data: categories = [],
+    isLoading: isCategoriesLoading,
+    error: categoriesError
+  } = useCategories(studyDetail?.studyId || 0)
+
+  // ✅ 공부 자료 목록 조회 - /ref/list 엔드포인트 사용
+  const {
+    data: refFiles = [],
+    isLoading: isRefFilesLoading,
+    error: refFilesError
+  } = useRefList(studyDetail?.studyId || 0)
+
+  // 디버깅을 위한 로그
+  console.log('=== 공부 자료 목록 조회 디버깅 ===')
+  console.log('studyDetail?.studyId:', studyDetail?.studyId)
+  console.log('refFiles:', refFiles)
+  console.log('isRefFilesLoading:', isRefFilesLoading)
+  console.log('refFilesError:', refFilesError)
+  console.log('================================')
+
+  // 카테고리 생성/삭제 mutation
+  const createCategoryMutation = useCreateCategory(studyDetail?.studyId || 0)
+  const deleteCategoryMutation = useDeleteCategory(studyDetail?.studyId || 0)
+
+  // ✅ 파일 업로드 mutation
+  const uploadRefMutation = useUploadRef(studyDetail?.studyId || 0)
+
   // 멤버 데이터 디버깅
   console.log('=== 멤버 목록 디버깅 ===')
   console.log('participants:', participants)
@@ -59,17 +96,41 @@ const StudyDetailPage: React.FC = () => {
   const acceptJoinRequestMutation = useAcceptJoinRequest(studyDetail?.studyId || 0)
   const rejectJoinRequestMutation = useRejectJoinRequest(studyDetail?.studyId || 0)
   const changeMemberRoleMutation = useChangeMemberRole(studyDetail?.studyId || 0)
+
   // Content Management 관련 상태
-  const [categories, setCategories] = useState<Category[]>([])
   const [showCategoryModal, setShowCategoryModal] = useState(false)
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest')
 
   // Upload Modal 관련 상태
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
 
-  const [contents, setContents] = useState<ContentItem[]>([])
+  // ✅ 수정 모달 관련 상태
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editingContent, setEditingContent] = useState<ContentItem | null>(null)
+
+  // ✅ PDF 미리보기 모달 관련 상태
+  const [isPDFModalOpen, setIsPDFModalOpen] = useState(false)
+  const [previewingContent, setPreviewingContent] = useState<(ContentItem & { originalFileId: number }) | null>(null)
+
+  // ✅ FileItem을 ContentItem으로 변환하는 함수
+  const convertFileToContent = (file: FileItem): ContentItem & { originalFileId: number } => ({
+    id: file.fileId.toString(),
+    title: file.title,
+    description: file.description || '',
+    tags: file.categories || [],
+    author: {
+      name: file.name || 'Unknown',
+      avatar: file.profileImageUrl || 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=32&h=32&fit=crop&crop=face'
+    },
+    date: file.updateDate || file.uploadDate || new Date().toLocaleDateString('ko-KR'),
+    isSelected: false,
+    originalFileId: file.fileId, // 원본 파일 ID 보존
+  })
+
+  // ✅ 변환된 공부 자료 목록
+  const convertedContents = refFiles.map(convertFileToContent)
 
   // 공지사항 관련 상태
   const [notice, setNotice] = useState<string>('')
@@ -143,19 +204,27 @@ const StudyDetailPage: React.FC = () => {
       console.error('Members error:', membersError)
       // 멤버 로드 실패는 전체 에러로 처리하지 않음
     }
-  }, [studyError, membersError])
+    if (categoriesError) {
+      console.error('Categories error:', categoriesError)
+      // 카테고리 로드 실패는 전체 에러로 처리하지 않음
+    }
+    if (refFilesError) {
+      console.error('Ref files error:', refFilesError)
+      // 공부 자료 로드 실패는 전체 에러로 처리하지 않음
+    }
+  }, [studyError, membersError, categoriesError, refFilesError])
 
-  // ✅ 로딩 상태 관리 - studyDetail만 체크
+  // ✅ 로딩 상태 관리 - studyDetail, 카테고리, 공부 자료 로딩 상태 체크
   useEffect(() => {
-    setLoading(isStudyLoading)
-  }, [isStudyLoading])  // ✅ isMembersLoading 제거
+    setLoading(isStudyLoading || isCategoriesLoading || isRefFilesLoading)
+  }, [isStudyLoading, isCategoriesLoading, isRefFilesLoading])
 
   // 선택된 카테고리와 검색어에 따라 콘텐츠 필터링
-  const filteredContents = contents.filter(content => {
+  const filteredContents = convertedContents.filter(content => {
     // 카테고리 필터링 (AND 조건)
     const categoryFilter = selectedCategories.length === 0 ||
       selectedCategories.every(categoryId => {
-        const category = categories.find(c => c.id === categoryId)
+        const category = categories.find(c => c.id.toString() === categoryId.toString())
         return category && content.tags.some(tag => tag.includes(category.name))
       })
 
@@ -336,17 +405,37 @@ const StudyDetailPage: React.FC = () => {
     }
   }
 
-  const handleCategoryRemove = (categoryName: string) => {
-    setCategories(prev => prev.filter(cat => cat.name !== categoryName))
+  const handleCategoryRemove = async (categoryId: string) => {
+    if (!studyDetail?.studyId) return
+
+    try {
+      // 실제 카테고리 ID로 변환 (string -> number)
+      const numericId = parseInt(categoryId)
+      if (isNaN(numericId)) {
+        console.error('Invalid category ID:', categoryId)
+        return
+      }
+
+      // 카테고리 삭제 API 호출
+      await deleteCategoryMutation.mutateAsync(numericId)
+      console.log('카테고리 삭제 완료')
+    } catch (error) {
+      console.error('카테고리 삭제 실패:', error)
+      alert('카테고리 삭제에 실패했습니다. 다시 시도해주세요.')
+    }
   }
 
-  const handleCategoryAdd = (categoryName: string) => {
-    const newCategory: Category = {
-      id: `category-${Date.now()}`,
-      name: categoryName,
-      isActive: false,
+  const handleCategoryAdd = async (categoryName: string) => {
+    if (!studyDetail?.studyId) return
+
+    try {
+      // 카테고리 생성 API 호출
+      await createCategoryMutation.mutateAsync(categoryName)
+      console.log('카테고리 생성 완료')
+    } catch (error) {
+      console.error('카테고리 생성 실패:', error)
+      alert('카테고리 생성에 실패했습니다. 다시 시도해주세요.')
     }
-    setCategories(prev => [...prev, newCategory])
   }
 
   // 멤버 삭제(강제탈퇴) 핸들러
@@ -449,7 +538,7 @@ const StudyDetailPage: React.FC = () => {
   }
 
   // Content Management 관련 핸들러들
-  const handleCategoryToggle = (categoryId: string) => {
+  const handleCategoryToggle = (categoryId: number) => {
     setSelectedCategories(prev => {
       if (prev.includes(categoryId)) {
         return prev.filter(id => id !== categoryId)
@@ -460,30 +549,163 @@ const StudyDetailPage: React.FC = () => {
   }
 
   const handleAddCategory = () => {
+    // ADMIN 권한 체크
+    if (studyDetail?.role !== 'ADMIN') {
+      alert('카테고리를 생성할 수 있는 권한이 없습니다.')
+      return
+    }
     setShowCategoryModal(true)
   }
 
-  const handleAddNewCategory = (categoryName: string) => {
-    const newCategory: Category = {
-      id: `category-${Date.now()}`,
-      name: categoryName,
-      isActive: false,
+  const handleAddNewCategory = async (categoryName: string) => {
+    if (!studyDetail?.studyId) return
+
+    try {
+      // 카테고리 생성 API 호출
+      await createCategoryMutation.mutateAsync(categoryName)
+      console.log('카테고리 생성 완료')
+
+      // 카테고리 생성 성공 후 React Query 캐시 무효화하여 목록 새로고침
+      if (studyDetail?.studyId) {
+        queryClient.invalidateQueries({ queryKey: ['ref', 'categories', studyDetail.studyId] })
+      }
+
+      setShowCategoryModal(false)
+    } catch (error) {
+      console.error('카테고리 생성 실패:', error)
+
+      // 상세 에러 정보 로깅
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: any; status?: number } }
+        const status = axiosError.response?.status
+        const errorData = axiosError.response?.data
+
+        console.error('에러 상세 정보:', {
+          status,
+          data: errorData,
+          studyId: studyDetail?.studyId,
+          categoryName: categoryName
+        })
+
+        // HTTP 상태 코드별 사용자 친화적 메시지
+        if (status === 409) {
+          alert('이미 존재하는 카테고리 이름입니다. 다른 이름을 사용해주세요.')
+          return
+        } else if (status === 400) {
+          alert('잘못된 요청입니다. 입력 정보를 확인해주세요.')
+          return
+        } else if (status === 401) {
+          alert('권한이 없습니다. 로그인 상태를 확인해주세요.')
+          return
+        } else if (status === 403) {
+          alert('카테고리를 생성할 권한이 없습니다.')
+          return
+        } else if (status && status >= 500) {
+          alert('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
+          return
+        }
+      }
+
+      alert('카테고리 생성에 실패했습니다. 다시 시도해주세요.')
     }
-    setCategories(prev => [...prev, newCategory])
   }
 
   const handleContentSelect = (contentId: string) => {
-    setContents(prevContents =>
-      prevContents.map(content =>
-        content.id === contentId
-          ? { ...content, isSelected: !content.isSelected }
-          : content
-      )
-    )
+    // This function is no longer needed as ContentItem is directly used.
+    // Keeping it for now in case it's called from the template.
+    console.log('Content select:', contentId)
   }
 
-  const handleContentPreview = () => {
-    //contentId: string
+  // ✅ 공부 자료 수정 핸들러
+  const handleContentEdit = (contentId: string) => {
+    const content = convertedContents.find(c => c.id === contentId)
+    if (content) {
+      setEditingContent(content)
+      setIsEditModalOpen(true)
+    }
+  }
+
+  // ✅ 공부 자료 수정 제출 핸들러
+  const handleFileEditSubmit = async (data: { id: string; title: string; description: string; categoryId: number[] }) => {
+    if (!studyDetail?.studyId) return
+
+    try {
+      // 파일 수정 API 호출 - JSON 형태로 데이터 전송
+      await refService.editFile(parseInt(data.id), {
+        title: data.title,
+        description: data.description,
+        categoryId: data.categoryId,
+      })
+
+      // 성공 시 React Query 캐시 무효화하여 목록 새로고침
+      if (studyDetail?.studyId) {
+        queryClient.invalidateQueries({ queryKey: ['ref', 'list', studyDetail.studyId] })
+      }
+
+      // 모달 닫기
+      setIsEditModalOpen(false)
+      setEditingContent(null)
+
+      // 성공 메시지 표시 (실제로는 toast 등을 사용)
+      console.log('파일 수정 완료')
+    } catch (error) {
+      console.error('파일 수정 실패:', error)
+      alert('파일 수정에 실패했습니다. 다시 시도해주세요.')
+    }
+  }
+
+  // ✅ 공부 자료 삭제 핸들러
+  const handleContentDelete = async (contentId: string) => {
+    if (!studyDetail?.studyId) return
+
+    // 확인 창 표시
+    const isConfirmed = window.confirm(
+      '정말로 이 파일을 삭제하시겠습니까?\n삭제된 파일은 복구할 수 없습니다.'
+    )
+
+    if (!isConfirmed) return
+
+    try {
+      // 파일 삭제 API 호출
+      await refService.deleteFile(parseInt(contentId))
+
+      // 성공 시 React Query 캐시 무효화하여 목록 새로고침
+      if (studyDetail?.studyId) {
+        queryClient.invalidateQueries({ queryKey: ['ref', 'list', studyDetail.studyId] })
+      }
+
+      console.log('파일 삭제 완료')
+    } catch (error) {
+      console.error('파일 삭제 실패:', error)
+      alert('파일 삭제에 실패했습니다. 다시 시도해주세요.')
+    }
+  }
+
+  const handleContentPreview = (contentId: string) => {
+    const content = convertedContents.find(c => c.id === contentId)
+    if (content && 'originalFileId' in content) {
+      setPreviewingContent(content)
+      setIsPDFModalOpen(true)
+    }
+  }
+
+  // ✅ 공부 자료 다운로드 핸들러
+  const handleContentDownload = async (contentId: string) => {
+    const content = convertedContents.find(c => c.id === contentId)
+    if (!content || !('originalFileId' in content)) return
+
+    try {
+      // 다운로드 URL 발급
+      const response = await refService.getDownloadUrl(content.originalFileId)
+
+      // 새 창에서 다운로드 URL 열기
+      window.open(response.presignedUrl, '_blank')
+
+      console.log('다운로드 URL 발급 완료:', response.presignedUrl)
+    } catch (error) {
+      console.error('다운로드 URL 발급 실패:', error)
+      alert('파일 다운로드에 실패했습니다. 다시 시도해주세요.')
+    }
   }
 
   // Upload Modal 관련 핸들러들
@@ -491,35 +713,38 @@ const StudyDetailPage: React.FC = () => {
     setIsUploadModalOpen(false)
   }
 
-  const handleUploadSubmit = (data: UploadData) => {
-    // 새로운 콘텐츠 아이템 생성
-    const newContent: ContentItem = {
-      id: `content-${Date.now()}`,
-      title: data.title,
-      description: data.description,
-      tags: data.selectedCategories.map(categoryId => {
-        const category = categories.find(c => c.id === categoryId)
-        return category?.name || categoryId
-      }),
-      author: {
-        name: 'Current User', // 실제로는 현재 로그인한 사용자 정보
-        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=32&h=32&fit=crop&crop=face'
-      },
-      date: new Date().toLocaleDateString('ko-KR', {
-        year: '2-digit',
-        month: '2-digit',
-        day: '2-digit'
-      }).replace(/\. /g, '.').replace(/\.$/, ''),
-      isSelected: false,
+  const handleUploadSubmit = async (data: UploadData) => {
+    if (!studyDetail?.studyId) return
+
+    try {
+      // FormData 생성 - API 요청 구조에 맞춤
+      const formData = new FormData()
+      formData.append('title', data.title)
+      formData.append('description', data.description)
+      formData.append('file', data.file)
+
+      // categoryId 배열을 개별 항목으로 추가
+      data.categoryId.forEach(categoryId => {
+        formData.append('categoryId', categoryId.toString())
+      })
+
+      // 파일 업로드 API 호출
+      await uploadRefMutation.mutateAsync(formData)
+
+      // 성공 시 React Query 캐시 무효화하여 목록 새로고침
+      if (studyDetail?.studyId) {
+        queryClient.invalidateQueries({ queryKey: ['ref', 'list', studyDetail.studyId] })
+      }
+
+      // 모달 닫기
+      setIsUploadModalOpen(false)
+
+      // 성공 메시지 표시 (실제로는 toast 등을 사용)
+      console.log('파일 업로드 완료')
+    } catch (error) {
+      console.error('파일 업로드 실패:', error)
+      alert('파일 업로드에 실패했습니다. 다시 시도해주세요.')
     }
-
-    // 콘텐츠 목록에 추가 (최신순이므로 맨 앞에 추가)
-    setContents(prev => [newContent, ...prev])
-
-    // 모달 닫기
-    setIsUploadModalOpen(false)
-
-    // 성공 메시지 표시 (실제로는 toast 등을 사용)
   }
 
   // 에러가 있으면 에러 메시지 표시
@@ -615,8 +840,12 @@ return (
         // 공지사항 관련 props
         noticeTitle={noticeTitle}
         noticeContent={noticeContent}
-        // Content Management 관련 props
-        categories={categories}
+        // Content Management 관련 props - ref API의 Category 타입을 content 타입으로 변환
+        categories={categories.map(cat => ({
+          id: cat.id.toString(),
+          name: cat.name,
+          isActive: false // ref API에는 isActive가 없으므로 기본값 설정
+        }))}
         selectedCategories={selectedCategories}
         contents={filteredContents}
         searchTerm={searchTerm}
@@ -646,6 +875,9 @@ return (
         onRejectJoinRequest={studyDetail?.role === 'ADMIN' ? handleRejectJoinRequest : undefined}
         onLeaveStudy={handleLeaveStudy}
         onStudyUpdate={handleStudyUpdate}
+        onContentEdit={handleContentEdit}
+        onContentDelete={handleContentDelete}
+        onContentDownload={handleContentDownload}
       />
     )}
 
@@ -654,6 +886,32 @@ return (
       isOpen={showCategoryModal}
       onClose={() => setShowCategoryModal(false)}
       onAdd={handleAddNewCategory}
+    />
+
+    {/* Edit File Modal */}
+    <EditFileModal
+      isOpen={isEditModalOpen}
+      onClose={() => {
+        setIsEditModalOpen(false)
+        setEditingContent(null)
+      }}
+      onEdit={handleFileEditSubmit}
+      categories={categories.map(cat => ({
+        id: cat.id.toString(),
+        name: cat.name,
+        isActive: false
+      }))}
+      initialData={editingContent ? {
+        id: editingContent.id,
+        title: editingContent.title,
+        description: editingContent.description,
+        tags: editingContent.tags
+      } : {
+        id: '',
+        title: '',
+        description: '',
+        tags: []
+      }}
     />
 
     {/* Notice Edit Modal */}
@@ -701,6 +959,16 @@ return (
           </div>
         </div>
       </div>
+    )}
+
+    {/* PDF Preview Modal */}
+    {isPDFModalOpen && previewingContent && (
+      <PDFPreviewModal
+        isOpen={isPDFModalOpen}
+        onClose={() => setIsPDFModalOpen(false)}
+        fileId={previewingContent.originalFileId}
+        fileName={previewingContent.title}
+      />
     )}
   </>
   )}

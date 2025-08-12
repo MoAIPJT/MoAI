@@ -8,13 +8,16 @@ export interface StudyManagementModalProps {
   studyImage?: string
   maxMembers?: number
   members: Member[]
-  categories: string[]
+  categories: Array<{
+    id: string
+    name: string
+  }>
   currentUserRole?: string
   onStudyNameChange: (name: string) => void
   onStudyDescriptionChange: (description: string) => void
   onStudyImageChange: (image: File | null) => void
   onMaxMembersChange: (maxMembers: number) => void
-  onCategoryRemove?: (category: string) => void
+  onCategoryRemove?: (categoryId: string) => void
   onCategoryAdd?: (category: string) => void
   onMemberRemove?: (userId: number) => void
   onStudyUpdate?: (data: {

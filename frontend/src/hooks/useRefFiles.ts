@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { refService } from '../services/refService';
 import { refKeys } from './queryKeys';
-import { UploadReq, EditReq, DeleteReq } from '../types/ref';
 
 export const useRefFiles = () => {
   const queryClient = useQueryClient();
@@ -11,7 +10,7 @@ export const useRefFiles = () => {
     return useQuery({
       queryKey: refKeys.list(studyId),
       queryFn: () => refService.getFiles(studyId, userId),
-      enabled: !!studyId,
+      enabled: studyId > 0, // studyId가 유효한 양수일 때만 실행
     });
   };
 
@@ -39,7 +38,7 @@ export const useRefFiles = () => {
   // 파일 삭제
   const useDeleteRef = (studyId: number) => {
     return useMutation({
-      mutationFn: ({ id, req }: { id: number; req: DeleteReq }) =>
+      mutationFn: ({ id, req }: { id: number; req: { fileId: number; studyId: number; uploaderId: number; categoryId?: number } }) =>
         refService.deleteFile(id, req),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: refKeys.list(studyId) });

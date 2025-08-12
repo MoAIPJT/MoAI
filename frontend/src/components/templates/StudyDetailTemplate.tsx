@@ -28,7 +28,7 @@ interface StudyDetailTemplateProps {
   noticeContent?: string
   // Content Management 관련 props
   categories: Category[]
-  selectedCategories: string[]
+  selectedCategories: number[]
   contents: ContentItem[]
   searchTerm: string
   sortOrder: 'newest' | 'oldest'
@@ -43,12 +43,15 @@ interface StudyDetailTemplateProps {
   onSettingsClick: () => void
   onLeaveStudy?: () => void
   // Content Management 관련 핸들러들
-  onCategoryToggle: (categoryId: string) => void
+  onCategoryToggle: (categoryId: number) => void
   onAddCategory: () => void
   onSearchChange: (term: string) => void
   onSortChange: (order: 'newest' | 'oldest') => void
   onContentSelect: (contentId: string) => void
   onContentPreview: (contentId: string) => void
+  onContentEdit: (contentId: string) => void
+  onContentDelete: (contentId: string) => void
+  onContentDownload: (contentId: string) => void
   // Upload Modal 관련 핸들러들
   onUploadModalClose: () => void
   onUploadSubmit: (data: UploadData) => void
@@ -74,7 +77,7 @@ interface StudyDetailTemplateProps {
     imageUrl: string
     status: 'PENDING' | 'APPROVED' | 'REJECTED'
   }>
-  onAcceptJoinRequest?: (userId: number, role: string) => void
+  onAcceptJoinRequest?: (userId: number, role: 'ADMIN' | 'DELEGATE' | 'MEMBER') => void
   onRejectJoinRequest?: (userId: number) => void
 }
 
@@ -114,6 +117,9 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   onSortChange,
   onContentSelect,
   onContentPreview,
+  onContentEdit,
+  onContentDelete,
+  onContentDownload,
   // Upload Modal 관련 핸들러들
   onUploadModalClose,
   onUploadSubmit,
@@ -206,7 +212,11 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
             onSortChange={onSortChange}
             onContentSelect={onContentSelect}
             onContentPreview={onContentPreview}
+            onContentEdit={onContentEdit}
+            onContentDelete={onContentDelete}
+            onContentDownload={onContentDownload}
             onUploadData={onUploadData}
+            currentUserRole={currentUserRole}
           />
         </div>
       </div>
@@ -242,7 +252,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
           studyImage={currentStudy?.image}
           maxMembers={currentStudy?.memberCount || 10}
           members={studyParticipants || []}
-          categories={categories.map(c => c.name)}
+          categories={categories}
           currentUserRole={currentUserRole}
           onStudyNameChange={onStudyNameChange || (() => {})}
           onStudyDescriptionChange={onStudyDescriptionChange || (() => {})}

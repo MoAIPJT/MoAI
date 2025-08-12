@@ -29,6 +29,12 @@ const StudyManagementModal: React.FC<StudyManagementModalProps> = ({
   if (!isOpen) return null
 
   const handleAddCategory = () => {
+    // ADMIN 권한 체크
+    if (currentUserRole !== 'ADMIN') {
+      alert('카테고리를 생성할 수 있는 권한이 없습니다.')
+      return
+    }
+
     if (newCategory.trim() && onCategoryAdd) {
       onCategoryAdd(newCategory.trim())
       setNewCategory('')
@@ -202,46 +208,60 @@ const StudyManagementModal: React.FC<StudyManagementModalProps> = ({
             </div>
           </div>
 
-          {/* 카테고리 관리 섹션 */}
-          <div className="bg-purple-50 p-4 rounded-lg">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">카테고리 관리</h3>
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-2 mb-4">
-                {categories.map((category, index) => (
-                  <span
-                    key={index}
-                    className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 ${
-                      index % 2 === 0 ? 'bg-[#DABAFF] text-gray-800' : 'bg-[#F6EEFF] text-gray-800'
-                    }`}
-                  >
-                    {category}
+          {/* 카테고리 관리 - ADMIN만 표시 */}
+          {currentUserRole === 'ADMIN' && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">카테고리 관리</h3>
+              <div className="space-y-4">
+                {/* 기존 카테고리 목록 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    기존 카테고리
+                  </label>
+                  <div className="space-y-2">
+                    {categories?.map((category) => (
+                      <div key={category.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <span className="text-gray-800">{category.name}</span>
+                        <button
+                          onClick={() => onCategoryRemove?.(category.id)}
+                          className="text-red-500 hover:text-red-700 text-sm"
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    ))}
+                    {(!categories || categories.length === 0) && (
+                      <p className="text-gray-500 text-sm">등록된 카테고리가 없습니다.</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* 새 카테고리 추가 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    새 카테고리 추가
+                  </label>
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="카테고리 이름을 입력하세요"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
                     <button
-                      onClick={() => onCategoryRemove?.(category)}
-                      className="text-xs hover:text-red-500"
+                      onClick={handleAddCategory}
+                      disabled={!newCategory.trim()}
+                      className="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 disabled:bg-gray-300 disabled:text-gray-500"
                     >
-                      ×
+                      추가
                     </button>
-                  </span>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="새 카테고리 입력"
-                />
-                <button
-                  onClick={handleAddCategory}
-                  className="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  +
-                </button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* 멤버 관리 섹션 */}

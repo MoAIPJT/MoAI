@@ -3,17 +3,16 @@ export interface FileItem {
   title: string;
   description?: string;
   categories: string[];
-  uploaderName?: string;
-  profileImage?: string;
+  name: string;  // uploaderName -> name
+  profileImageUrl?: string;  // profileImage -> profileImageUrl
   updateDate?: string;
   uploadDate?: string;
 }
 
 export interface UploadReq {
-  studyId: number;
+  categoryId: number[];  // categories -> categoryId, string[] -> number[]
   title: string;
   description?: string;
-  categories: string[];
   file: File;
 }
 

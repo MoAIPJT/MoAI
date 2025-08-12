@@ -11,5 +11,5 @@ export interface UploadData {
   title: string
   description: string
   file: File
-  selectedCategories: string[]
+  categoryId: number[]  // selectedCategories -> categoryId, string[] -> number[]
 }
