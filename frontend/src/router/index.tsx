@@ -38,8 +38,7 @@ const Router: React.FC = () => {
         <Route path="/ai-summary" element={<AISummaryPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/test" element={<TestPage />} />
-        <Route path="/study-detail" element={<StudyDetailPage />} />
-        <Route path="/study/:studyId" element={<StudyDetailPage />} />
+        <Route path="/study/:hashId" element={<StudyDetailPage />} />
         <Route path="/video-conference" element={<VideoConferencePage />} />
         <Route path="/video-conference/:studyId" element={<VideoConferencePage />} />
         <Route path="/auth/google/callback" element={<GoogleCallback />} />

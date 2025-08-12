@@ -9,7 +9,7 @@ import UploadDataModal from '../organisms/UploadDataModal'
 import type { StudyItem } from '../organisms/DashboardSidebar/types'
 import type { Category, ContentItem } from '../../types/content'
 import type { UploadData } from '../organisms/UploadDataModal/types'
-import type { StudyParticipantsResponse } from '../../types/study'
+import type { Member } from '../../types/study'
 import StudyMembersModal from '../molecules/StudyMembersModal'
 import StudyManagementModal from '../molecules/StudyManagementModal'
 
@@ -20,8 +20,11 @@ interface StudyDetailTemplateProps {
   loading: boolean
   currentStudy: StudyItem | null
   participants?: Array<{ id: string; name: string; avatar: string }>
-  studyParticipants?: StudyParticipantsResponse | null
+  studyParticipants?: Member[]
   userName?: string
+  // 공지사항 관련 props
+  noticeTitle?: string
+  noticeContent?: string
   // Content Management 관련 props
   categories: Category[]
   selectedCategories: string[]
@@ -35,7 +38,6 @@ interface StudyDetailTemplateProps {
   onSearch: () => void
   onUploadData: () => void
   onCreateRoom: () => void
-
   onEditNotice: () => void
   onSettingsClick: () => void
   // Content Management 관련 핸들러들
@@ -67,6 +69,9 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   participants = [],
   studyParticipants,
   userName,
+  // 공지사항 관련 props
+  noticeTitle = '공지사항',
+  noticeContent = '공지사항이 없습니다.',
   // Content Management 관련 props
   categories,
   selectedCategories,
@@ -80,9 +85,8 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   onSearch,
   onUploadData,
   onCreateRoom,
-
   onEditNotice,
-  // onSettingsClick,
+  onSettingsClick,
   // Content Management 관련 핸들러들
   onCategoryToggle,
   onAddCategory,
@@ -109,6 +113,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   const handleCloseMembersModal = () => setIsMembersModalOpen(false)
   const handleOpenManagementModal = () => setIsManagementModalOpen(true)
   const handleCloseManagementModal = () => setIsManagementModalOpen(false)
+
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardSidebar
@@ -123,11 +128,11 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
       <div className="ml-64 flex flex-col">
         {/* 상단 헤더 */}
         <StudyHeader
-                   studyName={currentStudy?.name}
-         studyDescription={currentStudy?.description}
-         studyImageUrl={currentStudy?.image}
+          studyName={currentStudy?.name}
+          studyDescription={currentStudy?.description}
+          studyImageUrl={currentStudy?.image}
           loading={loading}
-          userCount={studyParticipants?.participants?.length || 0}
+          userCount={studyParticipants?.length || 0}
           onSettingsClick={handleOpenManagementModal}
           onUserCountClick={handleOpenMembersModal}
         />
@@ -139,7 +144,12 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
             {/* 왼쪽: 공지사항과 화상회의 (6/10) */}
             <div className="col-span-6 flex flex-col h-full">
               <div className="mb-6">
-                <StudyNoticeBox onEdit={onEditNotice} userName={userName} />
+                <StudyNoticeBox
+                  title={noticeTitle}
+                  content={noticeContent}
+                  onEdit={onEditNotice}
+                  userName={userName}
+                />
               </div>
               <div className="flex-1">
                 <StudyVideoConference
@@ -186,31 +196,31 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
       <StudyMembersModal
         isOpen={isMembersModalOpen}
         onClose={handleCloseMembersModal}
-        members={studyParticipants?.participants || []}
+        members={studyParticipants || []}
         studyName={currentStudy?.name || 'Study'}
       />
 
-             {/* Study Management Modal */}
-       <StudyManagementModal
-         isOpen={isManagementModalOpen}
-         onClose={handleCloseManagementModal}
-         studyName={currentStudy?.name || ''}
-         studyDescription={currentStudy?.description || ''}
-         studyImage={currentStudy?.image}
-         maxMembers={currentStudy?.memberCount || 10}
-         members={studyParticipants?.participants || []}
-         categories={categories.map(c => c.name)}
-                   onStudyNameChange={onStudyNameChange || (() => {})}
-          onStudyDescriptionChange={onStudyDescriptionChange || (() => {})}
-          onStudyImageChange={onStudyImageChange || (() => {})}
-          onMaxMembersChange={onMaxMembersChange || (() => {})}
-          onCategoryRemove={onCategoryRemove || (() => {})}
-          onCategoryAdd={onCategoryAdd || (() => {})}
-          onMemberRemove={onMemberRemove || (() => {})}
-         onSave={() => {
-           handleCloseManagementModal()
-         }}
-       />
+      {/* Study Management Modal */}
+      <StudyManagementModal
+        isOpen={isManagementModalOpen}
+        onClose={handleCloseManagementModal}
+        studyName={currentStudy?.name || ''}
+        studyDescription={currentStudy?.description || ''}
+        studyImage={currentStudy?.image}
+        maxMembers={currentStudy?.memberCount || 10}
+        members={studyParticipants || []}
+        categories={categories.map(c => c.name)}
+        onStudyNameChange={onStudyNameChange || (() => {})}
+        onStudyDescriptionChange={onStudyDescriptionChange || (() => {})}
+        onStudyImageChange={onStudyImageChange || (() => {})}
+        onMaxMembersChange={onMaxMembersChange || (() => {})}
+        onCategoryRemove={onCategoryRemove || (() => {})}
+        onCategoryAdd={onCategoryAdd || (() => {})}
+        onMemberRemove={onMemberRemove || (() => {})}
+        onSave={() => {
+          handleCloseManagementModal()
+        }}
+      />
     </div>
   )
 }

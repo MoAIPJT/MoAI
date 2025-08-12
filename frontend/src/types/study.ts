@@ -44,6 +44,7 @@ export interface StudyAllItem {
 
 // 스터디 상세 정보 (StudyDetailResponseDto 기반)
 export interface StudyDetail {
+  studyId: number
   name: string
   imageUrl: string
   status: 'PENDING' | 'APPROVED' | 'LEFT' | 'REJECTED'

@@ -123,13 +123,19 @@ export const getAllStudies = async (): Promise<StudyAllItem[]> => {
 export const getStudyDetail = async (hashId: string): Promise<StudyDetail> => {
   try {
     const response = await api.get<StudyDetail>(`/study/detail?hashId=${hashId}`)
-    return response.data
+    const data = response.data
+
+    // DB id → studyId로 매핑
+    return {
+      ...data,
+      studyId: data.studyId ?? (data as { id?: number }).id
+    }
   } catch (error) {
     throw normalizeError(error)
   }
 }
 
-export const getStudyMembers = async (studyId: number): Promise<Member[]> => {
+export const getStudyMembers = async (studyId: string): Promise<Member[]> => {
   try {
     const response = await api.get<Member[]>(`/study/${studyId}/members`)
     return response.data

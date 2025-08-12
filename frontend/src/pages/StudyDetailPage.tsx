@@ -5,31 +5,23 @@ import CategoryAddModal from '../components/organisms/CategoryAddModal'
 import type { StudyItem } from '../components/organisms/DashboardSidebar/types'
 import type { Category, ContentItem } from '../types/content'
 import type { UploadData } from '../components/organisms/UploadDataModal/types'
-import { getStudies, getStudyById, getStudyParticipants } from '../services/studyService'
-import type { StudyParticipantsResponse } from '../types/study'
-import { useMe } from '@/hooks/useUsers'
+import { getSidebarStudies, getStudyDetail, getStudyMembers, updateStudyNotice } from '../services/studyService'
+import type { Member } from '../types/study'
 
 const StudyDetailPage: React.FC = () => {
   const navigate = useNavigate()
-  const { studyId } = useParams<{ studyId: string }>()
-  const { data: userProfile, isLoading: isProfileLoading } = useMe()
+  const { hashId } = useParams<{ hashId: string }>()
 
   const [expandedStudy, setExpandedStudy] = useState(true)
-  const [activeStudyId, setActiveStudyId] = useState<string | null>(studyId || null)
+  const [activeStudyId, setActiveStudyId] = useState<string | null>(hashId || null)
   const [studies, setStudies] = useState<StudyItem[]>([])
   const [currentStudy, setCurrentStudy] = useState<StudyItem | null>(null)
+  const [currentStudyIdNum, setCurrentStudyIdNum] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   // Content Management 관련 상태
-  const [categories, setCategories] = useState<Category[]>([
-    { id: 'frontend', name: '프론트', isActive: true },
-    { id: 'backend', name: '백엔드', isActive: false },
-    { id: 'ai', name: 'AI', isActive: false },
-    { id: 'os', name: '운영체제', isActive: false },
-    { id: 'network', name: '네트워크', isActive: false },
-  ])
-
+  const [categories, setCategories] = useState<Category[]>([])
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -39,66 +31,31 @@ const StudyDetailPage: React.FC = () => {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
 
   // 참여자 관련 상태
-  const [participants, setParticipants] = useState<StudyParticipantsResponse | null>(null)
+  const [participants, setParticipants] = useState<Member[]>([])
 
-  const [contents, setContents] = useState<ContentItem[]>([
-    {
-      id: '1',
-      title: 'React 컴포넌트 최적화 가이드',
-      tags: ['프론트', 'AI'],
-      description: 'React 컴포넌트의 성능을 최적화하는 방법과 best practices에 대한 가이드입니다. 메모이제이션과 렌더링 최적화 기법을 다룹니다.',
-      author: {
-        name: 'Hazel',
-        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=32&h=32&fit=crop&crop=face'
-      },
-      date: '25.11.22',
-      isSelected: false,
-    },
-    {
-      id: '2',
-      title: 'Spring Boot API 설계',
-      tags: ['백엔드', 'AI'],
-      description: 'Spring Boot를 사용한 RESTful API 설계 방법과 데이터베이스 연동, 보안 설정에 대한 내용입니다.',
-      author: {
-        name: 'Hazel',
-        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=32&h=32&fit=crop&crop=face'
-      },
-      date: '25.11.22',
-      isSelected: false,
-    },
-    {
-      id: '3',
-      title: '프론트엔드 상태 관리',
-      tags: ['프론트', '백엔드'],
-      description: 'Redux, Zustand, Recoil 등 다양한 상태 관리 라이브러리 비교와 실제 프로젝트 적용 사례를 다룹니다.',
-      author: {
-        name: 'Hazel',
-        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=32&h=32&fit=crop&crop=face'
-      },
-      date: '25.11.22',
-      isSelected: false,
-    },
-    {
-      id: '4',
-      title: '머신러닝 모델 배포',
-      tags: ['AI', '백엔드'],
-      description: 'TensorFlow, PyTorch 모델을 실제 서비스에 배포하는 방법과 MLOps 파이프라인 구축에 대한 가이드입니다.',
-      author: {
-        name: 'Hazel',
-        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=32&h=32&fit=crop&crop=face'
-      },
-      date: '25.11.22',
-      isSelected: false,
-    },
-  ])
+  const [contents, setContents] = useState<ContentItem[]>([])
+
+  // 공지사항 관련 상태
+  const [notice, setNotice] = useState<string>('')
+  const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false)
+  const [noticeTitle, setNoticeTitle] = useState<string>('공지사항')
+  const [noticeContent, setNoticeContent] = useState<string>('공지사항이 없습니다.')
 
   // 스터디 목록 로드
   useEffect(() => {
     const loadStudies = async () => {
       try {
         setError(null)
-        const studiesData = await getStudies()
-        setStudies(Array.isArray(studiesData) ? studiesData : [])
+        const studiesData = await getSidebarStudies()
+        // StudyListItem을 StudyItem으로 변환
+        const convertedStudies: StudyItem[] = studiesData.map(study => ({
+          id: study.hashId,               // ← hashId로!
+          name: study.name,
+          description: study.description,
+          image: study.imageUrl,
+          memberCount: 0 // 기본값 설정
+        }))
+        setStudies(convertedStudies)
       } catch  {
         setError('스터디 목록을 불러오는데 실패했습니다.')
         setStudies([]) // 에러 시 빈 배열로 설정
@@ -113,12 +70,31 @@ const StudyDetailPage: React.FC = () => {
       if (activeStudyId) {
         try {
           setError(null)
-          const studyData = await getStudyById(activeStudyId)
-          setCurrentStudy(studyData)
+          const studyData = await getStudyDetail(activeStudyId)
+          // StudyDetail을 StudyItem으로 변환
+          const convertedStudy: StudyItem = {
+            id: activeStudyId,              // 여긴 hashId를 유지
+            name: studyData.name,
+            description: studyData.description || '',
+            image: studyData.imageUrl,
+            memberCount: studyData.userCount || 0
+          }
+          setCurrentStudy(convertedStudy)
+          setCurrentStudyIdNum(studyData.studyId ?? null)
 
-          // 참여자 정보도 함께 로드
-          const participantsData = await getStudyParticipants(activeStudyId)
-          setParticipants(participantsData)
+          // 참여자 정보 로드
+          if (studyData.studyId && studyData.studyId > 0) {
+            try {
+              const membersData = await getStudyMembers(String(studyData.studyId))
+              setParticipants(membersData)
+            } catch (memberError) {
+              console.error('참여자 정보 로드 실패:', memberError)
+              setParticipants([])
+            }
+          } else {
+            console.warn('유효하지 않은 studyId:', studyData.studyId)
+            setParticipants([])
+          }
         } catch {
           setError('스터디 정보를 불러오는데 실패했습니다.')
         } finally {
@@ -161,9 +137,9 @@ const StudyDetailPage: React.FC = () => {
       window.open('/ai-summary', '_blank')
     }
 
-    // 마이페이지 클릭 시 대시보드로 이동
+    // 마이페이지 클릭 시 새 탭에서 대시보드 열기
     if (itemId === 'mypage') {
-      navigate('/dashboard')
+      window.open('/dashboard', '_blank')
     }
   }
 
@@ -194,11 +170,37 @@ const StudyDetailPage: React.FC = () => {
   const handleCreateRoom = () => {
   }
 
-
   const handleEditNotice = () => {
+    setIsNoticeModalOpen(true)
+    setNoticeTitle('공지사항')
+    setNoticeContent(notice)
   }
 
+  const handleNoticeSubmit = async () => {
+    if (!currentStudy || !noticeContent.trim() || !currentStudyIdNum) return
 
+    try {
+      // 공지사항 업데이트 API 호출
+      await updateStudyNotice({
+        studyId: currentStudyIdNum,
+        notice: noticeContent
+      })
+
+      // 로컬 상태 업데이트
+      setNotice(noticeContent)
+      setIsNoticeModalOpen(false)
+
+      // 성공 메시지 (실제로는 toast 등을 사용)
+      console.log('공지사항이 업데이트되었습니다.')
+    } catch (error) {
+      console.error('공지사항 업데이트 실패:', error)
+      // 에러 메시지 (실제로는 toast 등을 사용)
+    }
+  }
+
+  const handleNoticeModalClose = () => {
+    setIsNoticeModalOpen(false)
+  }
 
   const handleSettingsClick = () => {
   }
@@ -226,10 +228,7 @@ const StudyDetailPage: React.FC = () => {
   }
 
   const handleMemberRemove = (memberName: string) => {
-    setParticipants(prev => prev ? {
-      ...prev,
-      participants: prev.participants.filter(member => member.member !== memberName)
-    } : null)
+    setParticipants(prev => prev.filter(member => member.member !== memberName))
   }
 
   const handleStudyImageChange = (image: File | null) => {
@@ -327,11 +326,6 @@ const StudyDetailPage: React.FC = () => {
     // 성공 메시지 표시 (실제로는 toast 등을 사용)
   }
 
-  // 화상회의 더미 참여자 데이터
-  const dummyParticipants = [
-    { id: '1', name: 'Kuromi', avatar: '👻' },
-  ]
-
   // 에러가 있으면 에러 메시지 표시
   if (error) {
     return (
@@ -365,9 +359,15 @@ const StudyDetailPage: React.FC = () => {
         onCreateRoom={handleCreateRoom}
         onEditNotice={handleEditNotice}
         onSettingsClick={handleSettingsClick}
-        participants={dummyParticipants}
+        participants={participants.map(member => ({
+          id: member.email,
+          name: member.member,
+          avatar: member.imageUrl
+        }))}
         studyParticipants={participants}
-        userName={userProfile?.name || ''}
+        // 공지사항 관련 props
+        noticeTitle={noticeTitle}
+        noticeContent={noticeContent}
         // Content Management 관련 props
         categories={categories}
         selectedCategories={selectedCategories}
@@ -401,6 +401,53 @@ const StudyDetailPage: React.FC = () => {
         onClose={() => setShowCategoryModal(false)}
         onAdd={handleAddNewCategory}
       />
+
+      {/* Notice Edit Modal */}
+      {isNoticeModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-md">
+            <h3 className="text-lg font-semibold mb-4">공지사항 편집</h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                제목
+              </label>
+              <input
+                type="text"
+                value={noticeTitle}
+                onChange={(e) => setNoticeTitle(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="공지사항 제목을 입력하세요"
+              />
+            </div>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                내용
+              </label>
+              <textarea
+                value={noticeContent}
+                onChange={(e) => setNoticeContent(e.target.value)}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="공지사항 내용을 입력하세요"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={handleNoticeModalClose}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleNoticeSubmit}
+                className="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600"
+              >
+                저장
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
