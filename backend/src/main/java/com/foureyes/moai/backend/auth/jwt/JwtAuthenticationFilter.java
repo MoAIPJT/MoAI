@@ -1,6 +1,7 @@
 package com.foureyes.moai.backend.auth.jwt;
 
-import com.foureyes.moai.backend.auth.jwt.JwtTokenProvider;
+import com.foureyes.moai.backend.domain.user.security.CustomUserDetails;
+import com.foureyes.moai.backend.domain.user.security.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +20,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final CustomUserDetailsService customUserDetailsService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -28,7 +30,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
-        // 토큰이 없거나 Bearer로 시작하지 않으면 다음 필터로 넘어감
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -36,21 +37,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
 
-        // 토큰 검증
         if (jwtTokenProvider.validateToken(token)) {
-            int userId = jwtTokenProvider.getUserId(token); // subject에서 userId를 가져옴
+            int userId = jwtTokenProvider.getUserId(token);
 
-            // Authentication 객체 생성
+            CustomUserDetails userDetails = (CustomUserDetails)
+                customUserDetailsService.loadUserById(userId);
+
             UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
-                    userId, // principal로 userId를 넣음
+                    userDetails,
                     null,
-                    null // 권한 설정 필요시 SimpleGrantedAuthority 추가 가능
+                    userDetails.getAuthorities()
                 );
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            // IP 로깅 등에 활용, 보안, 확장성 고려한 Details 설정
 
-            // SecurityContext에 저장
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 

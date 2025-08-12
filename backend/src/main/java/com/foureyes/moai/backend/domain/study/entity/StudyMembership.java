@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "study_memberships")
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -47,5 +46,15 @@ public class StudyMembership {
         APPROVED,
         LEFT,
         REJECTED
+    }
+
+    // 상태 변경을 위한 메서드
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    // 역할 변경을 위한 메서드
+    public void setRole(Role role) {
+        this.role = role;
     }
 }

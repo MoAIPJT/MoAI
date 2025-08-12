@@ -7,12 +7,21 @@ import java.util.List;
 import java.util.Optional;
 
 public interface StudyMembershipRepository extends JpaRepository<StudyMembership, Integer> {
-    boolean existsByUserIdAndStudyGroup(int userId, StudyGroup studyGroup);
-    boolean existsByUserIdAndStudyGroup_Id(int userId, int studyGroupId);
+    boolean existsByUserIdAndStudyGroup(
+        int userId,
+        StudyGroup studyGroup
+    );
+    boolean existsByUserIdAndStudyGroup_Id(
+        int userId,
+        int studyGroupId
+    );
 
     //유저가 스터디 그룹의 속속인가, 승인상태인가
     boolean existsByUserIdAndStudyGroup_IdAndStatus(
-        int userId, int studyGroupId, StudyMembership.Status status);
+        int userId,
+        int studyGroupId,
+        StudyMembership.Status status
+    );
 
     // 해당 스터디에 APPROVED 상태인 멤버 전부 조회
     List<StudyMembership> findAllByStudyGroup_IdAndStatus(
@@ -27,7 +36,23 @@ public interface StudyMembershipRepository extends JpaRepository<StudyMembership
     );
 
     Optional<StudyMembership> findByUserIdAndStudyGroup_IdAndStatus(
-        int userId, int studyGroupId, StudyMembership.Status status);
+        int userId,
+        int studyGroupId,
+        StudyMembership.Status status
+    );
 
+    List<StudyMembership> findAllByUserIdAndStatus(
+        int userId,
+        StudyMembership.Status status
+    );
 
+    Optional<StudyMembership> findByUserIdAndStudyGroup_Id(
+        int userId,
+        int id
+    );
+
+    long  countByStudyGroup_IdAndStatus(
+        int id,
+        StudyMembership.Status status
+    );
 }
