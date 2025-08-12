@@ -119,6 +119,7 @@ public class StudyServiceImpl implements StudyService {
             .imageUrl(saved.getImageUrl())
             .createdBy(saved.getCreatedBy())
             .createdAt(saved.getCreatedAt())
+            .hashId(saved.getHashId())
             .build();
     }
 
@@ -135,13 +136,13 @@ public class StudyServiceImpl implements StudyService {
         StudyGroup group = validateStudyGroupExists(studyGroupId);
 
         // PENDING이나 APPROVED 상태인 경우만 중복으로 처리
-        Optional<StudyMembership> existingMembership = 
+        Optional<StudyMembership> existingMembership =
             studyMembershipRepository.findByUserIdAndStudyGroup_Id(userId, studyGroupId);
-        
+
         if (existingMembership.isPresent()) {
             StudyMembership.Status status = existingMembership.get().getStatus();
             if (status == StudyMembership.Status.PENDING || status == StudyMembership.Status.APPROVED) {
-                log.warn("이미 가입 요청한 스터디에 중복 요청: userId={}, studyGroupId={}, status={}", 
+                log.warn("이미 가입 요청한 스터디에 중복 요청: userId={}, studyGroupId={}, status={}",
                         userId, studyGroupId, status);
                 throw new CustomException(ErrorCode.ALREADY_JOINED_STUDY);
             }
@@ -385,9 +386,9 @@ public class StudyServiceImpl implements StudyService {
         long currentApprovedCount = studyMembershipRepository
             .countByStudyGroup_IdAndStatus(studyId, StudyMembership.Status.APPROVED);
         StudyGroup studyGroup = admin.getStudyGroup();
-        
+
         if (currentApprovedCount >= studyGroup.getMaxCapacity()) {
-            log.warn("스터디 최대 인원 초과로 가입 승인 실패: studyId={}, currentCount={}, maxCapacity={}", 
+            log.warn("스터디 최대 인원 초과로 가입 승인 실패: studyId={}, currentCount={}, maxCapacity={}",
                     studyId, currentApprovedCount, studyGroup.getMaxCapacity());
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
@@ -494,6 +495,7 @@ public class StudyServiceImpl implements StudyService {
                 .countByStudyGroup_IdAndStatus(group.getId(), StudyMembership.Status.APPROVED);
 
             return StudyDetailResponseDto.builder()
+                .id(group.getId())
                 .name(group.getName())
                 .imageUrl(group.getImageUrl())
                 .status(StudyMembership.Status.APPROVED.name())
