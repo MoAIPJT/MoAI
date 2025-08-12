@@ -22,6 +22,7 @@ interface StudyDetailTemplateProps {
   participants?: Array<{ id: string; name: string; avatar: string }>
   studyParticipants?: Member[]
   userName?: string
+  currentUserRole?: string
   // 공지사항 관련 props
   noticeTitle?: string
   noticeContent?: string
@@ -58,6 +59,15 @@ interface StudyDetailTemplateProps {
   onCategoryRemove?: (category: string) => void
   onCategoryAdd?: (category: string) => void
   onMemberRemove?: (memberId: string) => void
+  joinRequests?: Array<{
+    userID: number
+    userEmail: string
+    name: string
+    imageUrl: string
+    status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  }>
+  onAcceptJoinRequest?: (userId: number, role: string) => void
+  onRejectJoinRequest?: (userId: number) => void
 }
 
 const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
@@ -69,6 +79,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   participants = [],
   studyParticipants,
   userName,
+  currentUserRole,
   // 공지사항 관련 props
   noticeTitle = '공지사항',
   noticeContent = '공지사항이 없습니다.',
@@ -105,6 +116,9 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   onCategoryRemove,
   onCategoryAdd,
   onMemberRemove,
+  joinRequests = [],
+  onAcceptJoinRequest,
+  onRejectJoinRequest,
 }) => {
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false)
   const [isManagementModalOpen, setIsManagementModalOpen] = useState(false)
@@ -198,6 +212,10 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
         onClose={handleCloseMembersModal}
         members={studyParticipants || []}
         studyName={currentStudy?.name || 'Study'}
+        currentUserRole={currentUserRole}
+        joinRequests={joinRequests}
+        onAcceptJoinRequest={onAcceptJoinRequest}
+        onRejectJoinRequest={onRejectJoinRequest}
       />
 
       {/* Study Management Modal */}

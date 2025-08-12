@@ -9,6 +9,7 @@ import type {
   LeaveStudyReq,
   DeleteMemberReq,
   ChangeMemberRoleReq,
+  JoinRequest,
   AcceptJoinRequestReq,
   RejectJoinRequestReq,
   UpdateStudyNoticeReq,
@@ -135,11 +136,11 @@ export const getStudyDetail = async (hashId: string): Promise<StudyDetail> => {
     const result: StudyDetail = {
       studyId: studyId,  // data.id를 studyId로 사용
       name: data.name || '',
-      imageUrl: data.imageUrl || data.image_url || '',  // snake_case도 고려
-      status: data.status || 'PENDING',
+      imageUrl: data.imageUrl || data.image_url || '',
+      status: data.status,
       role: data.role,
       description: data.description,
-      userCount: data.userCount || data.user_count  // snake_case도 고려
+      userCount: data.userCount || data.user_count
     }
 
     console.log('Converted StudyDetail:', result)
@@ -198,7 +199,7 @@ export const changeMemberRole = async (payload: ChangeMemberRoleReq): Promise<vo
 
 export const acceptJoinRequest = async (payload: AcceptJoinRequestReq): Promise<void> => {
   try {
-    await api.patch('/study/join/accept', payload)
+    await api.patch('/study/accept', payload)
   } catch (error) {
     throw normalizeError(error)
   }
@@ -206,7 +207,7 @@ export const acceptJoinRequest = async (payload: AcceptJoinRequestReq): Promise<
 
 export const rejectJoinRequest = async (payload: RejectJoinRequestReq): Promise<void> => {
   try {
-    await api.patch('/study/join/reject', payload)
+    await api.patch('/study/reject', payload)
   } catch (error) {
     throw normalizeError(error)
   }
@@ -215,6 +216,36 @@ export const rejectJoinRequest = async (payload: RejectJoinRequestReq): Promise<
 export const updateStudyNotice = async (payload: UpdateStudyNoticeReq): Promise<void> => {
   try {
     await api.patch('/study/notice', payload)
+  } catch (error) {
+    throw normalizeError(error)
+  }
+}
+
+
+// 가입 요청 목록 조회 API 추가
+export const getJoinRequests = async (studyId: number): Promise<JoinRequest[]> => {
+  try {
+    const response = await api.get<JoinRequest[]>(`/study/list/management?studyId=${studyId}`)
+    return response.data
+  } catch (error) {
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { response?: { status?: number } }
+      if (axiosError.response?.status === 404) {
+        return []
+      }
+    }
+    throw normalizeError(error)
+  }
+}
+
+
+export interface JoinStudyReq {
+  studyId: number
+}
+
+export const joinStudy = async (payload: JoinStudyReq): Promise<void> => {
+  try {
+    await api.get(`/study/join?study_id=${payload.studyId}`)
   } catch (error) {
     throw normalizeError(error)
   }

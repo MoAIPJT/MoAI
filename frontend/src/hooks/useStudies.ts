@@ -220,15 +220,27 @@ export const useChangeMemberRole = (studyId: number) => {
   })
 }
 
+// 가입 요청 목록 조회 훅 추가
+export const useJoinRequests = (studyId: number) => {
+  return useQuery({
+    queryKey: studyKeys.joinRequests(studyId),
+    queryFn: () => studyService.getJoinRequests(studyId),
+    staleTime: 30 * 1000, // 30초
+    gcTime: 2 * 60 * 1000, // 2분
+    enabled: !!studyId && studyId > 0,
+  })
+}
+
 export const useAcceptJoinRequest = (studyId: number) => {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: studyService.acceptJoinRequest,
     onSuccess: () => {
-      // 멤버 목록과 스터디 상세 정보 갱신
+      // 멤버 목록, 스터디 상세 정보, 가입 요청 목록 갱신
       queryClient.invalidateQueries({ queryKey: studyKeys.members(String(studyId)) })
       queryClient.invalidateQueries({ queryKey: studyKeys.detail(studyId.toString()) })
+      queryClient.invalidateQueries({ queryKey: studyKeys.joinRequests(studyId) })
     }
   })
 }

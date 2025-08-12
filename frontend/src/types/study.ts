@@ -80,10 +80,9 @@ export interface StudyAllItem {
   role?: 'ADMIN' | 'DELEGATE' | 'MEMBER'
 }
 
-// ✅ 수정: studyId를 optional로 변경 (undefined 가능)
 // 스터디 상세 정보 (StudyDetailResponseDto 기반)
 export interface StudyDetail {
-  studyId?: number  // undefined일 수 있도록 optional로 변경
+  studyId?: number
   name: string
   imageUrl: string
   status: 'PENDING' | 'APPROVED' | 'LEFT' | 'REJECTED'
@@ -118,19 +117,27 @@ export interface ChangeMemberRoleReq {
   userId: number
   role: 'ADMIN' | 'DELEGATE' | 'MEMBER'
 }
+// 스터디 가입 요청
+export interface JoinRequest {
+  userID: number
+  userEmail: string
+  name: string
+  imageUrl: string
+  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+}
 
 // 스터디 가입 요청 수락
 export interface AcceptJoinRequestReq {
   studyId: number
-  userId: number
+  userId: number  // memberEmail 대신 userId 사용
+  role: 'ADMIN' | 'DELEGATE' | 'MEMBER'
 }
 
 // 스터디 가입 요청 거절
 export interface RejectJoinRequestReq {
   studyId: number
-  userId: number
+  userId: number  // memberEmail 대신 userId 사용
 }
-
 // 스터디 공지사항 업데이트
 export interface UpdateStudyNoticeReq {
   studyId: number

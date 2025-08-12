@@ -1,7 +1,17 @@
 import React from 'react'
 import type { StudyMembersModalProps } from './types'
 
-const StudyMembersModal: React.FC<StudyMembersModalProps> = ({ isOpen, onClose, members, studyName }) => {
+const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
+  isOpen,
+  onClose,
+  members,
+  studyName,
+  currentUserRole,
+  joinRequests = [],
+  onAcceptJoinRequest,
+  onRejectJoinRequest
+
+    }) => {
   if (!isOpen) return null
 
   return (
@@ -13,22 +23,22 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({ isOpen, onClose, 
             <button className="bg-purple-500 text-white px-4 py-2 rounded-full hover:bg-purple-600">
               초대하기
             </button>
-            <button 
-              onClick={onClose} 
+            <button
+              onClick={onClose}
               className="text-gray-500 hover:text-gray-700 text-2xl"
             >
               &times;
             </button>
           </div>
         </div>
-        
+
         <p className="text-gray-500 mb-6">Invite your team members to study</p>
 
         <div className="space-y-4 max-h-80 overflow-y-auto">
           {members.map((member, index) => {
             const isOwner = member.role === 'Owner'
             const isCurrentUserOwner = members.some(m => m.role === 'Owner' && m.member === 'Kuromi') // 임시로 Kuromi를 현재 사용자로 가정
-            
+
             return (
               <div key={index} className="flex items-center justify-between p-2 border-b border-gray-200 last:border-b-0">
                 <div className="flex items-center">
@@ -40,7 +50,7 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({ isOpen, onClose, 
                     <p className="text-sm text-gray-500">{member.email || '이메일 없음'}</p>
                   </div>
                 </div>
-                
+
                 <div className="relative">
                   {isCurrentUserOwner && !isOwner ? (
                     <select
@@ -67,9 +77,52 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({ isOpen, onClose, 
             )
           })}
         </div>
+
+        {/* 가입 요청 섹션: admin만 볼 수 있음 */}
+        {currentUserRole === 'ADMIN' && joinRequests && joinRequests.length > 0 && (
+          <div className="mt-6 border-t pt-6">
+            <h3 className="text-lg font-semibold mb-4 text-black">
+              가입 요청 ({joinRequests.length})
+            </h3>
+            <div className="space-y-3 max-h-60 overflow-y-auto">
+              {joinRequests.map((request) => (
+                <div key={request.userID} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-xl mr-3">
+                      {request.imageUrl ? (
+                        <img src={request.imageUrl} alt={request.name} className="w-10 h-10 rounded-full" />
+                      ) : (
+                        '👤'
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-800">{request.name}</p>
+                      <p className="text-sm text-gray-500">{request.userEmail}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => onAcceptJoinRequest?.(request.userID, 'MEMBER')}
+                      className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600"
+                    >
+                      승인
+                    </button>
+                    <button
+                      onClick={() => onRejectJoinRequest?.(request.userID)}
+                      className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+                    >
+                      거절
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
-export default StudyMembersModal 
+export default StudyMembersModal

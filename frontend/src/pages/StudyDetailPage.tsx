@@ -5,13 +5,15 @@ import CategoryAddModal from '../components/organisms/CategoryAddModal'
 import type { StudyItem } from '../components/organisms/DashboardSidebar/types'
 import type { Category, ContentItem } from '../types/content'
 import type { UploadData } from '../components/organisms/UploadDataModal/types'
-import { getSidebarStudies, updateStudyNotice } from '../services/studyService'
-import { useStudyDetail, useStudyMembers } from '../hooks/useStudies'
+import { getSidebarStudies, updateStudyNotice, joinStudy } from '../services/studyService'
+import { useStudyDetail, useStudyMembers, useJoinRequests, useAcceptJoinRequest, useRejectJoinRequest  } from '../hooks/useStudies'
+import { useQueryClient } from '@tanstack/react-query'
 import type { Member } from '../types/study'
 
 const StudyDetailPage: React.FC = () => {
   const navigate = useNavigate()
   const { hashId } = useParams<{ hashId: string }>()
+  const queryClient = useQueryClient()
 
   const [expandedStudy, setExpandedStudy] = useState(true)
   const [activeStudyId, setActiveStudyId] = useState<string | null>(hashId || null)
@@ -29,10 +31,16 @@ const StudyDetailPage: React.FC = () => {
   // ✅ 멤버 정보는 필요할 때만 로드 (예: 멤버 관리 모달)
   const {
     data: participants = [],
-    isLoading: isMembersLoading,
     error: membersError
   } = useStudyMembers(studyDetail?.studyId)
 
+  const {
+  data: joinRequests = []
+} = useJoinRequests(studyDetail?.studyId || 0)
+
+  // Mutation 훅들
+  const acceptJoinRequestMutation = useAcceptJoinRequest(studyDetail?.studyId || 0)
+  const rejectJoinRequestMutation = useRejectJoinRequest(studyDetail?.studyId || 0)
   // Content Management 관련 상태
   const [categories, setCategories] = useState<Category[]>([])
   const [showCategoryModal, setShowCategoryModal] = useState(false)
@@ -66,7 +74,7 @@ const StudyDetailPage: React.FC = () => {
           memberCount: 0 // 기본값 설정
         }))
         setStudies(convertedStudies)
-      } catch (loadError: unknown) {
+      } catch {
         setError('스터디 목록을 불러오는데 실패했습니다.')
         setStudies([]) // 에러 시 빈 배열로 설정
       }
@@ -131,6 +139,8 @@ const StudyDetailPage: React.FC = () => {
     return categoryFilter && searchFilter
   })
 
+
+
   const handleItemClick = (itemId: string) => {
     // 스터디 클릭 시 토글
     if (itemId === 'study') {
@@ -154,9 +164,7 @@ const StudyDetailPage: React.FC = () => {
       setActiveStudyId(studyId)
       setLoading(true) // 로딩 상태 활성화
 
-      // 즉시 현재 스터디 목록에서 해당 스터디 정보를 찾아서 임시로 설정
-      const selectedStudy = studies.find(study => study.id === studyId)
-      // currentStudy는 이제 useMemo로 계산되므로 setState 불필요
+      // currentStudy는 이제 useMemo로 계산되므로 별도 처리 불필요
 
       // 선택된 스터디로 페이지 이동
       navigate(`/study/${studyId}`)
@@ -207,7 +215,49 @@ const StudyDetailPage: React.FC = () => {
 
   const handleSettingsClick = () => {
   }
+  const handleJoinStudy = async () => {
+    if (!studyDetail?.studyId || !hashId) return
+    try {
+      // 가입 요청 API 호출
+      await joinStudy({ studyId: studyDetail.studyId })
 
+      // 성공 시 스터디 상세 정보 React Query 캐시 무효화
+      queryClient.invalidateQueries({ queryKey: ['studyDetail', hashId] })
+      queryClient.invalidateQueries({ queryKey: ['joinRequests', studyDetail.studyId] })
+
+      console.log('가입 요청이 전송되었습니다.')
+    } catch (error) {
+      console.error('가입 요청 실패:', error)
+      // 에러 처리
+    }
+  }
+
+  const handleAcceptJoinRequest = async (userId: number, role: 'ADMIN' | 'DELEGATE' | 'MEMBER' = 'MEMBER') => {
+    if (!studyDetail?.studyId) return
+    try {
+      await acceptJoinRequestMutation.mutateAsync({
+        studyId: studyDetail.studyId,
+        userId,
+        role
+      })
+      console.log('가입 요청 승인 완료')
+    } catch (error) {
+      console.error('가입 요청 승인 실패:', error)
+    }
+  }
+
+  const handleRejectJoinRequest = async (userId: number) => {
+    if (!studyDetail?.studyId) return
+    try {
+      await rejectJoinRequestMutation.mutateAsync({
+        studyId: studyDetail.studyId,
+        userId
+      })
+      console.log('가입 요청 거절 완료')
+    } catch (error) {
+      console.error('가입 요청 거절 실패:', error)
+    }
+  }
   // 스터디 관리 모달 관련 핸들러들
   const handleStudyNameChange = (name: string) => {
     // currentStudy는 이제 useMemo로 계산되므로 직접 수정 불가
@@ -344,14 +394,65 @@ const StudyDetailPage: React.FC = () => {
     )
   }
 
-  return (
-    <>
+
+return (
+  <>
+    {studyDetail?.status === null ? (
+      // 가입하지 않은 상태 - 가입하기 버튼
+      <div className="flex h-screen">
+        {/* 사이드바 */}
+        <div className="w-64 bg-white border-r">
+          {/* 기존 사이드바 컴포넌트 */}
+        </div>
+
+        {/* 메인 콘텐츠 - 가입 요청 화면 */}
+        <div className="flex-1 flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">
+              {currentStudy?.name} 📊
+            </h1>
+            <p className="text-gray-600 mb-6">스터디에 가입하여 학습을 시작해보세요</p>
+            <button
+              onClick={handleJoinStudy}
+              className="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+            >
+              가입하기
+            </button>
+          </div>
+        </div>
+      </div>
+    ) : studyDetail?.status === 'PENDING' ? (
+      // 가입 요청 대기 중 - 가입 요청 완료
+      <div className="flex h-screen">
+        {/* 사이드바 */}
+        <div className="w-64 bg-white border-r">
+          {/* 기존 사이드바 컴포넌트 */}
+        </div>
+
+        {/* 메인 콘텐츠 - 가입 요청 대기 화면 */}
+        <div className="flex-1 flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">
+              {currentStudy?.name} 📊
+            </h1>
+            <p className="text-gray-600 mb-6">가입 요청이 승인 대기 중입니다</p>
+            <button
+              disabled
+              className="px-6 py-3 bg-gray-400 text-white rounded-lg cursor-not-allowed"
+            >
+              가입 요청 완료
+            </button>
+          </div>
+        </div>
+      </div>
+    ) : (
       <StudyDetailTemplate
         studies={Array.isArray(studies) ? studies : []}
         activeStudyId={activeStudyId}
         expandedStudy={expandedStudy}
         loading={loading}
         currentStudy={currentStudy}
+        currentUserRole={studyDetail?.role} // 현재 사용자 역할 전달
         onItemClick={handleItemClick}
         onStudyClick={handleStudyClick}
         onSearch={handleSearch}
@@ -393,63 +494,66 @@ const StudyDetailPage: React.FC = () => {
         onCategoryRemove={handleCategoryRemove}
         onCategoryAdd={handleCategoryAdd}
         onMemberRemove={handleMemberRemove}
+        joinRequests={joinRequests}
+        onAcceptJoinRequest={handleAcceptJoinRequest}
+        onRejectJoinRequest={handleRejectJoinRequest}
       />
+    )}
 
-      {/* Category Add Modal */}
-      <CategoryAddModal
-        isOpen={showCategoryModal}
-        onClose={() => setShowCategoryModal(false)}
-        onAdd={handleAddNewCategory}
-      />
+    {/* Category Add Modal */}
+    <CategoryAddModal
+      isOpen={showCategoryModal}
+      onClose={() => setShowCategoryModal(false)}
+      onAdd={handleAddNewCategory}
+    />
 
-      {/* Notice Edit Modal */}
-      {isNoticeModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-96 max-w-md">
-            <h3 className="text-lg font-semibold mb-4">공지사항 편집</h3>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                제목
-              </label>
-              <input
-                type="text"
-                value={noticeTitle}
-                onChange={(e) => setNoticeTitle(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                placeholder="공지사항 제목을 입력하세요"
-              />
-            </div>
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                내용
-              </label>
-              <textarea
-                value={noticeContent}
-                onChange={(e) => setNoticeContent(e.target.value)}
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                placeholder="공지사항 내용을 입력하세요"
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={handleNoticeModalClose}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                취소
-              </button>
-              <button
-                onClick={handleNoticeSubmit}
-                className="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600"
-              >
-                저장
-              </button>
-            </div>
+    {/* Notice Edit Modal */}
+    {isNoticeModalOpen && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-96 max-w-md">
+          <h3 className="text-lg font-semibold mb-4">공지사항 편집</h3>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              제목
+            </label>
+            <input
+              type="text"
+              value={noticeTitle}
+              onChange={(e) => setNoticeTitle(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="공지사항 제목을 입력하세요"
+            />
+          </div>
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              내용
+            </label>
+            <textarea
+              value={noticeContent}
+              onChange={(e) => setNoticeContent(e.target.value)}
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="공지사항 내용을 입력하세요"
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={handleNoticeModalClose}
+              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              취소
+            </button>
+            <button
+              onClick={handleNoticeSubmit}
+              className="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600"
+            >
+              저장
+            </button>
           </div>
         </div>
-      )}
-    </>
-  )
-}
+      </div>
+    )}
+  </>
+  )}
 
 export default StudyDetailPage
