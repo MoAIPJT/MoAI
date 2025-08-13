@@ -5,6 +5,7 @@ import com.foureyes.moai.backend.commons.util.StorageService;
 import com.foureyes.moai.backend.domain.ai.dto.SummaryDto;
 import com.foureyes.moai.backend.domain.ai.dto.request.CreateAiSummaryRequest;
 import com.foureyes.moai.backend.domain.ai.dto.request.EditAiSummaryRequest;
+import com.foureyes.moai.backend.domain.ai.dto.response.AiSummaryResponseDto;
 import com.foureyes.moai.backend.domain.ai.dto.response.CreateAiSummaryResponse;
 import com.foureyes.moai.backend.domain.ai.dto.response.DashboardSummariesResponse;
 import com.foureyes.moai.backend.domain.ai.dto.response.SidebarSummariesResponse;
@@ -121,8 +122,21 @@ public class AiController {
         @PathVariable int id,
         @Valid @RequestBody EditAiSummaryRequest request
     ) {
-        int userId = extractUserIdFromToken(bearerToken);;
+        int userId = extractUserIdFromToken(bearerToken);
         aiService.editSummary(userId, id, request);
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(
+        summary = "AI 요약본 상세 조회",
+        description = "요약본 JSON과 연결된 문서들의 프리사인드 뷰 URL을 반환합니다."
+    )
+    @GetMapping("/detail/{id}")
+    public ResponseEntity<AiSummaryResponseDto> getDetail(
+        @Parameter(hidden = true) @RequestHeader("Authorization") String bearerToken,
+        @PathVariable("id") int id
+    ) {
+        int userId = extractUserIdFromToken(bearerToken);
+        return ResponseEntity.ok(aiService.getSummaryDetail(userId, id));
     }
 }
