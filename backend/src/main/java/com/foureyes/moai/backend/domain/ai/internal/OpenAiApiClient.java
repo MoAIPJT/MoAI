@@ -31,11 +31,12 @@ public class OpenAiApiClient {
                     "content", "Return ONLY a valid JSON array (UTF-8). No markdown code fences, no extra text."),
                 Map.of("role", "user", "content", prompt)
             ),
-            "max_tokens", 32768,
+            "max_tokens", 4000,
             "temperature", 0.3
         );
 
-        log.info("OpenAI 호출: {}", fullApiUrl,openAiApiKey);
+        log.info("OpenAI 호출: {}", fullApiUrl);
+
 
         return webClient.post()
             .uri(fullApiUrl)
