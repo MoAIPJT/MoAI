@@ -19,9 +19,13 @@ const EmailSentBox: React.FC<EmailSentBoxProps> = ({
       className="w-full h-full"
     />
   </div>
-    <p className="text-center mb-6">
-      <span className="text-purple-500 font-semibold">{message}</span>
-    </p>
+    <div className="text-center mb-6">
+      {message.split('\n').map((line, index) => (
+        <p key={index} className="text-purple-500 font-semibold">
+          {line}
+        </p>
+      ))}
+    </div>
     {email && (
       <p className="text-gray-600 text-center mb-4">
         <span className="font-semibold">{email}</span>로 메일을 발송했습니다.

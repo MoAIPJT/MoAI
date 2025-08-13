@@ -22,7 +22,7 @@ const SignupPage: React.FC = () => {
       // 회원가입 성공 후 이메일 인증 페이지로 이동
       navigate('/email-sent', {
         state: {
-          message: '회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료해주세요.',
+          message: '회원가입이 완료되었습니다.',
           email: data.email
         }
       })
