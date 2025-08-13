@@ -16,11 +16,14 @@ pipeline {
         stage('Staging Deploy') {
             steps {
                 script {
-                    sh 'docker compose -f compose.prod.yml down -v'
-                    sh 'docker compose -f compose.prod.yml up --build -d'
+			        withCredentials([file(credentialsId: 'backend-env-file', variable: 'DOTENV_FILE')]) {
+                        sh "cp ${DOTENV_FILE} .env"
+
+                        sh 'docker compose -f compose.prod.yml down -v'
+                        sh 'docker compose -f compose.prod.yml up --build -d'
+                    }
                 }
             }
         }
-   
     }
 }
