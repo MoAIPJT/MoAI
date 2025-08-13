@@ -1,5 +1,5 @@
 import React from 'react'
-import { UsersIcon, SettingsIcon } from '../../atoms/Icons'
+import { StudyMembersIcon, SettingsIcon } from '../../atoms/Icons'
 import type { StudyHeaderProps } from './types'
 
 const StudyHeader: React.FC<StudyHeaderProps> = ({
@@ -50,27 +50,22 @@ const StudyHeader: React.FC<StudyHeaderProps> = ({
             onClick={onUserCountClick}
             className="flex items-center gap-2 hover:bg-gray-100 p-2 rounded-lg transition-colors cursor-pointer group"
           >
-            <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-              <UsersIcon className="w-4 h-4 text-purple-600" />
-            </div>
-            <span className="text-sm font-medium text-gray-700">{userCount}</span>
-          </button>
-          <button
-            onClick={onSettingsClick}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors group"
-          >
             <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-gray-200 transition-colors">
-              <SettingsIcon className="w-4 h-4 text-gray-600" />
+              <StudyMembersIcon className="w-4 h-4 text-gray-600" />
             </div>
           </button>
-          {onLeaveStudy && currentUserRole !== 'ADMIN' && (
+          {/* 설정 아이콘은 admin일 때만 표시 */}
+          {currentUserRole === 'ADMIN' && (
             <button
-              onClick={onLeaveStudy}
-              className="px-4 py-2 text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
+              onClick={onSettingsClick}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors group"
             >
-              탈퇴하기
+              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-gray-200 transition-colors">
+                <SettingsIcon className="w-4 h-4 text-gray-600" />
+              </div>
             </button>
           )}
+
         </div>
       </div>
     </div>

@@ -4,8 +4,10 @@ import StudyDetailTemplate from '../components/templates/StudyDetailTemplate'
 import CategoryAddModal from '../components/organisms/CategoryAddModal'
 import EditFileModal from '../components/organisms/EditFileModal'
 import PDFPreviewModal from '../components/organisms/PDFPreviewModal'
+import DashboardSidebar from '../components/organisms/DashboardSidebar'
 import type { StudyItem } from '../components/organisms/DashboardSidebar/types'
 import type { ContentItem } from '../types/content'
+import type { StudyListItem } from '../types/study'
 import { getSidebarStudies, updateStudyNotice, joinStudy, leaveStudy, deleteStudyMember } from '../services/studyService'
 import { useStudyDetail, useStudyMembers, useJoinRequests, useAcceptJoinRequest, useRejectJoinRequest, useChangeMemberRole, useUpdateStudy } from "../hooks/useStudies";
 import { studyKeys } from "../hooks/queryKeys";
@@ -22,7 +24,7 @@ const StudyDetailPage: React.FC = () => {
   const navigate = useNavigate()
   const { hashId } = useParams<{ hashId: string }>()
   const queryClient = useQueryClient()
-  const { data: userProfile } = useMe()
+  const { data: userProfile, isLoading: isUserLoading } = useMe()
 
   const [expandedStudy, setExpandedStudy] = useState(true)
   const [activeStudyId, setActiveStudyId] = useState<string | null>(hashId || null)
@@ -34,25 +36,31 @@ const StudyDetailPage: React.FC = () => {
     return { year: now.getFullYear(), month: now.getMonth() + 1 }
   })
 
-  // ✅ React Query 훅 사용 - studyDetail만 필요
+  // ✅ 로그인 상태 확인 - userProfile이 있고 로딩이 아니어야 함
+  const isLoggedIn = !!userProfile && !isUserLoading
+
+  // ✅ 로그인되지 않은 경우 스터디 정보 로딩을 건너뛰기
+  const shouldLoadStudyDetail = isLoggedIn && activeStudyId
+
+  // ✅ React Query 훅 사용 - studyDetail만 필요 (로그인된 경우에만)
   const {
     data: studyDetail,
     isLoading: isStudyLoading,
     error: studyError
-  } = useStudyDetail(activeStudyId || '')
+  } = useStudyDetail(shouldLoadStudyDetail ? (activeStudyId || '') : '')
 
   // ✅ 멤버 정보는 필요할 때만 로드 (예: 멤버 관리 모달)
   const {
     data: participants = [],
     error: membersError
-  } = useStudyMembers(studyDetail?.studyId)
+  } = useStudyMembers(shouldLoadStudyDetail ? (studyDetail?.studyId || 0) : 0)
 
   // ✅ 스터디별 일정 조회
   const {
     data: studySchedules = [],
     isLoading: isSchedulesLoading
   } = useStudySchedules(
-    studyDetail?.studyId || 0,
+    shouldLoadStudyDetail ? (studyDetail?.studyId || 0) : 0,
     currentMonth.year,
     currentMonth.month
   )
@@ -65,14 +73,14 @@ const StudyDetailPage: React.FC = () => {
     data: categories = [],
     isLoading: isCategoriesLoading,
     error: categoriesError
-  } = useCategories(studyDetail?.studyId || 0)
+  } = useCategories(shouldLoadStudyDetail ? (studyDetail?.studyId || 0) : 0)
 
   // ✅ 공부 자료 목록 조회 - /ref/list 엔드포인트 사용
   const {
     data: refFiles = [],
     isLoading: isRefFilesLoading,
     error: refFilesError
-  } = useRefList(studyDetail?.studyId || 0)
+  } = useRefList(shouldLoadStudyDetail ? (studyDetail?.studyId || 0) : 0)
 
   // 디버깅을 위한 로그
   console.log('=== 공부 자료 목록 조회 디버깅 ===')
@@ -173,12 +181,13 @@ const StudyDetailPage: React.FC = () => {
         setError(null)
         const studiesData = await getSidebarStudies()
         // StudyListItem을 StudyItem으로 변환
-        const convertedStudies: StudyItem[] = studiesData.map(study => ({
+        const convertedStudies: StudyItem[] = studiesData.map((study: StudyListItem) => ({
           id: study.hashId,               // ← hashId로!
           name: study.name,
           description: study.description,
           image: study.imageUrl,
-          memberCount: 0 // 기본값 설정
+          memberCount: 0, // 기본값 설정
+          status: study.status // status 정보 추가
         }))
         setStudies(convertedStudies)
       } catch {
@@ -210,13 +219,32 @@ const StudyDetailPage: React.FC = () => {
     }
   }, [studyDetail])  // ✅ participants 의존성 제거
 
-  // ✅ 에러 처리
+  // ✅ 에러 처리 - 로그인된 경우에만 스터디 관련 에러 처리
   useEffect(() => {
-    if (studyError) {
+    if (isLoggedIn && studyError) {
       console.error('Study detail error:', studyError)
+      
+      // 403 에러(토큰 만료)인 경우 토큰 제거
+      if (studyError && typeof studyError === 'object' && 'response' in studyError) {
+        const axiosError = studyError as { response?: { status?: number } }
+        if (axiosError.response?.status === 403) {
+          console.log('토큰 만료 - 토큰 제거')
+          localStorage.removeItem('accessToken')
+          localStorage.removeItem('refreshToken')
+          return
+        }
+      }
+      
+      // 그 외 에러는 기존과 동일하게 처리
       setError('스터디 정보를 불러오는데 실패했습니다.')
       setLoading(false)
     }
+    
+    // 로그인되지 않은 경우 에러 상태 초기화
+    if (!isLoggedIn) {
+      setError(null)
+    }
+    
     if (membersError) {
       console.error('Members error:', membersError)
       // 멤버 로드 실패는 전체 에러로 처리하지 않음
@@ -229,12 +257,16 @@ const StudyDetailPage: React.FC = () => {
       console.error('Ref files error:', refFilesError)
       // 공부 자료 로드 실패는 전체 에러로 처리하지 않음
     }
-  }, [studyError, membersError, categoriesError, refFilesError])
+  }, [isLoggedIn, studyError, membersError, categoriesError, refFilesError])
 
-  // ✅ 로딩 상태 관리 - studyDetail, 카테고리, 공부 자료 로딩 상태 체크
+  // ✅ 로딩 상태 관리 - 로그인된 경우에만 스터디 관련 로딩 상태 체크
   useEffect(() => {
-    setLoading(isStudyLoading || isCategoriesLoading || isRefFilesLoading)
-  }, [isStudyLoading, isCategoriesLoading, isRefFilesLoading])
+    if (isLoggedIn) {
+      setLoading(isStudyLoading || isCategoriesLoading || isRefFilesLoading)
+    } else {
+      setLoading(false) // 로그인되지 않은 경우 로딩 상태 해제
+    }
+  }, [isLoggedIn, isStudyLoading, isCategoriesLoading, isRefFilesLoading])
 
   // 선택된 카테고리와 검색어에 따라 콘텐츠 필터링
   const filteredContents = convertedContents.filter(content => {
@@ -344,20 +376,95 @@ const StudyDetailPage: React.FC = () => {
     navigate('/dashboard')
   }
   const handleJoinStudy = async () => {
-    if (!studyDetail?.studyId || !hashId) return
+    console.log('=== handleJoinStudy 함수 호출됨 ===')
+    
+    // 로그인되지 않은 경우 로그인 페이지로 리다이렉트
+    if (!isLoggedIn) {
+      console.log('로그인되지 않음, 로그인 페이지로 이동')
+      navigate('/login')
+      return
+    }
+
+    console.log('로그인 상태 확인됨, studyDetail:', studyDetail)
+    console.log('hashId:', hashId)
+
+    if (!studyDetail?.studyId || !hashId) {
+      console.log('스터디 정보 부족, 함수 종료')
+      return
+    }
+    
     try {
+      console.log('가입 요청 API 호출 시작, studyId:', studyDetail.studyId)
+      
+      // ✅ 즉시 로컬 상태 업데이트 (API 호출 전에 먼저 실행)
+      if (studyDetail) {
+        const updatedStudyDetail = {
+          ...studyDetail,
+          status: 'PENDING'
+        }
+        
+        // React Query 캐시 즉시 업데이트
+        queryClient.setQueryData(['studyDetail', hashId], updatedStudyDetail)
+      }
+
+      // ✅ 사이드바 스터디 목록도 즉시 업데이트
+      if (userProfile?.id) {
+        // 현재 사이드바 데이터 가져오기
+        const currentSidebarData = queryClient.getQueryData(studyKeys.sidebar(userProfile.id)) as StudyItem[] | undefined
+        
+        if (currentSidebarData && Array.isArray(currentSidebarData)) {
+          // 현재 스터디를 PENDING 상태로 업데이트
+          const updatedSidebarData = currentSidebarData.map((study: StudyItem) => 
+            study.id === hashId 
+              ? { ...study, status: 'PENDING' }
+              : study
+          )
+          
+          // 사이드바 데이터 즉시 업데이트
+          queryClient.setQueryData(studyKeys.sidebar(userProfile.id), updatedSidebarData)
+        }
+      }
+
       // 가입 요청 API 호출
       await joinStudy({ studyId: studyDetail.studyId })
 
-      // 성공 시 스터디 상세 정보 React Query 캐시 무효화
+      console.log('가입 요청이 전송되었습니다.')
+      
+      // ✅ API 성공 후 추가 캐시 무효화 (백그라운드에서 최신 데이터 동기화)
       if (hashId) {
         queryClient.invalidateQueries({ queryKey: ['studyDetail', hashId] })
       }
-
-      console.log('가입 요청이 전송되었습니다.')
+      
+      if (userProfile?.id) {
+        queryClient.invalidateQueries({ queryKey: studyKeys.sidebar(userProfile.id) })
+      }
+      
     } catch (error) {
       console.error('가입 요청 실패:', error)
-      // 에러 처리
+      
+      // ✅ API 실패 시 원래 상태로 롤백
+      if (studyDetail && hashId) {
+        const originalStudyDetail = {
+          ...studyDetail,
+          status: studyDetail.status // 원래 상태로 복원
+        }
+        queryClient.setQueryData(['studyDetail', hashId], originalStudyDetail)
+      }
+      
+      if (userProfile?.id) {
+        const currentSidebarData = queryClient.getQueryData(studyKeys.sidebar(userProfile.id)) as StudyItem[] | undefined
+        if (currentSidebarData && Array.isArray(currentSidebarData)) {
+          const rolledBackSidebarData = currentSidebarData.map((study: StudyItem) => 
+            study.id === hashId 
+              ? { ...study, status: studyDetail?.status || null }
+              : study
+          )
+          queryClient.setQueryData(studyKeys.sidebar(userProfile.id), rolledBackSidebarData)
+        }
+      }
+      
+      // 에러 메시지 표시
+      alert('가입 요청에 실패했습니다. 다시 시도해주세요.')
     }
   }
 
@@ -767,42 +874,117 @@ const StudyDetailPage: React.FC = () => {
     }
   }
 
-  // 에러가 있으면 에러 메시지 표시
-  if (error) {
+  // 로그인되지 않은 사용자를 위한 UI를 먼저 렌더링
+  if (!isLoggedIn) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <div className="text-center">
-          <div className="text-red-500 text-xl mb-4">⚠️</div>
-          <p className="text-gray-600">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
-          >
-            다시 시도
-          </button>
+      <div className="flex h-screen">
+        {/* 메인 콘텐츠 - 로그인 필요 화면 */}
+        <div className="flex-1 flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">
+              {hashId ? '스터디' : '스터디'}
+            </h1>
+            <p className="text-gray-600 mb-6">로그인이 필요합니다</p>
+            <button
+              onClick={() => {
+                // 현재 URL을 저장하고 로그인 페이지로 이동
+                const currentPath = window.location.pathname + window.location.search
+                localStorage.setItem('redirectAfterLogin', currentPath)
+                navigate('/login')
+              }}
+              className="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+            >
+              로그인하기
+            </button>
+          </div>
         </div>
       </div>
     )
   }
 
-
-return (
-  <>
-    {(studyDetail?.status === null || studyDetail?.status === 'REJECTED') ? (
-      // 가입하지 않은 상태 또는 거절된 상태 - 가입하기 버튼
+  // 에러가 있으면 에러 메시지 표시
+  if (error) {
+    return (
       <div className="flex h-screen">
-        {/* 사이드바 */}
-        <div className="w-64 bg-white border-r">
-          {/* 기존 사이드바 컴포넌트 */}
-        </div>
+        {/* 로그인된 경우에만 DashboardSidebar 표시 */}
+        {isLoggedIn && (
+          <DashboardSidebar
+            activeItem={undefined}
+            expandedStudy={expandedStudy}
+            studies={Array.isArray(studies) ? studies : []}
+            activeStudyId={activeStudyId}
+            onItemClick={handleItemClick}
+            onStudyClick={handleStudyClick}
+            onLogout={() => {
+              localStorage.removeItem('accessToken')
+              localStorage.removeItem('refreshToken')
+              navigate('/login')
+            }}
+            onSettingsClick={() => navigate('/dashboard')}
+            onLogoClick={() => navigate('/dashboard')}
+          />
+        )}
 
-        {/* 메인 콘텐츠 - 가입 요청 화면 */}
-        <div className="flex-1 flex items-center justify-center bg-gray-50">
+        {/* 메인 콘텐츠 - 에러 화면 */}
+        <div className={`flex-1 flex items-center justify-center bg-gray-50 ${isLoggedIn ? 'ml-64' : ''}`}>
+          <div className="text-center">
+            <div className="text-red-500 text-xl mb-4">⚠️</div>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <div className="flex gap-2 justify-center">
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+              >
+                다시 시도
+              </button>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+              >
+                대시보드로 돌아가기
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // status가 left, reject, null인 경우 가입하기 페이지 표시
+  if (studyDetail?.status === 'LEFT' || studyDetail?.status === 'REJECTED' || studyDetail?.status === null) {
+    
+    return (
+      <div className="flex h-screen">
+        {/* 로그인된 경우에만 DashboardSidebar 표시 */}
+        {isLoggedIn && (
+          <DashboardSidebar
+            activeItem={undefined}
+            expandedStudy={expandedStudy}
+            studies={Array.isArray(studies) ? studies : []}
+            activeStudyId={activeStudyId}
+            onItemClick={handleItemClick}
+            onStudyClick={handleStudyClick}
+            onLogout={() => {
+              localStorage.removeItem('accessToken')
+              localStorage.removeItem('refreshToken')
+              navigate('/login')
+            }}
+            onSettingsClick={() => navigate('/dashboard')}
+            onLogoClick={() => navigate('/dashboard')}
+          />
+        )}
+
+        {/* 메인 콘텐츠 - 가입하기 화면 */}
+        <div className={`flex-1 flex items-center justify-center bg-gray-50 ${isLoggedIn ? 'ml-64' : ''}`}>
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">
-              {currentStudy?.name} 📊
+              {currentStudy?.name || '스터디'}
             </h1>
-            <p className="text-gray-600 mb-6">스터디에 가입하여 학습을 시작해보세요</p>
+            <p className="text-gray-600 mb-6">
+              {studyDetail?.status === 'LEFT' && '스터디에서 나간 상태입니다. 다시 가입할 수 있습니다.'}
+              {studyDetail?.status === 'REJECTED' && '가입 신청이 거절되었습니다. 다시 신청할 수 있습니다.'}
+              {studyDetail?.status === null && '아직 가입하지 않은 스터디입니다. 가입해보세요!'}
+            </p>
             <button
               onClick={handleJoinStudy}
               className="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
@@ -812,19 +994,38 @@ return (
           </div>
         </div>
       </div>
-    ) : studyDetail?.status === 'PENDING' ? (
-      // 가입 요청 대기 중 - 가입 요청 완료
+    )
+  }
+
+  // status가 PENDING인 경우 가입 요청 대기 화면
+  if (studyDetail?.status === 'PENDING') {
+
+    return (
       <div className="flex h-screen">
-        {/* 사이드바 */}
-        <div className="w-64 bg-white border-r">
-          {/* 기존 사이드바 컴포넌트 */}
-        </div>
+        {/* 로그인된 경우에만 DashboardSidebar 표시 */}
+        {isLoggedIn && (
+          <DashboardSidebar
+            activeItem={undefined}
+            expandedStudy={expandedStudy}
+            studies={Array.isArray(studies) ? studies : []}
+            activeStudyId={activeStudyId}
+            onItemClick={handleItemClick}
+            onStudyClick={handleStudyClick}
+            onLogout={() => {
+              localStorage.removeItem('accessToken')
+              localStorage.removeItem('refreshToken')
+              navigate('/login')
+            }}
+            onSettingsClick={() => navigate('/dashboard')}
+            onLogoClick={() => navigate('/dashboard')}
+          />
+        )}
 
         {/* 메인 콘텐츠 - 가입 요청 대기 화면 */}
-        <div className="flex-1 flex items-center justify-center bg-gray-50">
+        <div className={`flex-1 flex items-center justify-center bg-gray-50 ${isLoggedIn ? 'ml-64' : ''}`}>
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">
-              {currentStudy?.name} 📊
+              {currentStudy?.name}
             </h1>
             <p className="text-gray-600 mb-6">가입 요청이 승인 대기 중입니다</p>
             <button
@@ -836,77 +1037,82 @@ return (
           </div>
         </div>
       </div>
-    ) : (
-      <StudyDetailTemplate
-        studies={Array.isArray(studies) ? studies : []}
-        activeStudyId={activeStudyId}
-        expandedStudy={expandedStudy}
-        loading={loading}
-        currentStudy={currentStudy}
-        currentUserRole={studyDetail?.role} // 현재 사용자 역할 전달
-        onItemClick={handleItemClick}
-        onStudyClick={handleStudyClick}
-        onSearch={handleSearch}
-        onUploadData={handleUploadData}
-        onCreateRoom={handleCreateRoom}
-        onEditNotice={handleEditNotice}
-        onSettingsClick={handleSettingsClick}
-        onLogout={() => {
-          // 로그아웃 처리
-          localStorage.removeItem('accessToken')
-          localStorage.removeItem('refreshToken')
-          navigate('/login')
-        }}
-        onLogoClick={() => navigate('/dashboard')}
-        participants={participants.map((member: Member) => ({
-          id: member.email,
-          name: member.member,
-          avatar: member.imageUrl
-        }))}
-        studyParticipants={participants}
-        // 공지사항 관련 props
-        noticeTitle={noticeTitle}
-        noticeContent={noticeContent}
-        // Content Management 관련 props - ref API의 Category 타입을 content 타입으로 변환
-        categories={categories}
-        selectedCategories={selectedCategories}
-        contents={filteredContents}
-        searchTerm={searchTerm}
-        sortOrder={sortOrder}
-        // Upload Modal 관련 props
-        isUploadModalOpen={isUploadModalOpen}
-        // 일정 관련 props
-        studySchedules={studySchedules}
-        isSchedulesLoading={isSchedulesLoading}
-        onCategoryToggle={handleCategoryToggle}
-        onAddCategory={handleAddCategory}
-        onSearchChange={setSearchTerm}
-        onSortChange={setSortOrder}
-        onContentSelect={handleContentSelect}
-        onContentPreview={handleContentPreview}
-        // Upload Modal 관련 핸들러들
-        onUploadModalClose={handleUploadModalClose}
-        onUploadSubmit={handleUploadSubmit}
-        // Study Management 관련 핸들러들
-        onStudyNameChange={handleStudyNameChange}
-        onStudyDescriptionChange={handleStudyDescriptionChange}
-        onStudyImageChange={handleStudyImageChange}
-        onMaxMembersChange={handleMaxMembersChange}
-        onCategoryRemove={handleCategoryRemove}
-        onCategoryAdd={handleCategoryAdd}
-        onMemberRemove={handleMemberRemove}
-        onMemberRoleChange={handleMemberRoleChange}
-        joinRequests={studyDetail?.role === 'ADMIN' ? joinRequests : []}
-        onAcceptJoinRequest={studyDetail?.role === 'ADMIN' ? handleAcceptJoinRequest : undefined}
-        onRejectJoinRequest={studyDetail?.role === 'ADMIN' ? handleRejectJoinRequest : undefined}
-        onLeaveStudy={handleLeaveStudy}
-        onStudyUpdate={handleStudyUpdate}
-        onContentEdit={handleContentEdit}
-        onContentDelete={handleContentDelete}
-        onContentDownload={handleContentDownload}
-        studyId={studyDetail?.studyId}
-      />
-    )}
+    )
+  }
+
+
+return (
+  <>
+    <StudyDetailTemplate
+      studies={Array.isArray(studies) ? studies : []}
+      activeStudyId={activeStudyId}
+      expandedStudy={expandedStudy}
+      loading={loading}
+      currentStudy={currentStudy}
+      currentUserRole={studyDetail?.role} // 현재 사용자 역할 전달
+      userName={userProfile?.name || '사용자'} // 현재 사용자 이름 전달
+      onItemClick={handleItemClick}
+      onStudyClick={handleStudyClick}
+      onSearch={handleSearch}
+      onUploadData={handleUploadData}
+      onCreateRoom={handleCreateRoom}
+      onEditNotice={handleEditNotice}
+      onSettingsClick={handleSettingsClick}
+      onLogout={() => {
+        // 로그아웃 처리
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('refreshToken')
+        navigate('/login')
+      }}
+      onLogoClick={() => navigate('/dashboard')}
+      participants={participants.map((member: Member) => ({
+        id: member.email,
+        name: member.member,
+        avatar: member.imageUrl
+      }))}
+      studyParticipants={participants}
+      // 공지사항 관련 props
+      noticeTitle={noticeTitle}
+      noticeContent={noticeContent}
+      // Content Management 관련 props - ref API의 Category 타입을 content 타입으로 변환
+      categories={categories}
+      selectedCategories={selectedCategories}
+      contents={filteredContents}
+      searchTerm={searchTerm}
+      sortOrder={sortOrder}
+      // Upload Modal 관련 props
+      isUploadModalOpen={isUploadModalOpen}
+      // 일정 관련 props
+      studySchedules={studySchedules}
+      isSchedulesLoading={isSchedulesLoading}
+      onCategoryToggle={handleCategoryToggle}
+      onAddCategory={handleAddCategory}
+      onSearchChange={setSearchTerm}
+      onSortChange={setSortOrder}
+      onContentSelect={handleContentSelect}
+      onContentPreview={handleContentPreview}
+      // Upload Modal 관련 핸들러들
+      onUploadModalClose={handleUploadModalClose}
+      onUploadSubmit={handleUploadSubmit}
+      // Study Management 관련 핸들러들
+      onStudyNameChange={handleStudyNameChange}
+      onStudyDescriptionChange={handleStudyDescriptionChange}
+      onStudyImageChange={handleStudyImageChange}
+      onMaxMembersChange={handleMaxMembersChange}
+      onCategoryRemove={handleCategoryRemove}
+      onCategoryAdd={handleCategoryAdd}
+      onMemberRemove={handleMemberRemove}
+      onMemberRoleChange={handleMemberRoleChange}
+      joinRequests={studyDetail?.role === 'ADMIN' ? joinRequests : []}
+      onAcceptJoinRequest={studyDetail?.role === 'ADMIN' ? handleAcceptJoinRequest : undefined}
+      onRejectJoinRequest={studyDetail?.role === 'ADMIN' ? handleRejectJoinRequest : undefined}
+      onLeaveStudy={handleLeaveStudy}
+      onStudyUpdate={handleStudyUpdate}
+      onContentEdit={handleContentEdit}
+      onContentDelete={handleContentDelete}
+      onContentDownload={handleContentDownload}
+      studyId={studyDetail?.studyId}
+    />
 
     {/* Category Add Modal */}
     <CategoryAddModal
@@ -994,6 +1200,7 @@ return (
       />
     )}
   </>
-  )}
+)
+}
 
 export default StudyDetailPage

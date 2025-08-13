@@ -412,13 +412,16 @@ const DashboardPage: React.FC = () => {
       // 성공적으로 스터디가 생성되면 초대 링크 모달 표시
       const inviteUrl = `${window.location.origin}/study/${response.hashId}`
       setCurrentInviteUrl(inviteUrl)
-      setIsInviteModalOpen(true)
-
+      
       // 스터디 목록 새로고침
       await fetchStudies()
       
       // 스터디 생성 모달 닫기
       setIsCreateStudyModalOpen(false)
+      
+      // 초대 링크 모달 표시 (로딩 완료 후)
+      setIsInviteModalOpen(true)
+      
     } catch (error) {
       // 백엔드가 실행되지 않은 경우 임시로 프론트엔드에서 처리
       if (error && typeof error === 'object' && 'code' in error && error.code === '500') {
@@ -553,7 +556,8 @@ const DashboardPage: React.FC = () => {
                       imageUrl: study.image || study.image_url || '',
                       createdBy: 1,
                       createdAt: new Date().toISOString().split('T')[0],
-                      inviteUrl: study.hashId ? `${window.location.origin}/study/${study.hashId}` : `${window.location.origin}/study/${study.id}`
+                      inviteUrl: study.hashId ? `${window.location.origin}/study/${study.hashId}` : `${window.location.origin}/study/${study.id}`,
+                      status: study.status // status 정보 추가
                     }))}
                     isLoading={isLoading}
                     onCreateStudy={handleCreateStudy}

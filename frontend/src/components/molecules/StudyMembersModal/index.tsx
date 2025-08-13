@@ -7,11 +7,15 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
   members,
   studyName,
   currentUserRole,
+  currentUserName,
+  currentUserEmail,
   joinRequests = [],
   onAcceptJoinRequest,
   onRejectJoinRequest,
   onMemberRoleChange,
+  onLeaveStudy,
   studyId,
+  hashId,
 }) => {
   const [showToast, setShowToast] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
@@ -22,8 +26,8 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
 
   const handleInviteClick = async () => {
     try {
-      // 스터디 초대 링크 생성 (실제 환경에 맞게 수정 필요)
-      const inviteLink = `${window.location.origin}/study/join/${studyId}`
+      // hashId를 사용하여 올바른 초대 링크 생성 (DashboardPage와 동일한 형식)
+      const inviteLink = `${window.location.origin}/study/${hashId}`
       await navigator.clipboard.writeText(inviteLink)
       
       // 복사 상태 업데이트
@@ -65,35 +69,34 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
     setShowConfirmModal(false)
   }
 
+  // 멤버 목록을 정렬: 내가 항상 가장 위에 위치
+  const sortedMembers = [...members].sort((a, b) => {
+    // 내가 항상 첫 번째 (실제 사용자 이름으로 비교)
+    if (currentUserName && a.member === currentUserName) return -1
+    if (currentUserName && b.member === currentUserName) return 1
+    return 0
+  })
+
   return (
     <>
       <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
         <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl relative">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-black">{studyName} Members</h2>
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={handleInviteClick}
-                className="bg-purple-500 text-white px-4 py-2 rounded-xl hover:bg-purple-600 transition-colors"
-              >
-                {copied ? '복사됨!' : '초대하기'}
-              </button>
-              <button
-                onClick={onClose}
-                className="text-gray-500 hover:text-gray-700 text-2xl"
-              >
-                &times;
-              </button>
-            </div>
+            <h2 className="text-2xl font-bold text-black">{studyName} 스터디 멤버</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 text-2xl"
+            >
+              &times;
+            </button>
           </div>
 
-          <p className="text-gray-500 mb-6">Invite your team members to study</p>
-
           <div className="space-y-4 max-h-80 overflow-y-auto">
-            {members.map((member, index) => {
+            {sortedMembers.map((member, index) => {
               const isAdmin = member.role === 'ADMIN'
               const isCurrentUserAdmin = currentUserRole === 'ADMIN'
               const canChangeRole = isCurrentUserAdmin && !isAdmin // ADMIN은 자신의 권한을 변경할 수 없음
+              const isMe = currentUserName && member.member === currentUserName
 
               return (
                 <div key={index} className="flex items-center justify-between p-2 border-b border-gray-200 last:border-b-0">
@@ -102,35 +105,67 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
                       {member.imageUrl || '👤'}
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-800">{member.member}</p>
+                      <p className="font-semibold text-gray-800">
+                        {member.member}
+                        {isMe && <span className="text-sm text-gray-500 ml-2">(me)</span>}
+                      </p>
                       <p className="text-sm text-gray-500">{member.email || '이메일 없음'}</p>
                     </div>
                   </div>
 
-                  <div className="relative">
-                    {canChangeRole ? (
-                      <select
-                        className="block appearance-none w-full bg-white border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-                        value={member.role}
-                        onChange={(e) => {
-                          const newRole = e.target.value as 'ADMIN' | 'DELEGATE' | 'MEMBER'
-                          console.log('권한 변경 시도:', { member: member.member, userId: member.userId, newRole })
-                          handleRoleChange(member, newRole)
-                        }}
-                      >
-                        <option value="MEMBER">MEMBER</option>
-                        <option value="DELEGATE">DELEGATE</option>
-                        <option value="ADMIN">ADMIN</option>
-                      </select>
-                    ) : (
-                      <span className="text-gray-600 font-medium">{member.role}</span>
+                  <div className="flex items-center gap-3">
+                    
+                    {/* Role 표시 (ADMIN 제외)*/}
+                    {currentUserRole !== 'ADMIN' && (
+                      <span className="text-gray-600 font-medium">
+                        {member.role === 'ADMIN' ? '운영자' : 
+                        member.role === 'DELEGATE' ? '대리인' : '회원'}
+                      </span>
                     )}
+                    
+                    {/* 권한 변경 드롭다운 (ADMIN만 가능) */}
                     {canChangeRole && (
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                          <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-                        </svg>
+                      <div className="relative">
+                        <select
+                          className="block appearance-none bg-white border border-gray-300 text-gray-700 py-1 px-3 rounded text-sm leading-tight focus:outline-none focus:bg-white focus:border-gray-500 pr-8"
+                          value={member.role}
+                          onChange={(e) => {
+                            const newRole = e.target.value as 'ADMIN' | 'DELEGATE' | 'MEMBER'
+                            console.log('권한 변경 시도:', { member: member.member, userId: member.userId, newRole })
+                            handleRoleChange(member, newRole)
+                          }}
+                        >
+                          <option value="MEMBER">회원</option>
+                          <option value="DELEGATE">대리인</option>
+                          <option value="ADMIN">운영자</option>
+                        </select>
+                        {/* 드롭다운 화살표 */}
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                          <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                          </svg>
+                        </div>
                       </div>
+                    )}
+                    
+                    {/* 내 카드 오른쪽에 "탈퇴하기" 버튼 */}
+                    {isMe && (
+                      <button
+                        onClick={() => {
+                          // 내가 admin일 경우, 다른 사람에게 admin role을 먼저 위임해야 함
+                          if (currentUserRole === 'ADMIN') {
+                            alert('관리자인 경우, 다른 사람에게 관리자 권한을 먼저 위임한 후 탈퇴할 수 있습니다.')
+                            return
+                          }
+                          // 탈퇴 처리
+                          if (onLeaveStudy) {
+                            onLeaveStudy()
+                          }
+                        }}
+                        className="px-3 py-1 text-red-600 border border-red-300 rounded hover:bg-red-50 transition-colors text-sm"
+                      >
+                        탈퇴하기
+                      </button>
                     )}
                   </div>
                 </div>
@@ -180,6 +215,16 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
               </div>
             </div>
           )}
+
+          {/* 초대하기 버튼을 모달의 오른쪽 아래에 위치 */}
+          <div className="flex justify-end mt-6">
+            <button 
+              onClick={handleInviteClick}
+              className="bg-purple-500 text-white px-4 py-2 rounded-xl hover:bg-purple-600 transition-colors"
+            >
+              {copied ? '복사!' : '초대하기'}
+            </button>
+          </div>
         </div>
       </div>
 
