@@ -16,7 +16,6 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
 }) => {
   const [date, setDate] = useState<Date | undefined>(new Date())
   const [showEventModal, setShowEventModal] = useState(false)
-  const [showCreateModal, setShowCreateModal] = useState(false)
 
   // studyId 디버깅
   console.log('StudyCalendar에서 받은 studyId:', studyId)
@@ -315,13 +314,16 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
     }
   };
 
-  const calendarEventsForDot = apiEvents.map(event => ({
-    date: event.date,
-    color: getColorValue(event.color),
-    title: event.title,
-    startTime: event.startTime,
-    endTime: event.endTime
-  }))
+  // 일정이 있는 날짜만 필터링하여 동그라미 표시
+  const calendarEventsForDot = apiEvents
+    .filter(event => event.date) // date가 있는 이벤트만 필터링
+    .map(event => ({
+      date: event.date,
+      color: getColorValue(event.color),
+      title: event.title,
+      startTime: event.startTime,
+      endTime: event.endTime
+    }))
 
   const handleDateSelect = (selectedDate: Date) => {
     setDate(selectedDate)
@@ -334,7 +336,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
 
   const handleCreateEventInFullCalendar = () => {
     // Full Calendar 내에서 일정 생성 버튼을 눌렀을 때 EventModal 열기
-    setShowCreateModal(true)
+    setShowEventModal(true)
   }
 
   const handleCloseModal = () => {
@@ -342,7 +344,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
   }
 
   const handleCloseCreateModal = () => {
-    setShowCreateModal(false)
+    setShowEventModal(false)
     setSelectedEvent(null)
   }
 
@@ -449,15 +451,9 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
     <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
       {/* 달력 헤더 */}
       <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <div className="w-2 h-8 rounded-full mr-3" style={{ backgroundColor: '#F8BB50' }}></div>
           <h3 className="text-lg font-semibold text-gray-900">일정</h3>
-          <button
-            onClick={handleAddEvent}
-            className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors"
-            disabled={isLoading}
-          >
-            {isLoading ? '로딩 중...' : '+ 일정 추가'}
-          </button>
         </div>
       </div>
 
@@ -536,9 +532,9 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
       )}
 
       {/* Event Modal */}
-      {showCreateModal && (
+      {showEventModal && (
         <EventModal
-          isOpen={showCreateModal}
+          isOpen={showEventModal}
           onClose={handleCloseCreateModal}
           onSave={(event) => handleSaveEvent(event as StudyEvent)}
           selectedDate={date}

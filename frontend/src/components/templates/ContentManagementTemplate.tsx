@@ -185,7 +185,13 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
+    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+      {/* 제목과 세로바 */}
+      <div className="flex items-center mb-6">
+        <div className="w-2 h-8 rounded-full mr-3" style={{ backgroundColor: '#477866' }}></div>
+        <h2 className="text-2xl font-bold text-gray-900">공부 자료</h2>
+      </div>
+
       {/* Category Tabs - attached to the box */}
       <div className="px-0 pt-0 pb-0">
         <CategoryTab
@@ -198,7 +204,7 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
       </div>
 
       {/* Main Content Box - 스크롤 가능하게 수정 */}
-      <div className="flex-1 bg-white rounded-lg shadow-sm flex flex-col min-h-0 relative">
+      <div className="flex-1 bg-gray-50 rounded-lg flex flex-col min-h-0 relative mt-4">
         {/* Upload Button - MainContent 박스의 오른쪽 위에 배치 */}
         <div className="absolute top-4 right-4 z-10 flex gap-3">
           <button
