@@ -17,8 +17,8 @@ pipeline {
             steps {
                 script {
 			        withCredentials([file(credentialsId: 'backend-env-file', variable: 'DOTENV_FILE')]) {
-                        sh 'sudo chown -R jenkins:jenkins .'
-                        sh 'sudo chmod -R u+w .'
+                        sh 'chown -R jenkins:jenkins .'
+                        sh 'chmod -R u+w .'
                         
                         sh "cp ${DOTENV_FILE} .env"
 
