@@ -15,6 +15,13 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
   const [previewUrl, setPreviewUrl] = useState<string>('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // 스터디 이름의 첫 글자로 이미지 생성
+  const generateStudyImage = (name: string) => {
+    if (!name.trim()) return ''
+    const firstChar = name.charAt(0)
+    return firstChar
+  }
+
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
@@ -33,8 +40,8 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
       return
     }
 
-    if (maxCapacity < 2 || maxCapacity > 8) {
-      alert('최대 인원은 2명 이상 8명 이하로 설정해주세요.')
+    if (maxCapacity < 2 || maxCapacity > 10) {
+      alert('최대 인원은 2명 이상 10명 이하로 설정해주세요.')
       return
     }
 
@@ -89,6 +96,11 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
                   alt="스터디 이미지 미리보기"
                   className="w-full h-full rounded-full object-cover"
                 />
+              ) : studyName.trim() ? (
+                // 스터디 이름이 있을 때 첫 글자로 이미지 생성
+                <div className="w-full h-full rounded-full bg-purple-500 text-white flex items-center justify-center text-6xl font-bold">
+                  {generateStudyImage(studyName)}
+                </div>
               ) : (
                 <>
                   <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,15 +147,15 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                인원 <span className="text-gray-500 text-xs">최대 8인</span>
+                인원 <span className="text-gray-500 text-xs">최대 10인</span>
               </label>
               <div className="w-24">
                 <input
                   type="number"
                   value={maxCapacity}
-                  onChange={(e) => setMaxCapacity(Math.max(2, Math.min(8, parseInt(e.target.value) || 2)))}
+                  onChange={(e) => setMaxCapacity(Math.max(2, Math.min(10, parseInt(e.target.value) || 2)))}
                   min={2}
-                  max={8}
+                  max={10}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-center"
                 />
               </div>

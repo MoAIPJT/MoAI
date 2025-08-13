@@ -4,7 +4,7 @@ import StudyCard from '../../molecules/StudyCard'
 import Button from '../../atoms/Button'
 import CreateStudyModal from '../CreateStudyModal'
 import type { CreateStudyData } from '../CreateStudyModal/types'
-import travelingImage from '../../../assets/MoAI/traveling.png'
+import travelingImage from '@/assets/MoAI/traveling.png'
 
 const StudyList: React.FC<StudyListProps> = ({
   studies = [],
@@ -81,18 +81,6 @@ const StudyList: React.FC<StudyListProps> = ({
 
   return (
     <div>
-      {/* 헤더 */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">스터디 목록</h1>
-        <Button
-          variant="primary"
-          size="md"
-          onClick={handleCreateStudy}
-        >
-          스터디 생성하기
-        </Button>
-      </div>
-
       {/* 스터디 그리드 */}
       <div className="relative">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

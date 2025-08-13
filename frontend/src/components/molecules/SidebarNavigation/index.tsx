@@ -60,11 +60,17 @@ const SidebarNavigation: React.FC<ExtendedSidebarNavigationProps> = ({
                       </div>
                     )}
                   </div>
-                  <span className={`text-sm truncate ${
+                  <span className={`text-sm truncate flex-1 ${
                     activeStudyId === study.id ? 'font-medium' : 'text-gray-700'
                   }`}>
                     {study.name}
                   </span>
+                  {/* 승인대기중 상태 표시 */}
+                  {study.status === 'PENDING' && (
+                    <span className="text-xs text-gray-500 ml-auto">
+                      승인대기중
+                    </span>
+                  )}
                 </div>
               ))}
             </div>

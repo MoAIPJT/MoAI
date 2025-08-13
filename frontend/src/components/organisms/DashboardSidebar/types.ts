@@ -7,6 +7,8 @@ export interface StudyItem {
   icon?: string
   memberCount?: number
   isActive?: boolean
+  status?: 'PENDING' | 'APPROVED' | 'LEFT' | 'REJECTED'
+  hashId?: string
 }
 
 export interface DashboardSidebarProps {
