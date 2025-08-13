@@ -167,19 +167,12 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
     promptType: string
   }): Promise<void> => {
     try {
-      // 요청 데이터 로깅
-      console.log('🔄 ContentManagementTemplate에서 받은 데이터:', {
-        summaryData,
-        timestamp: new Date().toISOString()
-      })
-
       // API 호출
       await createAISummaryMutation.mutateAsync(summaryData)
 
       // 성공 후 모달 닫기
       handleModalClose()
     } catch (error) {
-      console.error('AI 요약본 생성 실패:', error)
       alert('AI 요약본 생성에 실패했습니다. 다시 시도해주세요.')
     }
   }

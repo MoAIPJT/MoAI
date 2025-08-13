@@ -82,33 +82,12 @@ const StudyDetailPage: React.FC = () => {
     error: refFilesError
   } = useRefList(shouldLoadStudyDetail ? (studyDetail?.studyId || 0) : 0)
 
-  // 디버깅을 위한 로그
-  console.log('=== 공부 자료 목록 조회 디버깅 ===')
-  console.log('studyDetail?.studyId:', studyDetail?.studyId)
-  console.log('refFiles:', refFiles)
-  console.log('isRefFilesLoading:', isRefFilesLoading)
-  console.log('refFilesError:', refFilesError)
-  console.log('================================')
-
   // 카테고리 생성/삭제 mutation
   const createCategoryMutation = useCreateCategory(studyDetail?.studyId || 0)
   const deleteCategoryMutation = useDeleteCategory(studyDetail?.studyId || 0)
 
   // ✅ 파일 업로드 mutation
   const uploadRefMutation = useUploadRef(studyDetail?.studyId || 0)
-
-  // 멤버 데이터 디버깅
-  console.log('=== 멤버 목록 디버깅 ===')
-  console.log('participants:', participants)
-  participants.forEach(member => {
-    console.log('Member:', {
-      userId: member.userId,
-      name: member.member,
-      role: member.role,
-      email: member.email
-    })
-  })
-  console.log('========================')
 
   const {
   data: joinRequests = []
@@ -211,7 +190,6 @@ const StudyDetailPage: React.FC = () => {
             setNoticeContent(defaultNotice)
           }
         } catch (error) {
-          console.error('공지사항 조회 실패:', error)
           // 에러 발생 시 로컬 스토리지 데이터 사용
           const savedNotice = localStorage.getItem(`study_notice_${activeStudyId}`)
           if (savedNotice) {
@@ -270,7 +248,6 @@ const StudyDetailPage: React.FC = () => {
   // ✅ 로딩 상태만 별도로 관리 - 더 간단해짐
   useEffect(() => {
     if (studyDetail) {
-      console.log('Study detail loaded:', studyDetail)
       setLoading(false)
     }
   }, [studyDetail])  // ✅ participants 의존성 제거
@@ -278,13 +255,10 @@ const StudyDetailPage: React.FC = () => {
   // ✅ 에러 처리 - 로그인된 경우에만 스터디 관련 에러 처리
   useEffect(() => {
     if (isLoggedIn && studyError) {
-      console.error('Study detail error:', studyError)
-      
       // 403 에러(토큰 만료)인 경우 토큰 제거
       if (studyError && typeof studyError === 'object' && 'response' in studyError) {
         const axiosError = studyError as { response?: { status?: number } }
         if (axiosError.response?.status === 403) {
-          console.log('토큰 만료 - 토큰 제거')
           localStorage.removeItem('accessToken')
           localStorage.removeItem('refreshToken')
           return
@@ -299,19 +273,6 @@ const StudyDetailPage: React.FC = () => {
     // 로그인되지 않은 경우 에러 상태 초기화
     if (!isLoggedIn) {
       setError(null)
-    }
-    
-    if (membersError) {
-      console.error('Members error:', membersError)
-      // 멤버 로드 실패는 전체 에러로 처리하지 않음
-    }
-    if (categoriesError) {
-      console.error('Categories error:', categoriesError)
-      // 카테고리 로드 실패는 전체 에러로 처리하지 않음
-    }
-    if (refFilesError) {
-      console.error('Ref files error:', refFilesError)
-      // 공부 자료 로드 실패는 전체 에러로 처리하지 않음
     }
   }, [isLoggedIn, studyError, membersError, categoriesError, refFilesError])
 
@@ -452,26 +413,17 @@ const StudyDetailPage: React.FC = () => {
     navigate('/dashboard')
   }
   const handleJoinStudy = async () => {
-    console.log('=== handleJoinStudy 함수 호출됨 ===')
-    
     // 로그인되지 않은 경우 로그인 페이지로 리다이렉트
     if (!isLoggedIn) {
-      console.log('로그인되지 않음, 로그인 페이지로 이동')
       navigate('/login')
       return
     }
 
-    console.log('로그인 상태 확인됨, studyDetail:', studyDetail)
-    console.log('hashId:', hashId)
-
     if (!studyDetail?.studyId || !hashId) {
-      console.log('스터디 정보 부족, 함수 종료')
       return
     }
     
     try {
-      console.log('가입 요청 API 호출 시작, studyId:', studyDetail.studyId)
-      
       // ✅ 즉시 로컬 상태 업데이트 (API 호출 전에 먼저 실행)
       if (studyDetail) {
         const updatedStudyDetail = {
@@ -503,8 +455,6 @@ const StudyDetailPage: React.FC = () => {
 
       // 가입 요청 API 호출
       await joinStudy({ studyId: studyDetail.studyId })
-
-      console.log('가입 요청이 전송되었습니다.')
       
       // ✅ API 성공 후 추가 캐시 무효화 (백그라운드에서 최신 데이터 동기화)
       if (hashId) {
@@ -516,8 +466,6 @@ const StudyDetailPage: React.FC = () => {
       }
       
     } catch (error) {
-      console.error('가입 요청 실패:', error)
-      
       // ✅ API 실패 시 원래 상태로 롤백
       if (studyDetail && hashId) {
         const originalStudyDetail = {
@@ -552,9 +500,8 @@ const StudyDetailPage: React.FC = () => {
         userId,
         role
       })
-      console.log('가입 요청 승인 완료')
     } catch (error) {
-      console.error('가입 요청 승인 실패:', error)
+      // 에러는 상위 컴포넌트에서 처리
     }
   }
 
@@ -565,20 +512,17 @@ const StudyDetailPage: React.FC = () => {
         studyId: studyDetail.studyId,
         userId
       })
-      console.log('가입 요청 거절 완료')
     } catch (error) {
-      console.error('가입 요청 거절 실패:', error)
+      // 에러는 상위 컴포넌트에서 처리
     }
   }
   // 스터디 관리 모달 관련 핸들러들
   const handleStudyNameChange = (name: string) => {
     // currentStudy는 이제 useMemo로 계산되므로 직접 수정 불가
-    console.log('Study name change:', name)
   }
 
   const handleStudyDescriptionChange = (description: string) => {
     // currentStudy는 이제 useMemo로 계산되므로 직접 수정 불가
-    console.log('Study description change:', description)
   }
 
   // 스터디 수정 훅
@@ -597,12 +541,9 @@ const StudyDetailPage: React.FC = () => {
       // useUpdateStudy 훅을 사용하여 스터디 수정
       await updateStudyMutation.mutateAsync(data)
 
-      console.log('스터디 수정 완료')
-
       // 성공 메시지 (실제로는 toast 등을 사용)
       alert('스터디 정보가 수정되었습니다.')
     } catch (error) {
-      console.error('스터디 수정 실패:', error)
       // 에러 메시지 표시 (실제로는 toast 등을 사용)
       alert('스터디 수정에 실패했습니다. 다시 시도해주세요.')
     }
@@ -614,9 +555,7 @@ const StudyDetailPage: React.FC = () => {
     try {
       // 카테고리 삭제 API 호출
       await deleteCategoryMutation.mutateAsync(categoryId)
-      console.log('카테고리 삭제 완료')
     } catch (error) {
-      console.error('카테고리 삭제 실패:', error)
       alert('카테고리 삭제에 실패했습니다. 다시 시도해주세요.')
     }
   }
@@ -627,9 +566,7 @@ const StudyDetailPage: React.FC = () => {
     try {
       // 카테고리 생성 API 호출
       await createCategoryMutation.mutateAsync(categoryName)
-      console.log('카테고리 생성 완료')
     } catch (error) {
-      console.error('카테고리 생성 실패:', error)
       alert('카테고리 생성에 실패했습니다. 다시 시도해주세요.')
     }
   }
@@ -645,14 +582,11 @@ const StudyDetailPage: React.FC = () => {
         userId: userId
       })
 
-      console.log('멤버 강제탈퇴 완료')
-
       // 성공 시 멤버 목록 React Query 캐시 무효화
       if (hashId) {
         queryClient.invalidateQueries({ queryKey: ['studyDetail', hashId] })
       }
     } catch (error) {
-      console.error('멤버 강제탈퇴 실패:', error)
       alert('멤버 강제탈퇴에 실패했습니다. 다시 시도해주세요.')
     }
   }
@@ -666,18 +600,9 @@ const StudyDetailPage: React.FC = () => {
       role: newRole
     }
 
-    console.log('=== 멤버 역할 변경 디버깅 ===')
-    console.log('studyDetail:', studyDetail)
-    console.log('전달받은 userId:', userId)
-    console.log('전달받은 newRole:', newRole)
-    console.log('최종 payload:', payload)
-    console.log('==============================')
-
     try {
       // 멤버 역할 변경 API 호출
       await changeMemberRoleMutation.mutateAsync(payload)
-
-      console.log('멤버 역할 변경 완료')
 
       // 성공 시 스터디 상세 정보와 멤버 목록 React Query 캐시 무효화
       if (hashId && userProfile?.id) {
@@ -686,30 +611,20 @@ const StudyDetailPage: React.FC = () => {
         queryClient.invalidateQueries({ queryKey: studyKeys.sidebar(userProfile.id) })
       }
     } catch (error) {
-      console.error('멤버 역할 변경 실패:', error)
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { data?: unknown; status?: number } }
-        console.error('에러 상세 정보:', {
-          response: axiosError.response?.data,
-          status: axiosError.response?.status
-        })
-      }
+      // 에러 처리
     }
   }
 
   const handleStudyImageChange = (image: File | null) => {
     if (image) {
       // 이미지 업로드 API 호출 (실제 구현 필요)
-      console.log('Image upload:', image)
     } else {
       // 이미지 제거 API 호출 (실제 구현 필요)
-      console.log('Image remove')
     }
   }
 
   const handleMaxMembersChange = (maxMembers: number) => {
     // 최대 멤버 수 변경 API 호출 (실제 구현 필요)
-    console.log('Max members change:', maxMembers)
   }
 
   // 스터디 탈퇴 핸들러
@@ -729,12 +644,9 @@ const StudyDetailPage: React.FC = () => {
         studyGroupId: studyDetail.studyId
       })
 
-      console.log('스터디 탈퇴 완료')
-
       // 성공 시 대시보드로 이동
       navigate('/dashboard')
     } catch (error) {
-      console.error('스터디 탈퇴 실패:', error)
       // 에러 메시지 표시 (실제로는 toast 등을 사용)
       alert('스터디 탈퇴에 실패했습니다. 다시 시도해주세요.')
     }
@@ -766,7 +678,6 @@ const StudyDetailPage: React.FC = () => {
     try {
       // 카테고리 생성 API 호출
       await createCategoryMutation.mutateAsync(categoryName)
-      console.log('카테고리 생성 완료')
 
       // 카테고리 생성 성공 후 React Query 캐시 무효화하여 목록 새로고침
       if (studyDetail?.studyId) {
@@ -775,20 +686,10 @@ const StudyDetailPage: React.FC = () => {
 
       setShowCategoryModal(false)
     } catch (error) {
-      console.error('카테고리 생성 실패:', error)
-
       // 상세 에러 정보 로깅
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { data?: unknown; status?: number } }
         const status = axiosError.response?.status
-        const errorData = axiosError.response?.data
-
-        console.error('에러 상세 정보:', {
-          status,
-          data: errorData,
-          studyId: studyDetail?.studyId,
-          categoryName: categoryName
-        })
 
         // HTTP 상태 코드별 사용자 친화적 메시지
         if (status === 409) {
@@ -796,20 +697,18 @@ const StudyDetailPage: React.FC = () => {
           return
         } else if (status === 400) {
           alert('잘못된 요청입니다. 입력 정보를 확인해주세요.')
-          return
         } else if (status === 401) {
           alert('권한이 없습니다. 로그인 상태를 확인해주세요.')
-          return
         } else if (status === 403) {
           alert('카테고리를 생성할 권한이 없습니다.')
-          return
         } else if (status && status >= 500) {
           alert('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
-          return
+        } else {
+          alert('카테고리 생성에 실패했습니다. 다시 시도해주세요.')
         }
+      } else {
+        alert('카테고리 생성에 실패했습니다. 다시 시도해주세요.')
       }
-
-      alert('카테고리 생성에 실패했습니다. 다시 시도해주세요.')
     }
   }
 
@@ -842,11 +741,7 @@ const StudyDetailPage: React.FC = () => {
       // 모달 닫기
       setIsEditModalOpen(false)
       setEditingContent(null)
-
-      // 성공 메시지 표시 (실제로는 toast 등을 사용)
-      console.log('파일 수정 완료')
     } catch (error) {
-      console.error('파일 수정 실패:', error)
       alert('파일 수정에 실패했습니다. 다시 시도해주세요.')
     }
   }
@@ -870,10 +765,7 @@ const StudyDetailPage: React.FC = () => {
       if (studyDetail?.studyId) {
         queryClient.invalidateQueries({ queryKey: ['ref', 'list', studyDetail.studyId] })
       }
-
-      console.log('파일 삭제 완료')
     } catch (error) {
-      console.error('파일 삭제 실패:', error)
       alert('파일 삭제에 실패했습니다. 다시 시도해주세요.')
     }
   }
@@ -897,10 +789,7 @@ const StudyDetailPage: React.FC = () => {
 
       // 새 창에서 다운로드 URL 열기
       window.open(response.presignedUrl, '_blank')
-
-      console.log('다운로드 URL 발급 완료:', response.presignedUrl)
     } catch (error) {
-      console.error('다운로드 URL 발급 실패:', error)
       alert('파일 다운로드에 실패했습니다. 다시 시도해주세요.')
     }
   }
@@ -935,11 +824,7 @@ const StudyDetailPage: React.FC = () => {
 
       // 모달 닫기
       setIsUploadModalOpen(false)
-
-      // 성공 메시지 표시 (실제로는 toast 등을 사용)
-      console.log('파일 업로드 완료')
     } catch (error) {
-      console.error('파일 업로드 실패:', error)
       alert('파일 업로드에 실패했습니다. 다시 시도해주세요.')
     }
   }

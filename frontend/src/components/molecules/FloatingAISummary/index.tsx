@@ -83,13 +83,6 @@ const FloatingAISummary: React.FC<FloatingAISummaryProps> = ({
         promptType: prompt || 'study-summary.v1'
       }
 
-      // 요청 데이터 로깅
-      console.log('📝 FloatingAISummary에서 준비된 데이터:', {
-        summaryData,
-        selectedContents: selectedContents.map(c => ({ id: c.id, title: c.title })),
-        userInputs: { title, description, selectedModel, prompt }
-      })
-
       await onSubmit(summaryData)
     } finally {
       setIsLoading(false)

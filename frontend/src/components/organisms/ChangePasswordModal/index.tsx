@@ -89,7 +89,6 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
         handleClose()
       } catch (error) {
         // 에러는 상위 컴포넌트에서 처리
-        console.error('비밀번호 변경 모달 에러:', error)
       } finally {
         setIsSubmitting(false)
       }

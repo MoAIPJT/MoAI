@@ -80,7 +80,7 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
   //     setPublisher(publisher)
   //     
   //   } catch (error) {
-  //     console.error('OpenVidu 세션 초기화 실패:', error)
+  //     // 에러 처리
   //   } finally {
   //     setIsConnecting(false)
   //   }
@@ -123,7 +123,7 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
   //         setParticipants(onlineParticipants)
   //       }
   //     } catch (error) {
-  //       console.error('온라인 스터디 상태 확인 실패:', error)
+  //       // 에러 처리
   //     }
   //   }
   //   
@@ -164,7 +164,7 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
   //     setHasActiveMeeting(true)
   //     
   //   } catch (error) {
-  //     console.error('방 생성 실패:', error)
+  //     // 에러 처리
   //   }
   // }
 
@@ -188,7 +188,7 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
   //     await initializeSession()
   //     
   //   } catch (error) {
-  //     console.error('방 입장 실패:', error)
+  //     // 에러 처리
   //   }
   // }
 
@@ -215,7 +215,7 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
   //     setParticipants([])
   //     
   //   } catch (error) {
-  //     console.error('세션 종료 실패:', error)
+  //     // 에러 처리
   //   }
   // }
 
