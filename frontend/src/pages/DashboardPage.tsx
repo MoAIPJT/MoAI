@@ -16,12 +16,14 @@ import type { CalendarEvent } from '../components/ui/calendar'
 import InviteLinkModal from '../components/organisms/InviteLinkModal'
 import { fetchSummaryList } from '../services/summaryService'
 import { useLogout, useMe, usePatchProfile } from '@/hooks/useUsers'
+import { useAuth } from '@/hooks/useAuth'
 import { useAppStore } from '@/store/appStore'
 import { createStudy, getAllStudies } from '@/services/studyService'
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate()
   const logoutMutation = useLogout()
+  const { logout } = useAuth()
   const { data: userProfile, isLoading: isProfileLoading } = useMe()
   const setProfile = useAppStore((state) => state.auth.setProfile)
   const patchProfileMutation = usePatchProfile()
@@ -105,13 +107,13 @@ const DashboardPage: React.FC = () => {
 
   // 사용자 프로필 데이터를 ProfileData 형식으로 변환
   const profileData: ProfileData = {
-    nickname: userProfile?.nickname || userProfile?.name || '안덕현',
+    nickname: userProfile?.name || '안덕현',
     email: userProfile?.email || 'dksejrqus2@gmail.com',
     profileImage: userProfile?.profileImageUrl || ''
   }
 
   // 프로필 로딩 중일 때 기본값 사용
-  const displayName = isProfileLoading ? '안덕현' : (userProfile?.nickname || userProfile?.name || '안덕현')
+  const displayName = isProfileLoading ? '안덕현' : (userProfile?.name || '안덕현')
 
   // 프로필 정보가 로딩 완료되면 store에 저장
   useEffect(() => {
@@ -241,7 +243,17 @@ const DashboardPage: React.FC = () => {
   }
 
   const handleLogout = () => {
-    logoutMutation.mutate()
+    // 로그아웃 API 호출
+    logoutMutation.mutate(undefined, {
+      onSuccess: () => {
+        // 로그아웃 성공 시 로컬 상태 정리 및 로그인 페이지로 이동
+        logout()
+      },
+      onError: () => {
+        // API 호출 실패 시에도 로컬 상태 정리 및 로그인 페이지로 이동
+        logout()
+      }
+    })
   }
 
   const handleSettingsClick = () => {
@@ -392,6 +404,7 @@ const DashboardPage: React.FC = () => {
         }}
         onLogout={handleLogout}
         onSettingsClick={handleSettingsClick}
+        onLogoClick={() => navigate('/dashboard')}
       />
       <div className="flex-1 flex flex-col ml-64">
         <TopBar userName={displayName} />

@@ -16,6 +16,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   onStudyClick,
   onLogout,
   onSettingsClick,
+  onLogoClick,
 }) => {
   const navigationItems: NavigationItem[] = [
     {
@@ -64,7 +65,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
   return (
     <div className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col fixed top-0 left-0 z-30">
-      <SidebarLogo useImage={true} />
+      <SidebarLogo useImage={true} onClick={onLogoClick} />
       <div className="flex-1 flex flex-col">
         <SidebarNavigation
           items={navigationItems}

@@ -460,6 +460,7 @@ return (
         onCreateRoom={handleCreateRoom}
         onEditNotice={handleEditNotice}
         onSettingsClick={handleSettingsClick}
+        onLogoClick={() => navigate('/dashboard')}
         participants={participants.map((member: Member) => ({
           id: member.email,
           name: member.member,

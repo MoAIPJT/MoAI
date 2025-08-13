@@ -41,6 +41,7 @@ interface StudyDetailTemplateProps {
   onCreateRoom: () => void
   onEditNotice: () => void
   onSettingsClick: () => void
+  onLogoClick?: () => void
   // Content Management 관련 핸들러들
   onCategoryToggle: (categoryId: string) => void
   onAddCategory: () => void
@@ -66,7 +67,7 @@ interface StudyDetailTemplateProps {
     imageUrl: string
     status: 'PENDING' | 'APPROVED' | 'REJECTED'
   }>
-  onAcceptJoinRequest?: (userId: number, role: string) => void
+  onAcceptJoinRequest?: (userId: number, role?: "ADMIN" | "DELEGATE" | "MEMBER") => void
   onRejectJoinRequest?: (userId: number) => void
 }
 
@@ -98,6 +99,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   onCreateRoom,
   onEditNotice,
   onSettingsClick,
+  onLogoClick,
   // Content Management 관련 핸들러들
   onCategoryToggle,
   onAddCategory,
@@ -137,6 +139,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
         activeStudyId={activeStudyId}
         onItemClick={onItemClick}
         onStudyClick={onStudyClick}
+        onLogoClick={onLogoClick}
       />
 
       <div className="ml-64 flex flex-col">

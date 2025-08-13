@@ -4,16 +4,21 @@ interface SidebarLogoProps {
   logoIcon?: string
   iconColor?: string
   useImage?: boolean
+  onClick?: () => void
 }
 
 const SidebarLogo: React.FC<SidebarLogoProps> = ({
   logoIcon = 'M',
   iconColor = 'bg-green-500',
   useImage = true,
+  onClick,
 }) => {
   return (
     <div className="p-4 border-b border-gray-100">
-      <div className="flex items-center justify-center">
+      <div 
+        className={`flex items-center justify-center ${onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+        onClick={onClick}
+      >
         {useImage ? (
           <img
             src="/src/assets/(M)logo.png"
