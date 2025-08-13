@@ -222,6 +222,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
                 <StudyVideoConference
                   onCreateRoom={onCreateRoom}
                   participants={participants}
+                  currentUserRole={currentUserRole}
                 />
               </div>
             </div>
