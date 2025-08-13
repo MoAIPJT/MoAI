@@ -214,6 +214,8 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
                   content={noticeContent}
                   onEdit={onEditNotice}
                   userName={userName}
+                  studyName={currentStudy?.name}
+                  isAdmin={currentUserRole === 'ADMIN'}
                 />
               </div>
               <div className="flex-1">

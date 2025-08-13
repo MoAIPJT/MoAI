@@ -8,7 +8,7 @@ import DashboardSidebar from '../components/organisms/DashboardSidebar'
 import type { StudyItem } from '../components/organisms/DashboardSidebar/types'
 import type { ContentItem } from '../types/content'
 import type { StudyListItem } from '../types/study'
-import { getSidebarStudies, updateStudyNotice, joinStudy, leaveStudy, deleteStudyMember } from '../services/studyService'
+import { getSidebarStudies, updateStudyNotice, joinStudy, leaveStudy, deleteStudyMember, getStudyNotice } from '../services/studyService'
 import { useStudyDetail, useStudyMembers, useJoinRequests, useAcceptJoinRequest, useRejectJoinRequest, useChangeMemberRole, useUpdateStudy } from "../hooks/useStudies";
 import { studyKeys } from "../hooks/queryKeys";
 import { useQueryClient } from '@tanstack/react-query'
@@ -177,7 +177,7 @@ const StudyDetailPage: React.FC = () => {
   const [notice, setNotice] = useState<string>('')
   const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false)
   const [noticeTitle, setNoticeTitle] = useState<string>('공지사항')
-  const [noticeContent, setNoticeContent] = useState<string>('공지사항이 없습니다.')
+  const [noticeContent, setNoticeContent] = useState<string>('')
 
   // 공지사항을 로컬 스토리지에서 불러오기
   useEffect(() => {
@@ -189,6 +189,46 @@ const StudyDetailPage: React.FC = () => {
       }
     }
   }, [activeStudyId])
+
+  // 백엔드에서 공지사항 가져오기
+  useEffect(() => {
+    const fetchStudyNotice = async () => {
+      if (studyDetail?.studyId && isLoggedIn) {
+        try {
+          const response = await getStudyNotice(studyDetail.studyId)
+          if (response.notice && response.notice.trim()) {
+            // 백엔드에 공지사항이 있으면 사용
+            setNotice(response.notice)
+            setNoticeContent(response.notice)
+            // 로컬 스토리지에도 저장
+            if (activeStudyId) {
+              localStorage.setItem(`study_notice_${activeStudyId}`, response.notice)
+            }
+          } else {
+            // 백엔드에 공지사항이 없으면 기본 내용 설정
+            const defaultNotice = studyDetail?.name ? `안녕하세요! ${studyDetail.name} 입니다 :)` : '안녕하세요! 스터디 입니다 :)'
+            setNotice(defaultNotice)
+            setNoticeContent(defaultNotice)
+          }
+        } catch (error) {
+          console.error('공지사항 조회 실패:', error)
+          // 에러 발생 시 로컬 스토리지 데이터 사용
+          const savedNotice = localStorage.getItem(`study_notice_${activeStudyId}`)
+          if (savedNotice) {
+            setNotice(savedNotice)
+            setNoticeContent(savedNotice)
+          } else {
+            // 로컬 스토리지에도 없으면 기본 내용 설정
+            const defaultNotice = studyDetail?.name ? `안녕하세요! ${studyDetail.name} 입니다 :)` : '안녕하세요! 스터디 입니다 :)'
+            setNotice(defaultNotice)
+            setNoticeContent(defaultNotice)
+          }
+        }
+      }
+    }
+
+    fetchStudyNotice()
+  }, [studyDetail?.studyId, isLoggedIn, activeStudyId])
 
   // 스터디 목록 로드
   useEffect(() => {
@@ -347,7 +387,13 @@ const StudyDetailPage: React.FC = () => {
   const handleEditNotice = () => {
     setIsNoticeModalOpen(true)
     setNoticeTitle('공지사항')
-    setNoticeContent(notice)
+    // 공지사항이 비어있거나 기본 내용인 경우 새로운 기본 내용 설정
+    if (!notice || notice === '공지사항이 없습니다.' || notice.includes('안녕하세요!') && notice.includes('입니다 :)')) {
+      const defaultNotice = studyDetail?.name ? `안녕하세요! ${studyDetail.name} 입니다 :)` : '안녕하세요! 스터디 입니다 :)'
+      setNoticeContent(defaultNotice)
+    } else {
+      setNoticeContent(notice)
+    }
   }
 
   const handleNoticeSubmit = async () => {
@@ -362,6 +408,7 @@ const StudyDetailPage: React.FC = () => {
 
       // 로컬 상태 업데이트
       setNotice(noticeContent)
+      setNoticeTitle('공지사항')
       setIsNoticeModalOpen(false)
 
       // 로컬 스토리지에 공지사항 저장
@@ -371,14 +418,27 @@ const StudyDetailPage: React.FC = () => {
 
       // 성공 메시지 (실제로는 toast 등을 사용)
       console.log('공지사항이 업데이트되었습니다.')
+      
       // 성공 시 스터디 상세 정보 React Query 캐시 무효화
       if (hashId) {
         queryClient.invalidateQueries({ queryKey: ['studyDetail', hashId] })
       }
 
+      // 백엔드에서 최신 공지사항 다시 가져오기
+      try {
+        const response = await getStudyNotice(studyDetail.studyId)
+        if (response.notice) {
+          setNotice(response.notice)
+          setNoticeContent(response.notice)
+        }
+      } catch (error) {
+        console.error('공지사항 동기화 실패:', error)
+      }
+
     } catch (error: unknown) {
       console.error('공지사항 업데이트 실패:', error)
       // 에러 메시지 (실제로는 toast 등을 사용)
+      alert('공지사항 업데이트에 실패했습니다. 다시 시도해주세요.')
     }
   }
 
@@ -1060,7 +1120,15 @@ return (
       loading={loading}
       currentStudy={currentStudy}
       currentUserRole={studyDetail?.role} // 현재 사용자 역할 전달
-      userName={userProfile?.name || '사용자'} // 현재 사용자 이름 전달
+      userName={(() => {
+        // admin 사용자 찾기
+        if (studyDetail?.role === 'ADMIN') {
+          return userProfile?.name || '관리자'
+        }
+        // admin이 아닌 경우 admin 멤버 찾기
+        const adminMember = participants.find(member => member.role === 'ADMIN')
+        return adminMember?.member || '관리자'
+      })()}
       onItemClick={handleItemClick}
       onStudyClick={handleStudyClick}
       onSearch={handleSearch}
@@ -1158,18 +1226,6 @@ return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg p-6 w-96 max-w-md">
           <h3 className="text-lg font-semibold mb-4">공지사항 편집</h3>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              제목
-            </label>
-            <input
-              type="text"
-              value={noticeTitle}
-              onChange={(e) => setNoticeTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-              placeholder="공지사항 제목을 입력하세요"
-            />
-          </div>
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               내용

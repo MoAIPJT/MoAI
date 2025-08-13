@@ -3,4 +3,6 @@ export interface StudyNoticeBoxProps {
   content?: string
   onEdit?: () => void
   userName?: string
+  studyName?: string
+  isAdmin?: boolean
 }
