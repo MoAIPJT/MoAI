@@ -4,6 +4,7 @@ export interface SignupFormProps {
   onGoogleSignup?: () => void
   loading?: boolean
   error?: string | null
+  socialButtonsDisabled?: boolean
 }
 
 export interface SignupFormData {

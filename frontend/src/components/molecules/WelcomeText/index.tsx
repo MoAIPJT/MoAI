@@ -1,6 +1,10 @@
 import React from 'react'
 
-const WelcomeText: React.FC = () => {
+interface WelcomeTextProps {
+  actionText?: string
+}
+
+const WelcomeText: React.FC<WelcomeTextProps> = ({ actionText = "로그인하세요." }) => {
   return (
     <div className="text-center mb-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-2">환영합니다!</h1>
@@ -10,7 +14,7 @@ const WelcomeText: React.FC = () => {
           alt="MoAI Logo" 
           className="h-12 w-auto"
         />
-        로그인하세요
+        {actionText}
       </p>
     </div>
   )
