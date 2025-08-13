@@ -15,16 +15,20 @@ import type { ProfileData } from '../components/organisms/ProfileSettingsModal/t
 import type { CalendarEvent } from '../components/ui/calendar'
 import InviteLinkModal from '../components/organisms/InviteLinkModal'
 import { fetchSummaryList } from '../services/summaryService'
-import { useLogout, useMe, usePatchProfile } from '@/hooks/useUsers'
+import { useLogout, useMe, usePatchProfile, useChangePassword, useDeleteAccount } from '@/hooks/useUsers'
+import { useAuth } from '@/hooks/useAuth'
 import { useAppStore } from '@/store/appStore'
 import { createStudy, getAllStudies } from '@/services/studyService'
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate()
   const logoutMutation = useLogout()
+  const { logout } = useAuth()
   const { data: userProfile, isLoading: isProfileLoading } = useMe()
   const setProfile = useAppStore((state) => state.auth.setProfile)
   const patchProfileMutation = usePatchProfile()
+  const changePasswordMutation = useChangePassword()
+  const deleteAccountMutation = useDeleteAccount()
 
   const [studies, setStudies] = useState<Study[]>([])
   const [summaries, setSummaries] = useState<AISummary[]>([])
@@ -105,13 +109,14 @@ const DashboardPage: React.FC = () => {
 
   // 사용자 프로필 데이터를 ProfileData 형식으로 변환
   const profileData: ProfileData = {
-    nickname: userProfile?.nickname || userProfile?.name || '안덕현',
+    name: userProfile?.name || '안덕현',
     email: userProfile?.email || 'dksejrqus2@gmail.com',
-    profileImage: userProfile?.profileImageUrl || ''
+    profileImageUrl: userProfile?.profileImageUrl || '/src/assets/MoAI/smiling.png',
+    providerType: userProfile?.providerType || 'LOCAL'
   }
 
   // 프로필 로딩 중일 때 기본값 사용
-  const displayName = isProfileLoading ? '안덕현' : (userProfile?.nickname || userProfile?.name || '안덕현')
+  const displayName = isProfileLoading ? '안덕현' : (userProfile?.name || '안덕현')
 
   // 프로필 정보가 로딩 완료되면 store에 저장
   useEffect(() => {
@@ -241,7 +246,17 @@ const DashboardPage: React.FC = () => {
   }
 
   const handleLogout = () => {
-    logoutMutation.mutate()
+    // 로그아웃 API 호출
+    logoutMutation.mutate(undefined, {
+      onSuccess: () => {
+        // 로그아웃 성공 시 로컬 상태 정리 및 로그인 페이지로 이동
+        logout()
+      },
+      onError: () => {
+        // API 호출 실패 시에도 로컬 상태 정리 및 로그인 페이지로 이동
+        logout()
+      }
+    })
   }
 
   const handleSettingsClick = () => {
@@ -252,8 +267,8 @@ const DashboardPage: React.FC = () => {
     try {
       // ProfileData를 API 형식에 맞게 변환
       const updateData = {
-        nickname: data.nickname,
-        profileImageUrl: data.profileImage
+        name: data.name,
+        profileImageUrl: data.profileImageUrl
       }
 
       await patchProfileMutation.mutateAsync(updateData)
@@ -272,16 +287,119 @@ const DashboardPage: React.FC = () => {
     setIsChangePasswordModalOpen(true)
   }
 
-  const handleChangePasswordSubmit = () => {
-    // TODO: API 호출로 비밀번호 변경
-
-    alert('비밀번호가 성공적으로 변경되었습니다.')
+  const handleChangePasswordSubmit = async (data: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
+    try {
+      console.log('비밀번호 변경 요청 데이터:', {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+        confirmNewPassword: data.confirmPassword
+      })
+      
+      // 실제 비밀번호 변경 API 호출
+      const response = await changePasswordMutation.mutateAsync({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+        confirmNewPassword: data.confirmPassword
+      })
+      
+      console.log('비밀번호 변경 성공 응답:', response)
+      alert('비밀번호가 성공적으로 변경되었습니다.')
+    } catch (error) {
+      console.error('비밀번호 변경 실패 상세:', error)
+      
+      // 사용자 친화적인 에러 메시지 생성
+      let errorMessage = '비밀번호 변경에 실패했습니다.'
+      
+      if (error && typeof error === 'object' && 'code' in error) {
+        const errorCode = (error as any).code
+        const errorMsg = (error as any).message
+        
+        console.log('에러 코드:', errorCode, '에러 메시지:', errorMsg)
+        
+        switch (errorCode) {
+          case 'INVALID_PASSWORD':
+            errorMessage = '현재 비밀번호가 올바르지 않습니다.'
+            break
+          case 'PASSWORD_CONFIRM_MISMATCH':
+            errorMessage = '새 비밀번호와 확인 비밀번호가 일치하지 않습니다.'
+            break
+          case 'PASSWORD_SAME_AS_OLD':
+            errorMessage = '새 비밀번호는 현재 비밀번호와 달라야 합니다.'
+            break
+          case 'VALIDATION_ERROR':
+            errorMessage = '입력값을 확인해주세요.'
+            break
+          case 'INTERNAL_SERVER_ERROR':
+            errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
+            break
+          default:
+            if (errorMsg) {
+              errorMessage = errorMsg
+            }
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message
+      }
+      
+      alert(errorMessage)
+    }
   }
 
-  const handleWithdrawMembership = () => {
-    // TODO: 회원탈퇴 확인 모달 또는 페이지로 이동
-    if (confirm('정말로 회원탈퇴를 하시겠습니까?')) {
-      // 회원탈퇴 처리
+  const handleWithdrawMembership = async () => {
+    // 회원탈퇴 확인
+    if (!confirm('정말로 회원탈퇴를 하시겠습니까?\n\n⚠️ 주의: 이 작업은 되돌릴 수 없습니다.')) {
+      return
+    }
+    
+    // 추가 확인
+    if (!confirm('회원탈퇴를 진행하시겠습니까?\n\n모든 데이터가 영구적으로 삭제됩니다.')) {
+      return
+    }
+    
+    try {
+      console.log('회원탈퇴 요청 시작')
+      
+      // 회원탈퇴 API 호출
+      await deleteAccountMutation.mutateAsync()
+      
+      console.log('회원탈퇴 성공')
+      alert('회원탈퇴가 완료되었습니다.')
+      
+      // 로그아웃 처리 및 로그인 페이지로 이동
+      logout()
+      
+    } catch (error) {
+      console.error('회원탈퇴 실패:', error)
+      
+      // 사용자 친화적인 에러 메시지 생성
+      let errorMessage = '회원탈퇴에 실패했습니다.'
+      
+      if (error && typeof error === 'object' && 'code' in error) {
+        const errorCode = (error as any).code
+        const errorMsg = (error as any).message
+        
+        console.log('에러 코드:', errorCode, '에러 메시지:', errorMsg)
+        
+        switch (errorCode) {
+          case 'UNAUTHORIZED':
+            errorMessage = '인증이 만료되었습니다. 다시 로그인해주세요.'
+            break
+          case 'USER_NOT_FOUND':
+            errorMessage = '사용자 정보를 찾을 수 없습니다.'
+            break
+          case 'INTERNAL_SERVER_ERROR':
+            errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
+            break
+          default:
+            if (errorMsg) {
+              errorMessage = errorMsg
+            }
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message
+      }
+      
+      alert(errorMessage)
     }
   }
 
@@ -392,6 +510,7 @@ const DashboardPage: React.FC = () => {
         }}
         onLogout={handleLogout}
         onSettingsClick={handleSettingsClick}
+        onLogoClick={() => navigate('/dashboard')}
       />
       <div className="flex-1 flex flex-col ml-64">
         <TopBar userName={displayName} />
