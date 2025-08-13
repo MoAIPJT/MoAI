@@ -17,6 +17,9 @@ pipeline {
             steps {
                 script {
 			        withCredentials([file(credentialsId: 'backend-env-file', variable: 'DOTENV_FILE')]) {
+                        sh 'sudo chown -R jenkins:jenkins .'
+                        sh 'sudo chmod -R u+w .'
+                        
                         sh "cp ${DOTENV_FILE} .env"
 
                         sh 'docker compose -f compose.prod.yml down -v'
