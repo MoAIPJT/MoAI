@@ -52,8 +52,14 @@ export const useAuth = () => {
       setIsAuthenticated(true)
       setUser({ email: data.email })
 
-      // 로그인 성공 후 리다이렉트
-      navigate('/dashboard')
+      // 로그인 성공 후 리다이렉트 - 저장된 URL이 있으면 해당 URL로, 없으면 대시보드로
+      const redirectUrl = localStorage.getItem('redirectAfterLogin')
+      if (redirectUrl) {
+        localStorage.removeItem('redirectAfterLogin') // 사용 후 제거
+        navigate(redirectUrl)
+      } else {
+        navigate('/dashboard')
+      }
       return response
     } catch (err: unknown) {
       // 이메일 인증 에러 처리

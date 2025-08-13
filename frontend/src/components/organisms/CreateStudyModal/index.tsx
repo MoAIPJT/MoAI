@@ -6,7 +6,9 @@ import InputText from '../../atoms/InputText'
 const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
   isOpen,
   onClose,
-  onSubmit
+  onSubmit,
+  isLoading = false,
+  onLoadingChange
 }) => {
   const [studyName, setStudyName] = useState('')
   const [studyDescription, setStudyDescription] = useState('')
@@ -45,6 +47,11 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
       return
     }
 
+    // 제출 버튼을 누르는 순간 로딩 상태 활성화
+    if (onLoadingChange) {
+      onLoadingChange(true)
+    }
+
     onSubmit({
       name: studyName,
       description: studyDescription,
@@ -52,13 +59,16 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
       maxCapacity: maxCapacity
     })
 
-    // 폼 초기화
-    setStudyName('')
-    setStudyDescription('')
-    setMaxCapacity(8)
-    setSelectedImage(null)
-    setPreviewUrl('')
-    onClose()
+    // 로딩 중이 아닐 때만 폼 초기화 및 모달 닫기
+    if (!isLoading) {
+      // 폼 초기화
+      setStudyName('')
+      setStudyDescription('')
+      setMaxCapacity(8)
+      setSelectedImage(null)
+      setPreviewUrl('')
+      onClose()
+    }
   }
 
   const handleClose = () => {
@@ -76,7 +86,7 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">스터디 생성하기</h2>
+          <h2 className="text-2xl font-bold text-gray-900">스터디 시작하기</h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 text-2xl"
@@ -177,8 +187,9 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
             variant="primary"
             size="md"
             onClick={handleSubmit}
+            disabled={isLoading}
           >
-            생성
+            {isLoading ? '시작 중...' : '시작'}
           </Button>
         </div>
       </div>

@@ -8,7 +8,7 @@ import ProfileSettingsModal from '../components/organisms/ProfileSettingsModal'
 import ChangePasswordModal from '../components/organisms/ChangePasswordModal'
 import { Calendar } from '../components/ui/calendar'
 import Button from '../components/atoms/Button'
-import type { Study } from '../components/organisms/StudyList/types'
+import LoadingToast from '../components/atoms/LoadingToast'
 import type { StudyItem } from '../components/organisms/DashboardSidebar/types'
 import type { AISummary } from '../components/molecules/AISummaryCard/types'
 import type { CreateStudyData } from '../components/organisms/CreateStudyModal/types'
@@ -23,7 +23,6 @@ import { useAuth } from '@/hooks/useAuth'
 import { useAppStore } from '@/store/appStore'
 import { createStudy, getAllStudies } from '@/services/studyService'
 import { scheduleService } from '@/services/scheduleService'
-import type { ScheduleListResponse } from '@/services/scheduleService'
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate()
@@ -46,19 +45,19 @@ const DashboardPage: React.FC = () => {
   const [isCreateStudyModalOpen, setIsCreateStudyModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [expandedStudy, setExpandedStudy] = useState(false)
-  const [calendarEvents] = useState<CalendarEvent[]>([])
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([])
+  const [isCreatingStudy, setIsCreatingStudy] = useState(false)
 
   // 일정 데이터를 가져오는 함수
   const fetchSchedules = async () => {
     try {
-      setIsScheduleLoading(true)
       // 현재 월의 시작과 끝 날짜 계산
       const now = new Date()
       const from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
       const to = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString()
 
       const schedulesData = await scheduleService.getMySchedules(from, to)
-      setSchedules(schedulesData) // schedules 상태 설정
+      // setSchedules(schedulesData) // schedules 상태 설정 - 사용하지 않음
 
       // API 응답을 CalendarEvent 형식으로 변환
       const events: CalendarEvent[] = schedulesData.map(schedule => {
@@ -111,9 +110,9 @@ const DashboardPage: React.FC = () => {
         }
       ]
       setCalendarEvents(defaultEvents)
-      setSchedules([]) // 빈 배열로 설정
+      // setSchedules([]) // 빈 배열로 설정 - 사용하지 않음
     } finally {
-      setIsScheduleLoading(false)
+      // setIsScheduleLoading(false) // 사용하지 않음
     }
   }
 
@@ -127,9 +126,6 @@ const DashboardPage: React.FC = () => {
     studyImage: string;
     color: string;
   }> = []
-
-  // 디버깅을 위한 콘솔 로그
-  // console.log('useMe 결과:', { userProfile, isProfileLoading })
 
   // 사용자 프로필 데이터를 ProfileData 형식으로 변환
   const profileData: ProfileData = {
@@ -267,7 +263,7 @@ const DashboardPage: React.FC = () => {
   const handleChangePasswordSubmit = async (data: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
     try {
       // 실제 비밀번호 변경 API 호출
-      const response = await changePasswordMutation.mutateAsync({
+      await changePasswordMutation.mutateAsync({
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
         confirmNewPassword: data.confirmPassword
@@ -411,12 +407,16 @@ const DashboardPage: React.FC = () => {
       // 성공적으로 스터디가 생성되면 초대 링크 모달 표시
       const inviteUrl = `${window.location.origin}/study/${response.hashId}`
       setCurrentInviteUrl(inviteUrl)
-      setIsInviteModalOpen(true)
-
+      
       // 스터디 목록 새로고침
       await fetchStudies()
-
-      alert('스터디가 성공적으로 생성되었습니다!')
+      
+      // 스터디 생성 모달 닫기
+      setIsCreateStudyModalOpen(false)
+      
+      // 초대 링크 모달 표시 (로딩 완료 후)
+      setIsInviteModalOpen(true)
+      
     } catch (error) {
       // 백엔드가 실행되지 않은 경우 임시로 프론트엔드에서 처리
       if (error && typeof error === 'object' && 'code' in error && error.code === '500') {
@@ -434,15 +434,14 @@ const DashboardPage: React.FC = () => {
       }
 
       alert(errorMessage)
+    } finally {
+      // 스터디 생성 완료 후 로딩 상태 비활성화
+      setIsCreatingStudy(false)
     }
   }
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date)
-  }
-
-  const handleAddEvent = () => {
-    // TODO: 이벤트 추가 모달 또는 페이지로 이동
   }
 
   // 월 변경 시 일정 데이터 다시 로드
@@ -460,9 +459,9 @@ const DashboardPage: React.FC = () => {
   // 특정 월의 일정 데이터를 가져오는 함수
   const fetchSchedulesForMonth = async (from: string, to: string) => {
     try {
-      setIsScheduleLoading(true)
+      // setIsScheduleLoading(true) // 사용하지 않음
       const schedulesData = await scheduleService.getMySchedules(from, to)
-      setSchedules(schedulesData) // schedules 상태 설정
+      // setSchedules(schedulesData) // schedules 상태 설정 - 사용하지 않음
 
       // API 응답을 CalendarEvent 형식으로 변환
       const events: CalendarEvent[] = schedulesData.map(schedule => {
@@ -491,7 +490,7 @@ const DashboardPage: React.FC = () => {
       console.error('월별 일정 데이터 로드 실패:', error)
       // 에러 시 기존 이벤트 유지
     } finally {
-      setIsScheduleLoading(false)
+      // setIsScheduleLoading(false) // 사용하지 않음
     }
   }
 
@@ -537,7 +536,7 @@ const DashboardPage: React.FC = () => {
                       onClick={() => setIsCreateStudyModalOpen(true)}
                       className="rounded-xl bg-[#F6EEFF] text-gray-700 hover:bg-[#E8D9FF] border-0"
                     >
-                      스터디 생성하기
+                      스터디 시작하기
                     </Button>
                   </div>
                   <StudyList
@@ -548,7 +547,8 @@ const DashboardPage: React.FC = () => {
                       imageUrl: study.image || study.image_url || '',
                       createdBy: 1,
                       createdAt: new Date().toISOString().split('T')[0],
-                      inviteUrl: study.hashId ? `${window.location.origin}/study/${study.hashId}` : `${window.location.origin}/study/${study.id}`
+                      inviteUrl: study.hashId ? `${window.location.origin}/study/${study.hashId}` : `${window.location.origin}/study/${study.id}`,
+                      status: study.status // status 정보 추가
                     }))}
                     isLoading={isLoading}
                     onCreateStudy={handleCreateStudy}
@@ -673,8 +673,19 @@ const DashboardPage: React.FC = () => {
       {/* 스터디 생성 모달 */}
       <CreateStudyModal
         isOpen={isCreateStudyModalOpen}
-        onClose={() => setIsCreateStudyModalOpen(false)}
+        onClose={() => {
+          setIsCreateStudyModalOpen(false)
+          setIsCreatingStudy(false) // 모달 닫을 때 로딩 상태도 초기화
+        }}
         onSubmit={handleCreateStudy}
+        isLoading={isCreatingStudy}
+        onLoadingChange={setIsCreatingStudy}
+      />
+
+      {/* 로딩 토스트 */}
+      <LoadingToast 
+        isVisible={isCreatingStudy} 
+        message="스터디 시작하는 중..." 
       />
     </div>
   )

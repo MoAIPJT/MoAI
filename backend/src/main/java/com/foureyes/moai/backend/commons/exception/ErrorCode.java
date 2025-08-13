@@ -29,12 +29,10 @@ public enum ErrorCode {
     FORBIDDEN_DOCUMENT_ACCESS("문서에 접근할 권한이 없습니다.", HttpStatus.FORBIDDEN),
     FORBIDDEN("권한이 없습니다.", HttpStatus.FORBIDDEN),
     FORBIDDEN_SUMMARY_ACCESS("요약본에 대한 권한이 없습니다.", HttpStatus.FORBIDDEN),
-<<<<<<< HEAD
+
     EMAIL_NOT_VERIFIED("이메일 인증이 완료되지 않았습니다.", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED("접근 권한이 없습니다.", HttpStatus.UNAUTHORIZED),
-=======
-    EMAIL_NOT_VERIFIED("이메일 인증이 완료되지 않았습니다.", HttpStatus.BAD_REQUEST),
->>>>>>> d8c4ee7835b34a9b8461420f2815bba41b2d2b30
+
 
     // 404 Not Found
     USER_NOT_FOUND("등록되지 않은 이메일입니다.", HttpStatus.NOT_FOUND),

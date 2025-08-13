@@ -11,6 +11,7 @@ export interface StudyManagementModalProps {
   members: Member[]
   categories: Category[]
   currentUserRole?: string
+  currentUserName?: string
   onStudyNameChange: (name: string) => void
   onStudyDescriptionChange: (description: string) => void
   onStudyImageChange: (image: File | null) => void

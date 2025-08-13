@@ -51,10 +51,10 @@ interface StudyDetailTemplateProps {
   onUploadData: () => void
   onCreateRoom: () => void
   onEditNotice: () => void
-  onLeaveStudy?: () => void
   onSettingsClick: () => void
   onLogout?: () => void
   onLogoClick?: () => void
+  onLeaveStudy?: () => void
   // Content Management 관련 핸들러들
   onCategoryToggle: (categoryId: number) => void
   onAddCategory: () => void
@@ -90,7 +90,7 @@ interface StudyDetailTemplateProps {
     imageUrl: string
     status: 'PENDING' | 'APPROVED' | 'REJECTED'
   }>
-  onAcceptJoinRequest?: (userId: number, role?: 'ADMIN' | 'DELEGATE' | 'MEMBER') => void
+  onAcceptJoinRequest?: (userId: number, role: 'ADMIN' | 'DELEGATE' | 'MEMBER') => void
   onRejectJoinRequest?: (userId: number) => void
 }
 
@@ -126,10 +126,10 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   onUploadData,
   onCreateRoom,
   onEditNotice,
-  onLeaveStudy,
   onSettingsClick,
   onLogout,
   onLogoClick,
+  onLeaveStudy,
   // Content Management 관련 핸들러들
   onCategoryToggle,
   onAddCategory,
@@ -165,6 +165,17 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   const handleOpenManagementModal = () => setIsManagementModalOpen(true)
   const handleCloseManagementModal = () => setIsManagementModalOpen(false)
 
+  // 권한 변경 후 모달 닫기
+  const handleMemberRoleChange = (userId: number, newRole: 'ADMIN' | 'DELEGATE' | 'MEMBER') => {
+    if (onMemberRoleChange) {
+      onMemberRoleChange(userId, newRole)
+      // ADMIN으로 변경된 경우 모달 닫기
+      if (newRole === 'ADMIN') {
+        handleCloseMembersModal()
+      }
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardSidebar
@@ -186,11 +197,9 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
           studyDescription={currentStudy?.description}
           studyImageUrl={currentStudy?.image}
           loading={loading}
-          userCount={studyParticipants?.length || 0}
           currentUserRole={currentUserRole}
           onSettingsClick={handleOpenManagementModal}
           onUserCountClick={handleOpenMembersModal}
-          onLeaveStudy={onLeaveStudy}
         />
 
         {/* 메인 콘텐츠 */}
@@ -263,10 +272,13 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
         members={studyParticipants || []}
         studyName={currentStudy?.name || 'Study'}
         currentUserRole={currentUserRole}
+        currentUserName={userName}
+        hashId={activeStudyId || undefined} // activeStudyId는 hashId입니다
         joinRequests={joinRequests}
         onAcceptJoinRequest={onAcceptJoinRequest}
         onRejectJoinRequest={onRejectJoinRequest}
-        onMemberRoleChange={onMemberRoleChange}
+        onMemberRoleChange={handleMemberRoleChange}
+        onLeaveStudy={onLeaveStudy}
       />
 
       {/* Study Management Modal */}
@@ -281,6 +293,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
           members={studyParticipants || []}
           categories={categories}
           currentUserRole={currentUserRole}
+          currentUserName={userName}
           onStudyNameChange={onStudyNameChange || (() => {})}
           onStudyDescriptionChange={onStudyDescriptionChange || (() => {})}
           onStudyImageChange={onStudyImageChange || (() => {})}

@@ -513,6 +513,7 @@ public class StudyServiceImpl implements StudyService {
 
         // 4) 그 외(LEFT/REJECTED) → 명시 없으셔서 이름, 이미지, 상태만 포함하도록 처리
         return StudyDetailResponseDto.builder()
+            .id(group.getId())
             .name(group.getName())
             .imageUrl(group.getImageUrl())
             .status(membership.getStatus().name())
