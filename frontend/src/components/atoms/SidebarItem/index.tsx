@@ -14,9 +14,9 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
   return (
     <button
       onClick={() => onClick(id)}
-      className={`
+              className={`
         w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors duration-200
-        ${id === 'study' && (isExpanded || isActive)
+        ${id === 'study' && isExpanded && isActive
           ? 'bg-purple-500 text-white'
           : id === 'study'
             ? 'text-gray-700 hover:bg-purple-500 hover:text-white'
