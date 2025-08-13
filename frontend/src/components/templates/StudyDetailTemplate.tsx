@@ -197,11 +197,9 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
           studyDescription={currentStudy?.description}
           studyImageUrl={currentStudy?.image}
           loading={loading}
-          userCount={studyParticipants?.length || 0}
           currentUserRole={currentUserRole}
           onSettingsClick={handleOpenManagementModal}
           onUserCountClick={handleOpenMembersModal}
-          onLeaveStudy={onLeaveStudy}
         />
 
         {/* 메인 콘텐츠 */}
@@ -275,8 +273,6 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
         studyName={currentStudy?.name || 'Study'}
         currentUserRole={currentUserRole}
         currentUserName={userName}
-        currentUserEmail={userName} // 임시로 userName 사용, 실제로는 이메일을 별도로 받아야 함
-        studyId={studyId}
         hashId={activeStudyId || undefined} // activeStudyId는 hashId입니다
         joinRequests={joinRequests}
         onAcceptJoinRequest={onAcceptJoinRequest}

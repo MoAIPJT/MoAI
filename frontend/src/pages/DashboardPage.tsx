@@ -9,7 +9,6 @@ import ChangePasswordModal from '../components/organisms/ChangePasswordModal'
 import { Calendar } from '../components/ui/calendar'
 import Button from '../components/atoms/Button'
 import LoadingToast from '../components/atoms/LoadingToast'
-import type { Study } from '../components/organisms/StudyList/types'
 import type { StudyItem } from '../components/organisms/DashboardSidebar/types'
 import type { AISummary } from '../components/molecules/AISummaryCard/types'
 import type { CreateStudyData } from '../components/organisms/CreateStudyModal/types'
@@ -24,7 +23,6 @@ import { useAuth } from '@/hooks/useAuth'
 import { useAppStore } from '@/store/appStore'
 import { createStudy, getAllStudies } from '@/services/studyService'
 import { scheduleService } from '@/services/scheduleService'
-import type { ScheduleListResponse } from '@/services/scheduleService'
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate()
@@ -48,21 +46,18 @@ const DashboardPage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [expandedStudy, setExpandedStudy] = useState(false)
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([])
-  const [schedules, setSchedules] = useState<any[]>([])
-  const [isScheduleLoading, setIsScheduleLoading] = useState(false)
   const [isCreatingStudy, setIsCreatingStudy] = useState(false)
 
   // 일정 데이터를 가져오는 함수
   const fetchSchedules = async () => {
     try {
-      setIsScheduleLoading(true)
       // 현재 월의 시작과 끝 날짜 계산
       const now = new Date()
       const from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
       const to = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString()
 
       const schedulesData = await scheduleService.getMySchedules(from, to)
-      setSchedules(schedulesData) // schedules 상태 설정
+      // setSchedules(schedulesData) // schedules 상태 설정 - 사용하지 않음
 
       // API 응답을 CalendarEvent 형식으로 변환
       const events: CalendarEvent[] = schedulesData.map(schedule => {
@@ -115,9 +110,9 @@ const DashboardPage: React.FC = () => {
         }
       ]
       setCalendarEvents(defaultEvents)
-      setSchedules([]) // 빈 배열로 설정
+      // setSchedules([]) // 빈 배열로 설정 - 사용하지 않음
     } finally {
-      setIsScheduleLoading(false)
+      // setIsScheduleLoading(false) // 사용하지 않음
     }
   }
 
@@ -268,7 +263,7 @@ const DashboardPage: React.FC = () => {
   const handleChangePasswordSubmit = async (data: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
     try {
       // 실제 비밀번호 변경 API 호출
-      const response = await changePasswordMutation.mutateAsync({
+      await changePasswordMutation.mutateAsync({
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
         confirmNewPassword: data.confirmPassword
@@ -449,10 +444,6 @@ const DashboardPage: React.FC = () => {
     setSelectedDate(date)
   }
 
-  const handleAddEvent = () => {
-    // TODO: 이벤트 추가 모달 또는 페이지로 이동
-  }
-
   // 월 변경 시 일정 데이터 다시 로드
   const handleMonthChange = (date: Date) => {
     // 선택된 월의 시작과 끝 날짜 계산
@@ -468,9 +459,9 @@ const DashboardPage: React.FC = () => {
   // 특정 월의 일정 데이터를 가져오는 함수
   const fetchSchedulesForMonth = async (from: string, to: string) => {
     try {
-      setIsScheduleLoading(true)
+      // setIsScheduleLoading(true) // 사용하지 않음
       const schedulesData = await scheduleService.getMySchedules(from, to)
-      setSchedules(schedulesData) // schedules 상태 설정
+      // setSchedules(schedulesData) // schedules 상태 설정 - 사용하지 않음
 
       // API 응답을 CalendarEvent 형식으로 변환
       const events: CalendarEvent[] = schedulesData.map(schedule => {
@@ -499,7 +490,7 @@ const DashboardPage: React.FC = () => {
       console.error('월별 일정 데이터 로드 실패:', error)
       // 에러 시 기존 이벤트 유지
     } finally {
-      setIsScheduleLoading(false)
+      // setIsScheduleLoading(false) // 사용하지 않음
     }
   }
 

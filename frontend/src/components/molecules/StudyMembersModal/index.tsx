@@ -8,13 +8,11 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
   studyName,
   currentUserRole,
   currentUserName,
-  currentUserEmail,
   joinRequests = [],
   onAcceptJoinRequest,
   onRejectJoinRequest,
   onMemberRoleChange,
   onLeaveStudy,
-  studyId,
   hashId,
 }) => {
   const [showToast, setShowToast] = useState(false)

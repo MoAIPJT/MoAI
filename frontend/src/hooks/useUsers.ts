@@ -8,8 +8,8 @@ import type {
 } from '../types/users'
 
 // Query hooks
-export const useMe = () => {
-  return useQuery({
+export const useMe = (): ReturnType<typeof useQuery<Profile>> => {
+  return useQuery<Profile>({
     queryKey: userKeys.me(),
     queryFn: usersService.getProfile,
     staleTime: 60 * 1000, // 60 seconds
@@ -19,14 +19,6 @@ export const useMe = () => {
       if (error && typeof error === 'object' && 'code' in error && 
           (error.code === '404' || error.code === '403')) return false
       return failureCount < 3
-    },
-    // 403 에러 발생 시 토큰 제거
-    onError: (error: unknown) => {
-      if (error && typeof error === 'object' && 'code' in error && error.code === '403') {
-        console.log('403 에러 발생 - 토큰 제거')
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('refreshToken')
-      }
     }
   })
 }

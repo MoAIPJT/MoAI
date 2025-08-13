@@ -7,11 +7,9 @@ const StudyHeader: React.FC<StudyHeaderProps> = ({
   studyDescription,
   studyImageUrl,
   loading = false,
-  userCount = 7,
   currentUserRole,
   onSettingsClick,
   onUserCountClick,
-  onLeaveStudy,
 }) => {
   return (
     <div className="bg-white border-b border-gray-200 p-6">

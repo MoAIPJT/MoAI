@@ -22,9 +22,9 @@ const AISummaryPage: React.FC = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false)
   const [profileData, setProfileData] = useState<ProfileData>({
-    nickname: '안덕현',
+    name: '안덕현',
     email: 'dksejrqus2@gmail.com',
-    profileImage: ''
+    profileImageUrl: ''
   })
 
   const clearAuth = useAppStore((state) => state.auth.clearAuth)

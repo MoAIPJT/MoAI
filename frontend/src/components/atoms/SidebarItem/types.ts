@@ -1,7 +1,9 @@
+import React from 'react'
+
 export interface SidebarItemProps {
   id: string
   label: string
-  icon: string
+  icon: React.ReactElement
   isActive?: boolean
   isExpanded?: boolean
   hasSubItems?: boolean
