@@ -50,33 +50,21 @@ const normalizeError = (error: unknown): ApiError => {
 // Study endpoints
 export const createStudy = async (data: CreateStudyReq): Promise<CreateStudyRes> => {
   try {
-    let response;
-
-    if (data.image) {
-      // 이미지가 있는 경우 FormData 사용
-      const formData = new FormData()
-      formData.append('name', data.name)
-      if (data.description) {
-        formData.append('description', data.description)
-      }
-      formData.append('image', data.image)
-      formData.append('maxCapacity', data.maxCapacity.toString())
-
-      response = await api.post<CreateStudyRes>('/study/register', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
-    } else {
-      // 이미지가 없는 경우 JSON 형식으로 전송
-      const requestBody = {
-        name: data.name,
-        description: data.description || '',
-        maxCapacity: data.maxCapacity
-      }
-
-      response = await api.post<CreateStudyRes>('/study/register', requestBody)
+    const formData = new FormData()
+    formData.append('name', data.name)
+    if (data.description) {
+      formData.append('description', data.description)
     }
+    if (data.image) {
+      formData.append('image', data.image)
+    }
+    formData.append('maxCapacity', data.maxCapacity.toString())
+
+    const response = await api.post<CreateStudyRes>('/study/register', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
 
     return response.data
   } catch (error) {
