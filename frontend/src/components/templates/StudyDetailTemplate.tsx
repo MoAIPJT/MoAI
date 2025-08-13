@@ -41,6 +41,7 @@ interface StudyDetailTemplateProps {
   onCreateRoom: () => void
   onEditNotice: () => void
   onSettingsClick: () => void
+  onLogout?: () => void
   onLogoClick?: () => void
   // Content Management 관련 핸들러들
   onCategoryToggle: (categoryId: string) => void
@@ -99,6 +100,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   onCreateRoom,
   onEditNotice,
   onSettingsClick,
+  onLogout,
   onLogoClick,
   // Content Management 관련 핸들러들
   onCategoryToggle,
@@ -140,6 +142,8 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
         onItemClick={onItemClick}
         onStudyClick={onStudyClick}
         onLogoClick={onLogoClick}
+        onLogout={onLogout}
+        onSettingsClick={onSettingsClick}
       />
 
       <div className="ml-64 flex flex-col">

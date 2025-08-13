@@ -152,9 +152,9 @@ const StudyDetailPage: React.FC = () => {
       window.open('/ai-summary', '_blank')
     }
 
-    // 마이페이지 클릭 시 새 탭에서 대시보드 열기
+    // 마이페이지 클릭 시 현재 창에서 대시보드로 이동
     if (itemId === 'mypage') {
-      window.open('/dashboard', '_blank')
+      navigate('/dashboard')
     }
   }
 
@@ -214,6 +214,9 @@ const StudyDetailPage: React.FC = () => {
   }
 
   const handleSettingsClick = () => {
+    // 프로필 설정 모달을 열거나 설정 페이지로 이동
+    // 현재는 대시보드로 이동하여 설정을 할 수 있도록 함
+    navigate('/dashboard')
   }
   const handleJoinStudy = async () => {
     if (!studyDetail?.studyId || !hashId) return
@@ -460,6 +463,12 @@ return (
         onCreateRoom={handleCreateRoom}
         onEditNotice={handleEditNotice}
         onSettingsClick={handleSettingsClick}
+        onLogout={() => {
+          // 로그아웃 처리
+          localStorage.removeItem('accessToken')
+          localStorage.removeItem('refreshToken')
+          navigate('/login')
+        }}
         onLogoClick={() => navigate('/dashboard')}
         participants={participants.map((member: Member) => ({
           id: member.email,
