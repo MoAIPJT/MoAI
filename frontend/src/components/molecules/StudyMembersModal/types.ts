@@ -9,7 +9,11 @@ export interface StudyMembersModalProps {
 
   // 가입 요청 관련 props 추가
   joinRequests?: JoinRequest[]
+<<<<<<< HEAD
   onAcceptJoinRequest?: (userId: number, role: 'ADMIN' | 'DELEGATE' | 'MEMBER') => void
+=======
+  onAcceptJoinRequest?: (userId: number, role?: "ADMIN" | "DELEGATE" | "MEMBER") => void
+>>>>>>> d8c4ee7835b34a9b8461420f2815bba41b2d2b30
   onRejectJoinRequest?: (userId: number) => void
 
   // 멤버 권한 변경 관련 props 추가

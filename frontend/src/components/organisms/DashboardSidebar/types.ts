@@ -18,4 +18,5 @@ export interface DashboardSidebarProps {
   onStudyClick?: (studyId: string) => void // 스터디 클릭 핸들러
   onLogout?: () => void // 로그아웃 핸들러
   onSettingsClick?: () => void // 설정 클릭 핸들러
+  onLogoClick?: () => void // 로고 클릭 핸들러
 }

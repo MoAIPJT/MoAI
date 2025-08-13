@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import type { ChangePasswordModalProps } from './types'
 import Button from '../../atoms/Button'
 import InputText from '../../atoms/InputText'
@@ -14,15 +14,47 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     confirmPassword: ''
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [isValid, setIsValid] = useState({
+    newPassword: false,
+    confirmPassword: false
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleInputChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value
     setFormData(prev => ({
       ...prev,
-      [field]: event.target.value
+      [field]: value
     }))
+    
     // 에러 메시지 초기화
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }))
+    }
+
+    // 실시간 유효성 검사
+    if (field === 'newPassword') {
+      const isValidPassword = value.length >= 8
+      setIsValid(prev => ({ ...prev, newPassword: isValidPassword }))
+      
+      if (formData.confirmPassword && value !== formData.confirmPassword) {
+        setErrors(prev => ({ ...prev, confirmPassword: '비밀번호가 일치하지 않습니다.' }))
+        setIsValid(prev => ({ ...prev, confirmPassword: false }))
+      } else if (formData.confirmPassword && value === formData.confirmPassword) {
+        setErrors(prev => ({ ...prev, confirmPassword: '' }))
+        setIsValid(prev => ({ ...prev, confirmPassword: true }))
+      }
+    }
+
+    if (field === 'confirmPassword') {
+      const isMatch = value === formData.newPassword
+      setIsValid(prev => ({ ...prev, confirmPassword: isMatch }))
+      
+      if (value && !isMatch) {
+        setErrors(prev => ({ ...prev, confirmPassword: '비밀번호가 일치하지 않습니다.' }))
+      } else if (value && isMatch) {
+        setErrors(prev => ({ ...prev, confirmPassword: '' }))
+      }
     }
   }
 
@@ -49,10 +81,18 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (validateForm()) {
-      onSubmit(formData)
-      handleClose()
+      setIsSubmitting(true)
+      try {
+        await onSubmit(formData)
+        handleClose()
+      } catch (error) {
+        // 에러는 상위 컴포넌트에서 처리
+        console.error('비밀번호 변경 모달 에러:', error)
+      } finally {
+        setIsSubmitting(false)
+      }
     }
   }
 
@@ -63,6 +103,11 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
       confirmPassword: ''
     })
     setErrors({})
+    setIsValid({
+      newPassword: false,
+      confirmPassword: false
+    })
+    setIsSubmitting(false)
     onClose()
   }
 
@@ -92,7 +137,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               value={formData.currentPassword}
               onChange={handleInputChange('currentPassword')}
               placeholder="현재 비밀번호를 입력하세요"
-              className={errors.currentPassword ? 'border-red-500' : ''}
+              className={`w-full ${errors.currentPassword ? 'border-red-500' : ''}`}
             />
             {errors.currentPassword && (
               <p className="text-red-500 text-sm">{errors.currentPassword}</p>
@@ -109,8 +154,17 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               value={formData.newPassword}
               onChange={handleInputChange('newPassword')}
               placeholder="새 비밀번호를 입력하세요 (8자 이상)"
-              className={errors.newPassword ? 'border-red-500' : ''}
+              className={`w-full ${errors.newPassword ? 'border-red-500' : ''}`}
             />
+            {formData.newPassword && (
+              <div className="flex items-center gap-2">
+                {isValid.newPassword ? (
+                  <span className="text-green-500 text-sm">✓ 8자 이상</span>
+                ) : (
+                  <span className="text-red-500 text-sm">✗ 8자 이상</span>
+                )}
+              </div>
+            )}
             {errors.newPassword && (
               <p className="text-red-500 text-sm">{errors.newPassword}</p>
             )}
@@ -126,8 +180,17 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               value={formData.confirmPassword}
               onChange={handleInputChange('confirmPassword')}
               placeholder="새 비밀번호를 다시 입력하세요"
-              className={errors.confirmPassword ? 'border-red-500' : ''}
+              className={`w-full ${errors.confirmPassword ? 'border-red-500' : ''}`}
             />
+            {formData.confirmPassword && (
+              <div className="flex items-center gap-2">
+                {isValid.confirmPassword ? (
+                  <span className="text-green-500 text-sm">✓ 비밀번호 일치</span>
+                ) : (
+                  <span className="text-red-500 text-sm">✗ 비밀번호 불일치</span>
+                )}
+              </div>
+            )}
             {errors.confirmPassword && (
               <p className="text-red-500 text-sm">{errors.confirmPassword}</p>
             )}
@@ -140,6 +203,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               size="md"
               onClick={handleClose}
               className="flex-1"
+              disabled={isSubmitting}
             >
               취소
             </Button>
@@ -148,8 +212,9 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               size="md"
               onClick={handleSubmit}
               className="flex-1"
+              disabled={!isValid.newPassword || !isValid.confirmPassword || isSubmitting}
             >
-              변경
+              {isSubmitting ? '변경 중...' : '변경'}
             </Button>
           </div>
         </div>
