@@ -5,8 +5,6 @@ import PDFViewer from '../components/atoms/PDFViewer'
 import SplitResizer from '../components/atoms/SplitResizer'
 import ProfileSettingsModal from '../components/organisms/ProfileSettingsModal'
 import ChangePasswordModal from '../components/organisms/ChangePasswordModal'
-import ProfileSettingsModal from '../components/organisms/ProfileSettingsModal'
-import ChangePasswordModal from '../components/organisms/ChangePasswordModal'
 import { fetchSummaryList, type StudyWithSummaries } from '../services/summaryService'
 import { dummySummaryData } from '../types/summary'
 import type { ProfileData } from '../components/organisms/ProfileSettingsModal/types'
@@ -45,7 +43,6 @@ const AISummaryPage: React.FC = () => {
       const response = await fetchSummaryList(userId)
       setStudiesWithSummaries(response.studies || [])
     } catch {
-    } catch {
       // setError('AI 요약본 목록을 불러오는데 실패했습니다.')
 
 
@@ -57,14 +54,14 @@ const AISummaryPage: React.FC = () => {
           study_image_url: '/src/assets/MoAI/thinking.png',
           summaries: [
             {
-              summary_id: 'cats-dogs',
+              summaryId: 'cats-dogs',
               title: 'Cats and Dogs',
               description: 'Fine-grained categorization of pet breeds (37 breeds of cats and dogs).',
               model_type: 'Gemini',
               prompt_type: '요약'
             },
             {
-              summary_id: 'i-love-duck',
+              summaryId: 'i-love-duck',
               title: 'I Love Duck',
               description: 'Duck Duck Duck',
               model_type: 'Gemini',
@@ -78,7 +75,7 @@ const AISummaryPage: React.FC = () => {
           study_image_url: '/src/assets/MoAI/traveling.png',
           summaries: [
             {
-              summary_id: 'hamburger',
+              summaryId: 'hamburger',
               title: '햄버거 맛있겠다',
               description: '햄버거에 대한 상세한 분석과 레시피',
               model_type: 'Gemini',

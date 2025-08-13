@@ -18,10 +18,6 @@ const LoginPage: React.FC = () => {
     const backendUrl = import.meta.env.VITE_BACKEND_URL
     window.location.href = `${backendUrl}/oauth2/authorization/kakao`
   }
-  const handleKakaoLogin = () => {
-    const backendUrl = import.meta.env.VITE_BACKEND_URL
-    window.location.href = `${backendUrl}/oauth2/authorization/kakao`
-  }
 
   const handleGoogleLogin = () => {
     const googleClientId = import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID

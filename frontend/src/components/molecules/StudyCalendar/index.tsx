@@ -108,30 +108,6 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
   ])
 
 
-  const [modalCreateModal, setModalCreateModal] = useState(false)
-
-  // 특정 날짜에 이벤트가 있는지 확인하는 함수는 이제 필요 없음 (직접 렌더링 방식으로 변경)
-
-  const handleCreateEvent = () => {
-    setShowEventModal(true)
-  }
-
-  const handleModalCreateEvent = () => {
-    setModalCreateModal(true)
-  }
-
-  const handleCloseModal = () => {
-    setShowEventModal(false)
-  }
-
-  const handleCloseCreateModal = () => {
-    setShowCreateModal(false)
-  }
-
-  const handleCloseModalCreateModal = () => {
-    setModalCreateModal(false)
-  }
-
   const handleEventClick = (event: StudyEvent) => {
     setSelectedEvent(event)
   }

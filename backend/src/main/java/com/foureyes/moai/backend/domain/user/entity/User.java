@@ -3,7 +3,6 @@ package com.foureyes.moai.backend.domain.user.entity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -14,7 +13,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Data
-@Builder
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor

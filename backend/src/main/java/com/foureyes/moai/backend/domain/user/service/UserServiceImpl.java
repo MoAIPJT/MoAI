@@ -169,10 +169,6 @@ public class UserServiceImpl implements UserService {
                     log.warn("존재하지 않는 사용자 로그아웃 시도: userId={}", userId);
                     return new CustomException(ErrorCode.USER_NOT_FOUND);
                 });
-                .orElseThrow(() -> {
-                    log.warn("존재하지 않는 사용자 로그아웃 시도: userId={}", userId);
-                    return new CustomException(ErrorCode.USER_NOT_FOUND);
-                });
 
         user.setRefreshToken(null);
         userRepository.save(user);
