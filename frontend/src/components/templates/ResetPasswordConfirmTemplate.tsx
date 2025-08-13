@@ -26,7 +26,7 @@ const ResetPasswordConfirmTemplate: React.FC = () => {
 
       // 성공 시 로그인 페이지로 이동
       navigate('/login', {
-        state: { message: '비밀번호가 성공적으로 변경되었습니다. 새로운 비밀번호로 로그인해주세요.' }
+        state: { message: '비밀번호가 성공적으로 변경되었습니다.' }
       })
     } catch (error) {
       // 에러는 mutation에서 처리됨
