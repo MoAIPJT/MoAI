@@ -22,7 +22,19 @@ pipeline {
                         
                         sh "cp ${DOTENV_FILE} .env"
 
-                        sh 'docker compose -f compose.prod.yml down -v'
+                        sh 'docker compose -f compose.prod.yml down -v --remove-orphans'
+
+                        // 2. Explicitly remove any lingering containers by name (e.g., redis-moai)
+                        def containers = sh(returnStdout: true, script: 'docker ps -a --format "{{.Names}}"').trim()
+                        if (containers.contains('redis-moai')) {
+                            echo "Found and removing old 'redis-moai' container."
+                            sh 'docker rm -f redis-moai'
+                        }
+                        if (containers.contains('mysql-moai')) {
+                            echo "Found and removing old 'mysql-moai' container."
+                            sh 'docker rm -f mysql-moai'
+                        }
+
                         sh 'docker compose -f compose.prod.yml up --build -d'
                     }
                 }
