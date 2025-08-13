@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { orgService } from '../services/orgService'
 import { orgKeys, studyKeys } from './queryKeys'
-import { AcceptReq, RejectReq, DesignateReq, DeleteMemberReq } from '../types/org'
 
 export const useOrg = () => {
   const queryClient = useQueryClient()
@@ -22,7 +21,7 @@ export const useOrg = () => {
       onSuccess: (_, variables) => {
         // 관련 쿼리 무효화
         queryClient.invalidateQueries({ queryKey: orgKeys.requests(variables.studyId) })
-        queryClient.invalidateQueries({ queryKey: studyKeys.members(variables.studyId) })
+        queryClient.invalidateQueries({ queryKey: studyKeys.members(String(variables.studyId)) })
         // 선택적으로 사이드바도 무효화
         queryClient.invalidateQueries({ queryKey: studyKeys.sidebar(variables.userId) })
       }
@@ -35,7 +34,7 @@ export const useOrg = () => {
       mutationFn: orgService.rejectJoin,
       onSuccess: (_, variables) => {
         queryClient.invalidateQueries({ queryKey: orgKeys.requests(variables.studyId) })
-        queryClient.invalidateQueries({ queryKey: studyKeys.members(variables.studyId) })
+        queryClient.invalidateQueries({ queryKey: studyKeys.members(String(variables.studyId)) })
         queryClient.invalidateQueries({ queryKey: studyKeys.sidebar(variables.userId) })
       }
     })
@@ -47,7 +46,7 @@ export const useOrg = () => {
       mutationFn: orgService.designateRole,
       onSuccess: (_, variables) => {
         queryClient.invalidateQueries({ queryKey: orgKeys.requests(variables.studyId) })
-        queryClient.invalidateQueries({ queryKey: studyKeys.members(variables.studyId) })
+        queryClient.invalidateQueries({ queryKey: studyKeys.members(String(variables.studyId)) })
         queryClient.invalidateQueries({ queryKey: studyKeys.sidebar(variables.userId) })
       }
     })
@@ -59,7 +58,7 @@ export const useOrg = () => {
       mutationFn: orgService.deleteMember,
       onSuccess: (_, variables) => {
         queryClient.invalidateQueries({ queryKey: orgKeys.requests(variables.studyId) })
-        queryClient.invalidateQueries({ queryKey: studyKeys.members(variables.studyId) })
+        queryClient.invalidateQueries({ queryKey: studyKeys.members(String(variables.studyId)) })
         queryClient.invalidateQueries({ queryKey: studyKeys.sidebar(variables.userId) })
       }
     })

@@ -2,7 +2,7 @@ import type { Category } from '@/types/content'
 
 export interface CategoryTabProps {
   categories: Category[]
-  selectedCategories: string[]
-  onCategoryToggle: (categoryId: string) => void
+  selectedCategories: number[]
+  onCategoryToggle: (categoryId: number) => void
   onAddClick: () => void
 }

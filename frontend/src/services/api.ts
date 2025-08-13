@@ -8,32 +8,6 @@ const api = axios.create({
   },
 })
 
-// 토큰 갱신 함수
-const refreshAccessToken = async () => {
-  try {
-    const refreshToken = localStorage.getItem('refreshToken')
-    if (!refreshToken) {
-      throw new Error('No refresh token')
-    }
-
-    const response = await axios.post('/api/users/refresh-token', {
-      refreshToken
-    }, {
-      baseURL: import.meta.env.VITE_API_BASE_URL || '/api'
-    })
-
-    const { accessToken } = response.data
-    localStorage.setItem('accessToken', accessToken)
-    return accessToken
-  } catch (error) {
-    // 토큰 갱신 실패 시 로그인 페이지로 리다이렉트
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('refreshToken')
-    window.location.href = '/login'
-    throw error
-  }
-}
-
 // 요청 인터셉터
 api.interceptors.request.use(
   (config) => {

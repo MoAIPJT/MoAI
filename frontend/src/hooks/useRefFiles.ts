@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { refService } from '../services/refService';
 import { refKeys } from './queryKeys';
-import { UploadReq, EditReq, DeleteReq } from '../types/ref';
 
 export const useRefFiles = () => {
   const queryClient = useQueryClient();
@@ -11,7 +10,7 @@ export const useRefFiles = () => {
     return useQuery({
       queryKey: refKeys.list(studyId),
       queryFn: () => refService.getFiles(studyId, userId),
-      enabled: !!studyId,
+      enabled: studyId > 0, // studyId가 유효한 양수일 때만 실행
     });
   };
 
@@ -28,8 +27,8 @@ export const useRefFiles = () => {
   // 파일 수정
   const useEditRef = (studyId: number) => {
     return useMutation({
-      mutationFn: ({ id, form }: { id: number; form: FormData }) =>
-        refService.editFile(id, form),
+      mutationFn: ({ id, data }: { id: number; data: { title: string; description: string; categoryId: number[] } }) =>
+        refService.editFile(id, data),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: refKeys.list(studyId) });
       },
@@ -39,8 +38,8 @@ export const useRefFiles = () => {
   // 파일 삭제
   const useDeleteRef = (studyId: number) => {
     return useMutation({
-      mutationFn: ({ id, req }: { id: number; req: DeleteReq }) =>
-        refService.deleteFile(id, req),
+      mutationFn: (id: number) =>
+        refService.deleteFile(id),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: refKeys.list(studyId) });
       },

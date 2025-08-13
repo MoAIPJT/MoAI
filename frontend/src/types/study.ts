@@ -89,10 +89,12 @@ export interface StudyDetail {
   role?: 'ADMIN' | 'DELEGATE' | 'MEMBER'
   description?: string
   userCount?: number
+  notice?: string
 }
 
 // 스터디 멤버 (StudyMemberListResponseDto 기반)
 export interface Member {
+  userId: number // 사용자 ID (백엔드 응답과 일치)
   member: string // 사용자 이름
   role: string // 권한
   imageUrl: string // 프로필 이미지
@@ -101,8 +103,7 @@ export interface Member {
 
 // 스터디 탈퇴 요청
 export interface LeaveStudyReq {
-  studyId: number
-  userId: number
+  studyGroupId: number
 }
 
 // 스터디 멤버 삭제 요청
@@ -114,7 +115,7 @@ export interface DeleteMemberReq {
 // 스터디 멤버 역할 변경 요청
 export interface ChangeMemberRoleReq {
   studyId: number
-  userId: number
+  userId: number  // 사용자 ID로 식별 (백엔드에서 기대하는 필드명)
   role: 'ADMIN' | 'DELEGATE' | 'MEMBER'
 }
 // 스터디 가입 요청

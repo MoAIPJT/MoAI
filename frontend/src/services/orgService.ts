@@ -1,5 +1,5 @@
 import api from './api'
-import { AcceptReq, RejectReq, DesignateReq, DeleteMemberReq, OrgListResponse } from '../types/org'
+import type { AcceptReq, RejectReq, DesignateReq, DeleteMemberReq, OrgListResponse } from '../types/org'
 
 export const orgService = {
   // 스터디별 가입 요청 및 멤버 목록 조회

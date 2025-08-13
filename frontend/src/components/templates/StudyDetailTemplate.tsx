@@ -28,12 +28,23 @@ interface StudyDetailTemplateProps {
   noticeContent?: string
   // Content Management 관련 props
   categories: Category[]
-  selectedCategories: string[]
+  selectedCategories: number[]
   contents: ContentItem[]
   searchTerm: string
   sortOrder: 'newest' | 'oldest'
   // Upload Modal 관련 props
   isUploadModalOpen: boolean
+  // 일정 관련 props
+  studySchedules?: Array<{
+    id: number
+    title: string
+    startDatetime: string
+    endDatetime: string
+    memo?: string
+  }>
+  isSchedulesLoading?: boolean
+  // 스터디 ID
+  studyId?: number
   onItemClick: (itemId: string) => void
   onStudyClick: (studyId: string) => void
   onSearch: () => void
@@ -43,13 +54,17 @@ interface StudyDetailTemplateProps {
   onSettingsClick: () => void
   onLogout?: () => void
   onLogoClick?: () => void
+  onLeaveStudy?: () => void
   // Content Management 관련 핸들러들
-  onCategoryToggle: (categoryId: string) => void
+  onCategoryToggle: (categoryId: number) => void
   onAddCategory: () => void
   onSearchChange: (term: string) => void
   onSortChange: (order: 'newest' | 'oldest') => void
   onContentSelect: (contentId: string) => void
   onContentPreview: (contentId: string) => void
+  onContentEdit: (contentId: string) => void
+  onContentDelete: (contentId: string) => void
+  onContentDownload: (contentId: string) => void
   // Upload Modal 관련 핸들러들
   onUploadModalClose: () => void
   onUploadSubmit: (data: UploadData) => void
@@ -58,9 +73,16 @@ interface StudyDetailTemplateProps {
   onStudyDescriptionChange?: (description: string) => void
   onStudyImageChange?: (image: File | null) => void
   onMaxMembersChange?: (maxMembers: number) => void
-  onCategoryRemove?: (category: string) => void
+  onCategoryRemove?: (categoryId: number) => void
   onCategoryAdd?: (category: string) => void
-  onMemberRemove?: (memberId: string) => void
+  onMemberRemove?: (userId: number) => void
+  onMemberRoleChange?: (userId: number, newRole: 'ADMIN' | 'DELEGATE' | 'MEMBER') => void
+  onStudyUpdate?: (data: {
+    name: string
+    description: string
+    image?: File
+    maxCapacity: number
+  }) => void
   joinRequests?: Array<{
     userID: number
     userEmail: string
@@ -68,7 +90,7 @@ interface StudyDetailTemplateProps {
     imageUrl: string
     status: 'PENDING' | 'APPROVED' | 'REJECTED'
   }>
-  onAcceptJoinRequest?: (userId: number, role?: "ADMIN" | "DELEGATE" | "MEMBER") => void
+  onAcceptJoinRequest?: (userId: number, role: 'ADMIN' | 'DELEGATE' | 'MEMBER') => void
   onRejectJoinRequest?: (userId: number) => void
 }
 
@@ -93,6 +115,11 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   sortOrder,
   // Upload Modal 관련 props
   isUploadModalOpen,
+  // 일정 관련 props
+  studySchedules,
+  isSchedulesLoading,
+  // 스터디 ID
+  studyId,
   onItemClick,
   onStudyClick,
   onSearch,
@@ -102,6 +129,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   onSettingsClick,
   onLogout,
   onLogoClick,
+  onLeaveStudy,
   // Content Management 관련 핸들러들
   onCategoryToggle,
   onAddCategory,
@@ -109,6 +137,9 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   onSortChange,
   onContentSelect,
   onContentPreview,
+  onContentEdit,
+  onContentDelete,
+  onContentDownload,
   // Upload Modal 관련 핸들러들
   onUploadModalClose,
   onUploadSubmit,
@@ -120,6 +151,8 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   onCategoryRemove,
   onCategoryAdd,
   onMemberRemove,
+  onMemberRoleChange,
+  onStudyUpdate,
   joinRequests = [],
   onAcceptJoinRequest,
   onRejectJoinRequest,
@@ -154,8 +187,10 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
           studyImageUrl={currentStudy?.image}
           loading={loading}
           userCount={studyParticipants?.length || 0}
+          currentUserRole={currentUserRole}
           onSettingsClick={handleOpenManagementModal}
           onUserCountClick={handleOpenMembersModal}
+          onLeaveStudy={onLeaveStudy}
         />
 
         {/* 메인 콘텐츠 */}
@@ -175,14 +210,18 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
               <div className="flex-1">
                 <StudyVideoConference
                   onCreateRoom={onCreateRoom}
-                  participants={participants} // 화상채팅은 별도 참여자 목록 사용
+                  participants={participants}
                 />
               </div>
             </div>
 
             {/* 오른쪽: 캘린더 (4/10) */}
             <div className="col-span-4">
-              <StudyCalendar />
+              <StudyCalendar
+                schedules={studySchedules || []}
+                isLoading={isSchedulesLoading}
+                studyId={studyId}
+              />
             </div>
           </div>
 
@@ -200,7 +239,11 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
             onSortChange={onSortChange}
             onContentSelect={onContentSelect}
             onContentPreview={onContentPreview}
+            onContentEdit={onContentEdit}
+            onContentDelete={onContentDelete}
+            onContentDownload={onContentDownload}
             onUploadData={onUploadData}
+            currentUserRole={currentUserRole}
           />
         </div>
       </div>
@@ -223,29 +266,34 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
         joinRequests={joinRequests}
         onAcceptJoinRequest={onAcceptJoinRequest}
         onRejectJoinRequest={onRejectJoinRequest}
+        onMemberRoleChange={onMemberRoleChange}
       />
 
       {/* Study Management Modal */}
-      <StudyManagementModal
-        isOpen={isManagementModalOpen}
-        onClose={handleCloseManagementModal}
-        studyName={currentStudy?.name || ''}
-        studyDescription={currentStudy?.description || ''}
-        studyImage={currentStudy?.image}
-        maxMembers={currentStudy?.memberCount || 10}
-        members={studyParticipants || []}
-        categories={categories.map(c => c.name)}
-        onStudyNameChange={onStudyNameChange || (() => {})}
-        onStudyDescriptionChange={onStudyDescriptionChange || (() => {})}
-        onStudyImageChange={onStudyImageChange || (() => {})}
-        onMaxMembersChange={onMaxMembersChange || (() => {})}
-        onCategoryRemove={onCategoryRemove || (() => {})}
-        onCategoryAdd={onCategoryAdd || (() => {})}
-        onMemberRemove={onMemberRemove || (() => {})}
-        onSave={() => {
-          handleCloseManagementModal()
-        }}
-      />
+      {onStudyUpdate && (
+        <StudyManagementModal
+          isOpen={isManagementModalOpen}
+          onClose={handleCloseManagementModal}
+          studyName={currentStudy?.name || ''}
+          studyDescription={currentStudy?.description || ''}
+          studyImage={currentStudy?.image}
+          maxMembers={currentStudy?.memberCount || 10}
+          members={studyParticipants || []}
+          categories={categories}
+          currentUserRole={currentUserRole}
+          onStudyNameChange={onStudyNameChange || (() => {})}
+          onStudyDescriptionChange={onStudyDescriptionChange || (() => {})}
+          onStudyImageChange={onStudyImageChange || (() => {})}
+          onMaxMembersChange={onMaxMembersChange || (() => {})}
+          onCategoryRemove={onCategoryRemove || (() => {})}
+          onCategoryAdd={onCategoryAdd || (() => {})}
+          onMemberRemove={onMemberRemove || (() => {})}
+          onStudyUpdate={onStudyUpdate}
+          onSave={() => {
+            handleCloseManagementModal()
+          }}
+        />
+      )}
     </div>
   )
 }

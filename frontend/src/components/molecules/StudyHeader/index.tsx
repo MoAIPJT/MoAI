@@ -8,8 +8,10 @@ const StudyHeader: React.FC<StudyHeaderProps> = ({
   studyImageUrl,
   loading = false,
   userCount = 7,
+  currentUserRole,
   onSettingsClick,
   onUserCountClick,
+  onLeaveStudy,
 }) => {
   return (
     <div className="bg-white border-b border-gray-200 p-6">
@@ -44,7 +46,7 @@ const StudyHeader: React.FC<StudyHeaderProps> = ({
         </div>
         
         <div className="flex items-center gap-4">
-          <button 
+          <button
             onClick={onUserCountClick}
             className="flex items-center gap-2 hover:bg-gray-100 p-2 rounded-lg transition-colors cursor-pointer group"
           >
@@ -61,6 +63,14 @@ const StudyHeader: React.FC<StudyHeaderProps> = ({
               <SettingsIcon className="w-4 h-4 text-gray-600" />
             </div>
           </button>
+          {onLeaveStudy && currentUserRole !== 'ADMIN' && (
+            <button
+              onClick={onLeaveStudy}
+              className="px-4 py-2 text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
+            >
+              탈퇴하기
+            </button>
+          )}
         </div>
       </div>
     </div>
