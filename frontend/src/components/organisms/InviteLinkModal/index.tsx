@@ -52,7 +52,7 @@ const InviteLinkModal: React.FC<InviteLinkModalProps> = ({
             </h2>
 
             <p className="text-gray-600 mb-6">
-              친구에게 서버 초대 링크 전송하기
+              친구에게 스터디 링크 전송하기
             </p>
 
             {/* 초대 링크 입력 필드 */}

@@ -8,6 +8,7 @@ import ProfileSettingsModal from '../components/organisms/ProfileSettingsModal'
 import ChangePasswordModal from '../components/organisms/ChangePasswordModal'
 import { Calendar } from '../components/ui/calendar'
 import Button from '../components/atoms/Button'
+import LoadingToast from '../components/atoms/LoadingToast'
 import type { Study } from '../components/organisms/StudyList/types'
 import type { StudyItem } from '../components/organisms/DashboardSidebar/types'
 import type { AISummary } from '../components/molecules/AISummaryCard/types'
@@ -46,7 +47,10 @@ const DashboardPage: React.FC = () => {
   const [isCreateStudyModalOpen, setIsCreateStudyModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [expandedStudy, setExpandedStudy] = useState(false)
-  const [calendarEvents] = useState<CalendarEvent[]>([])
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([])
+  const [schedules, setSchedules] = useState<any[]>([])
+  const [isScheduleLoading, setIsScheduleLoading] = useState(false)
+  const [isCreatingStudy, setIsCreatingStudy] = useState(false)
 
   // 일정 데이터를 가져오는 함수
   const fetchSchedules = async () => {
@@ -412,8 +416,9 @@ const DashboardPage: React.FC = () => {
 
       // 스터디 목록 새로고침
       await fetchStudies()
-
-      alert('스터디가 성공적으로 생성되었습니다!')
+      
+      // 스터디 생성 모달 닫기
+      setIsCreateStudyModalOpen(false)
     } catch (error) {
       // 백엔드가 실행되지 않은 경우 임시로 프론트엔드에서 처리
       if (error && typeof error === 'object' && 'code' in error && error.code === '500') {
@@ -431,6 +436,9 @@ const DashboardPage: React.FC = () => {
       }
 
       alert(errorMessage)
+    } finally {
+      // 스터디 생성 완료 후 로딩 상태 비활성화
+      setIsCreatingStudy(false)
     }
   }
 
@@ -534,7 +542,7 @@ const DashboardPage: React.FC = () => {
                       onClick={() => setIsCreateStudyModalOpen(true)}
                       className="rounded-xl bg-[#F6EEFF] text-gray-700 hover:bg-[#E8D9FF] border-0"
                     >
-                      스터디 생성하기
+                      스터디 시작하기
                     </Button>
                   </div>
                   <StudyList
@@ -670,8 +678,19 @@ const DashboardPage: React.FC = () => {
       {/* 스터디 생성 모달 */}
       <CreateStudyModal
         isOpen={isCreateStudyModalOpen}
-        onClose={() => setIsCreateStudyModalOpen(false)}
+        onClose={() => {
+          setIsCreateStudyModalOpen(false)
+          setIsCreatingStudy(false) // 모달 닫을 때 로딩 상태도 초기화
+        }}
         onSubmit={handleCreateStudy}
+        isLoading={isCreatingStudy}
+        onLoadingChange={setIsCreatingStudy}
+      />
+
+      {/* 로딩 토스트 */}
+      <LoadingToast 
+        isVisible={isCreatingStudy} 
+        message="스터디 시작하는 중..." 
       />
     </div>
   )

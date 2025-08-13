@@ -165,6 +165,17 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   const handleOpenManagementModal = () => setIsManagementModalOpen(true)
   const handleCloseManagementModal = () => setIsManagementModalOpen(false)
 
+  // 권한 변경 후 모달 닫기
+  const handleMemberRoleChange = (userId: number, newRole: 'ADMIN' | 'DELEGATE' | 'MEMBER') => {
+    if (onMemberRoleChange) {
+      onMemberRoleChange(userId, newRole)
+      // ADMIN으로 변경된 경우 모달 닫기
+      if (newRole === 'ADMIN') {
+        handleCloseMembersModal()
+      }
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardSidebar
@@ -263,10 +274,11 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
         members={studyParticipants || []}
         studyName={currentStudy?.name || 'Study'}
         currentUserRole={currentUserRole}
+        studyId={studyId}
         joinRequests={joinRequests}
         onAcceptJoinRequest={onAcceptJoinRequest}
         onRejectJoinRequest={onRejectJoinRequest}
-        onMemberRoleChange={onMemberRoleChange}
+        onMemberRoleChange={handleMemberRoleChange}
       />
 
       {/* Study Management Modal */}

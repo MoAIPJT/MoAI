@@ -9,4 +9,6 @@ export interface CreateStudyModalProps {
   isOpen: boolean
   onClose: () => void
   onSubmit: (data: CreateStudyData) => void
+  isLoading?: boolean
+  onLoadingChange?: (loading: boolean) => void
 }

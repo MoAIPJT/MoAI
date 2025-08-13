@@ -8,6 +8,7 @@ import type { StudyItem } from '../components/organisms/DashboardSidebar/types'
 import type { ContentItem } from '../types/content'
 import { getSidebarStudies, updateStudyNotice, joinStudy, leaveStudy, deleteStudyMember } from '../services/studyService'
 import { useStudyDetail, useStudyMembers, useJoinRequests, useAcceptJoinRequest, useRejectJoinRequest, useChangeMemberRole, useUpdateStudy } from "../hooks/useStudies";
+import { studyKeys } from "../hooks/queryKeys";
 import { useQueryClient } from '@tanstack/react-query'
 import type { Member } from '../types/study'
 import { useRefFiles } from '../hooks/useRefFiles'
@@ -15,11 +16,13 @@ import type { FileItem } from '../types/ref'
 import type { UploadData } from '../components/organisms/UploadDataModal/types'
 import { refService } from '../services/refService'
 import { useStudySchedules } from '../hooks/useSchedules'
+import { useMe } from '../hooks/useUsers'
 
 const StudyDetailPage: React.FC = () => {
   const navigate = useNavigate()
   const { hashId } = useParams<{ hashId: string }>()
   const queryClient = useQueryClient()
+  const { data: userProfile } = useMe()
 
   const [expandedStudy, setExpandedStudy] = useState(true)
   const [activeStudyId, setActiveStudyId] = useState<string | null>(hashId || null)
@@ -492,6 +495,13 @@ const StudyDetailPage: React.FC = () => {
       await changeMemberRoleMutation.mutateAsync(payload)
 
       console.log('멤버 역할 변경 완료')
+
+      // 성공 시 스터디 상세 정보와 멤버 목록 React Query 캐시 무효화
+      if (hashId && userProfile?.id) {
+        queryClient.invalidateQueries({ queryKey: ['studyDetail', hashId] })
+        queryClient.invalidateQueries({ queryKey: studyKeys.members(String(studyDetail.studyId)) })
+        queryClient.invalidateQueries({ queryKey: studyKeys.sidebar(userProfile.id) })
+      }
     } catch (error) {
       console.error('멤버 역할 변경 실패:', error)
       if (error && typeof error === 'object' && 'response' in error) {
