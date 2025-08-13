@@ -1,8 +1,11 @@
 pipeline {
+    // 'agent any' means this pipeline can run on any available Jenkins agent.
     agent any
 
 
     stages {
+        // STAGE 1: Checkout Code
+        // This stage clones your repository from GitLab into the Jenkins workspace.
         stage('Checkout') {
             steps {
                 echo 'Checking out the code...'

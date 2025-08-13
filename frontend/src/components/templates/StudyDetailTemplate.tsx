@@ -272,13 +272,13 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
           members={studyParticipants || []}
           categories={categories}
           currentUserRole={currentUserRole}
-          onStudyNameChange={onStudyNameChange || (() => {})}
-          onStudyDescriptionChange={onStudyDescriptionChange || (() => {})}
-          onStudyImageChange={onStudyImageChange || (() => {})}
-          onMaxMembersChange={onMaxMembersChange || (() => {})}
-          onCategoryRemove={onCategoryRemove || (() => {})}
-          onCategoryAdd={onCategoryAdd || (() => {})}
-          onMemberRemove={onMemberRemove || (() => {})}
+          onStudyNameChange={onStudyNameChange || (() => { })}
+          onStudyDescriptionChange={onStudyDescriptionChange || (() => { })}
+          onStudyImageChange={onStudyImageChange || (() => { })}
+          onMaxMembersChange={onMaxMembersChange || (() => { })}
+          onCategoryRemove={onCategoryRemove || (() => { })}
+          onCategoryAdd={onCategoryAdd || (() => { })}
+          onMemberRemove={onMemberRemove || (() => { })}
           onStudyUpdate={onStudyUpdate}
           onSave={() => {
             handleCloseManagementModal()

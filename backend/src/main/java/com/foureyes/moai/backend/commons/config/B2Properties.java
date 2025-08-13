@@ -11,5 +11,4 @@ public class B2Properties {
     private String accessKey;
     private String secretKey;
     private String bucketName;
-    private String docsBucketName;
 }

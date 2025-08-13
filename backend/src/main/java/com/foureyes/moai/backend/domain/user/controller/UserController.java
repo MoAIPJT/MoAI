@@ -13,6 +13,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -22,24 +24,28 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/users")
-@Tag(name = "User API", description = "회원 관리 API")
 @RequiredArgsConstructor
+@Tag(name = "User API", description = "회원 관리 API")
 public class UserController {
 
     // ===== SLF4J Logger =====
     private static final org.slf4j.Logger log =
         org.slf4j.LoggerFactory.getLogger(UserController.class);
 
+    // ===== SLF4J Logger =====
+    private static final org.slf4j.Logger log =
+        org.slf4j.LoggerFactory.getLogger(UserController.class);
+
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
     private final UserService userService;
-    private final EmailVerificationService emailVerificationService;
 
     /**
-     * 입력: UserSignupRequest
-     * 출력: UserSignupResponse
-     * 기능: 회원가입
-     */
+     * 입력: UserSignupRequest (회원가입 요청 정보)
+     * 출력: UserSignupResponse (회원가입 결과)
+     * 기능: 새로운 사용자를 회원가입 처리
+     **/
     @Operation(summary = "회원가입",
-        description = "새로운 사용자를 회원가입 시킵니다.")
+    description = "새로운 사용자를 회원가입 시킵니다.")
     @PostMapping("/signup")
     public ResponseEntity<UserSignupResponseDto>
     signup(@Valid @RequestBody UserSignupRequestDto request) {

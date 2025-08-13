@@ -17,6 +17,8 @@ import com.foureyes.moai.backend.domain.user.entity.User;
 import com.foureyes.moai.backend.domain.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -163,6 +165,10 @@ public class UserServiceImpl implements UserService {
     public void logout(Integer userId) {
     log.info("[logout] logout requested: userId={}", userId);
         User user = userRepository.findById(userId)
+                .orElseThrow(() -> {
+                    log.warn("존재하지 않는 사용자 로그아웃 시도: userId={}", userId);
+                    return new CustomException(ErrorCode.USER_NOT_FOUND);
+                });
                 .orElseThrow(() -> {
                     log.warn("존재하지 않는 사용자 로그아웃 시도: userId={}", userId);
                     return new CustomException(ErrorCode.USER_NOT_FOUND);

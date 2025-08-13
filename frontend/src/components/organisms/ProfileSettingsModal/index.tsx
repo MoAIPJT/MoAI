@@ -68,7 +68,7 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
             {/* 왼쪽 - 프로필 이미지 */}
             <div className="flex-shrink-0">
               <div className="w-24 h-24 rounded-full bg-purple-100 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors"
-                   onClick={() => fileInputRef.current?.click()}>
+                onClick={() => fileInputRef.current?.click()}>
                 {previewUrl ? (
                   <img
                     src={previewUrl}

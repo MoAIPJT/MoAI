@@ -7,9 +7,15 @@ import AISummaryList from '../components/organisms/AISummaryList'
 import ProfileSettingsModal from '../components/organisms/ProfileSettingsModal'
 import ChangePasswordModal from '../components/organisms/ChangePasswordModal'
 import { Calendar } from '../components/ui/calendar'
+import ProfileSettingsModal from '../components/organisms/ProfileSettingsModal'
+import ChangePasswordModal from '../components/organisms/ChangePasswordModal'
+import { Calendar } from '../components/ui/calendar'
 import type { Study } from '../components/organisms/StudyList/types'
 import type { AISummary } from '../components/molecules/AISummaryCard/types'
 import type { CreateStudyData } from '../components/organisms/CreateStudyModal/types'
+import type { ProfileData } from '../components/organisms/ProfileSettingsModal/types'
+// import type { ChangePasswordData } from '../components/organisms/ChangePasswordModal/types'
+import type { CalendarEvent } from '../components/ui/calendar'
 import type { ProfileData } from '../components/organisms/ProfileSettingsModal/types'
 // import type { ChangePasswordData } from '../components/organisms/ChangePasswordModal/types'
 import type { CalendarEvent } from '../components/ui/calendar'
@@ -281,9 +287,11 @@ const DashboardPage: React.FC = () => {
     try {
       setIsSummaryLoading(true)
 
+
       // 실제 API 호출
       const userId = localStorage.getItem('userId') || '1' // 실제로는 로그인된 유저 ID를 사용
       const response = await fetchSummaryList(userId)
+
 
       // API 응답을 기존 AISummary 타입에 맞게 변환
       const convertedSummaries: AISummary[] = response.summaries.map(summary => ({
@@ -293,6 +301,7 @@ const DashboardPage: React.FC = () => {
         createdAt: new Date().toISOString().split('T')[0], // 임시 날짜
         pdfUrl: `/pdfs/${summary.summary_id}.pdf` // 임시 PDF 경로
       }))
+
 
       setSummaries(convertedSummaries)
     } catch {
@@ -321,6 +330,7 @@ const DashboardPage: React.FC = () => {
           pdfUrl: '/pdfs/hamburger.pdf'
         }
       ]
+
 
       setSummaries(dummySummaries)
     } finally {
@@ -530,6 +540,14 @@ const DashboardPage: React.FC = () => {
           image: study.imageUrl || '',
           icon: '📚'
         }))}
+        expandedStudy={expandedStudy}
+        studies={studies.map(study => ({
+          id: study.id.toString(),
+          name: study.name,
+          description: study.description || '',
+          image: study.imageUrl || '',
+          icon: '📚'
+        }))}
         onItemClick={handleItemClick}
         activeStudyId={null}
         onStudyClick={(studyId) => {
@@ -543,6 +561,7 @@ const DashboardPage: React.FC = () => {
           }
         }}
         onLogout={handleLogout}
+        onSettingsClick={handleSettingsClick}
         onSettingsClick={handleSettingsClick}
       />
       <div className="flex-1 flex flex-col ml-64">
@@ -571,9 +590,11 @@ const DashboardPage: React.FC = () => {
               <AISummaryList
                 summaries={summaries}
                 isLoading={isSummaryLoading}
-                onSummaryClick={() => {}}
+                onSummaryClick={() => { }}
               />
             </div>
+
+            {/* 오른쪽 열 - 달력 및 예정된 이벤트 */}
 
             {/* 오른쪽 열 - 달력 및 예정된 이벤트 */}
             <div className="lg:col-span-1">
@@ -639,18 +660,17 @@ const DashboardPage: React.FC = () => {
 
                               {/* 기본 아이콘 (이미지가 없거나 로드 실패 시 표시) */}
                               <div
-                                className={`w-6 h-6 flex items-center justify-center text-xs font-medium ${
-                                  event.studyImage === 'SSAFY' ? 'bg-blue-500 text-white rounded' :
-                                  event.studyImage === '면' ? 'bg-purple-500 text-white rounded-full' :
-                                  event.studyImage === 'CS' ? 'bg-green-500 text-white rounded' :
-                                  'bg-gray-500 text-white rounded'
-                                }`}
+                                className={`w-6 h-6 flex items-center justify-center text-xs font-medium ${event.studyImage === 'SSAFY' ? 'bg-blue-500 text-white rounded' :
+                                    event.studyImage === '면' ? 'bg-purple-500 text-white rounded-full' :
+                                      event.studyImage === 'CS' ? 'bg-green-500 text-white rounded' :
+                                        'bg-gray-500 text-white rounded'
+                                  }`}
                                 style={{ display: event.studyImage && event.studyImage.startsWith('http') ? 'none' : 'flex' }}
                               >
                                 {event.studyImage === 'SSAFY' ? 'S' :
-                                 event.studyImage === '면' ? '면' :
-                                 event.studyImage === 'CS' ? 'CS' :
-                                 event.studyImage || '📅'}
+                                  event.studyImage === '면' ? '면' :
+                                    event.studyImage === 'CS' ? 'CS' :
+                                      event.studyImage || '📅'}
                               </div>
                             </div>
                             <div className="text-xs text-gray-600 truncate max-w-16">

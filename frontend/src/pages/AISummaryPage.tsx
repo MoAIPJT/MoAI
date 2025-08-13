@@ -5,6 +5,8 @@ import PDFViewer from '../components/atoms/PDFViewer'
 import SplitResizer from '../components/atoms/SplitResizer'
 import ProfileSettingsModal from '../components/organisms/ProfileSettingsModal'
 import ChangePasswordModal from '../components/organisms/ChangePasswordModal'
+import ProfileSettingsModal from '../components/organisms/ProfileSettingsModal'
+import ChangePasswordModal from '../components/organisms/ChangePasswordModal'
 import { fetchSummaryList, type StudyWithSummaries } from '../services/summaryService'
 import { dummySummaryData } from '../types/summary'
 import type { ProfileData } from '../components/organisms/ProfileSettingsModal/types'
@@ -37,12 +39,15 @@ const AISummaryPage: React.FC = () => {
       setIsLoading(true)
       // setError(null)
 
+
       // 실제 API 호출
       const userId = localStorage.getItem('userId') || '1' // 실제로는 로그인된 유저 ID를 사용
       const response = await fetchSummaryList(userId)
       setStudiesWithSummaries(response.studies || [])
     } catch {
+    } catch {
       // setError('AI 요약본 목록을 불러오는데 실패했습니다.')
+
 
       // 에러 시 더미 데이터 사용 (개발용)
       const dummyStudiesWithSummaries: StudyWithSummaries[] = [
@@ -199,8 +204,8 @@ const AISummaryPage: React.FC = () => {
             <PDFViewer
               pdfUrl={selectedSummary.originalPdfPath}
               title={selectedSummary.title}
-              onLoad={() => {}}
-              onError={() => {}}
+              onLoad={() => { }}
+              onError={() => { }}
             />
           </div>
         </div>
