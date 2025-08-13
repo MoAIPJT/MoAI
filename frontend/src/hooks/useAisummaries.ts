@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { aiKeys } from './queryKeys'
 import * as aiSummaryService from '@/services/aiSummaryService'
 import type {
-  AiSummaryCreateReq,
   AiSummaryEditReq
 } from '@/types/aiSummary'
 
@@ -65,6 +64,21 @@ export const useDeleteAiSummary = (userId: number, summaryId: number) => {
       queryClient.invalidateQueries({ queryKey: aiKeys.list(userId) })
       queryClient.invalidateQueries({ queryKey: aiKeys.sidebar(userId) })
       queryClient.invalidateQueries({ queryKey: aiKeys.detail(summaryId) })
+    }
+  })
+}
+
+export const useCreateAISummary = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: aiSummaryService.createAISummary,
+    onSuccess: () => {
+      // 성공 시 AI 요약본 목록을 다시 불러옴
+      queryClient.invalidateQueries({ queryKey: ['aiSummaries'] })
+    },
+    onError: (error) => {
+      console.error('AI 요약본 생성 실패:', error)
     }
   })
 }

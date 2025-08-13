@@ -19,6 +19,12 @@ export interface FloatingAISummaryProps {
   onPromptChange: (prompt: string) => void
   onSelectAllChange: (isSelectAll: boolean) => void
   onContentRemove: (contentId: string) => void
-  onSubmit: () => Promise<void>
+  onSubmit: (summaryData: {
+    fileId: number[]
+    title: string
+    description: string
+    modelType: string
+    promptType: string
+  }) => Promise<void>
   onClose: () => void
 }

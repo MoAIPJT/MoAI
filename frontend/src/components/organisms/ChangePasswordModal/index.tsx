@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import type { ChangePasswordModalProps } from './types'
 import Button from '../../atoms/Button'
 import InputText from '../../atoms/InputText'

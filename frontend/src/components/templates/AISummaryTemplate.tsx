@@ -13,6 +13,8 @@ interface AISummaryTemplateProps {
   onStudyToggle: (studyId: string) => void
   onSettingsClick?: () => void
   onLogout?: () => void
+  onEditSummary?: (summary: { summaryId: string; title: string; description: string }) => void
+  onDeleteSummary?: (summaryId: string) => void
   children: React.ReactNode
 }
 
@@ -25,6 +27,8 @@ const AISummaryTemplate: React.FC<AISummaryTemplateProps> = ({
   onStudyToggle,
   onSettingsClick,
   onLogout,
+  onEditSummary,
+  onDeleteSummary,
   children,
 }) => {
   const [sidebarWidth, setSidebarWidth] = useState(256)
@@ -52,6 +56,8 @@ const AISummaryTemplate: React.FC<AISummaryTemplateProps> = ({
           onStudyToggle={onStudyToggle}
           onSettingsClick={onSettingsClick}
           onLogout={onLogout}
+          onEditSummary={onEditSummary}
+          onDeleteSummary={onDeleteSummary}
         />
       </div>
 

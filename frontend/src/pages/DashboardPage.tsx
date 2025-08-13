@@ -22,6 +22,8 @@ import { useLogout, useMe, usePatchProfile, useChangePassword, useDeleteAccount 
 import { useAuth } from '@/hooks/useAuth'
 import { useAppStore } from '@/store/appStore'
 import { createStudy, getAllStudies } from '@/services/studyService'
+import { scheduleService } from '@/services/scheduleService'
+import type { ScheduleListResponse } from '@/services/scheduleService'
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate()
@@ -45,6 +47,75 @@ const DashboardPage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [expandedStudy, setExpandedStudy] = useState(false)
   const [calendarEvents] = useState<CalendarEvent[]>([])
+
+  // 일정 데이터를 가져오는 함수
+  const fetchSchedules = async () => {
+    try {
+      setIsScheduleLoading(true)
+      // 현재 월의 시작과 끝 날짜 계산
+      const now = new Date()
+      const from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+      const to = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString()
+
+      const schedulesData = await scheduleService.getMySchedules(from, to)
+      setSchedules(schedulesData) // schedules 상태 설정
+
+      // API 응답을 CalendarEvent 형식으로 변환
+      const events: CalendarEvent[] = schedulesData.map(schedule => {
+        const startDate = new Date(schedule.startDatetime)
+        const endDate = new Date(schedule.endDatetime)
+
+        // 스터디별로 다른 색상 할당
+        const getEventColor = (studyName: string) => {
+          if (studyName.includes('알고리즘')) return '#AA64FF'
+          if (studyName.includes('면접')) return '#FF6B6B'
+          if (studyName.includes('CS')) return '#4ECDC4'
+          return '#6B7280' // 기본 색상
+        }
+
+        return {
+          date: startDate, // Date 객체로 변환
+          color: getEventColor(schedule.title),
+          title: schedule.title,
+          startTime: startDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+          endTime: endDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+        }
+      })
+
+      setCalendarEvents(events)
+    } catch (error) {
+      console.error('일정 데이터 로드 실패:', error)
+
+      // 에러 시 기본 더미 데이터 사용
+      const defaultEvents: CalendarEvent[] = [
+        {
+          date: new Date(new Date().getFullYear(), new Date().getMonth(), 15),
+          color: '#AA64FF',
+          title: '알고리즘 스터디',
+          startTime: '14:00',
+          endTime: '16:00'
+        },
+        {
+          date: new Date(new Date().getFullYear(), new Date().getMonth(), 20),
+          color: '#FF6B6B',
+          title: 'CS 면접 준비',
+          startTime: '19:00',
+          endTime: '21:00'
+        },
+        {
+          date: new Date(new Date().getFullYear(), new Date().getMonth(), 25),
+          color: '#4ECDC4',
+          title: '프로젝트 회의',
+          startTime: '10:00',
+          endTime: '12:00'
+        }
+      ]
+      setCalendarEvents(defaultEvents)
+      setSchedules([]) // 빈 배열로 설정
+    } finally {
+      setIsScheduleLoading(false)
+    }
+  }
 
   // 다가오는 일정을 달력 이벤트에서 동적으로 생성
   const upcomingEvents: Array<{
@@ -118,11 +189,11 @@ const DashboardPage: React.FC = () => {
 
       // API 응답을 기존 AISummary 타입에 맞게 변환
       const convertedSummaries: AISummary[] = response.summaries.map(summary => ({
-        id: parseInt(summary.summary_id) || Date.now(), // summary_id를 숫자로 변환
+        id: parseInt(summary.summaryId) || Date.now(), // summaryId를 숫자로 변환
         title: summary.title,
         description: summary.description,
         createdAt: new Date().toISOString().split('T')[0], // 임시 날짜
-        pdfUrl: `/pdfs/${summary.summary_id}.pdf` // 임시 PDF 경로
+        pdfUrl: `/pdfs/${summary.summaryId}.pdf` // 임시 PDF 경로
       }))
 
       setSummaries(convertedSummaries)
@@ -137,6 +208,7 @@ const DashboardPage: React.FC = () => {
   useEffect(() => {
     fetchStudies()
     fetchSummaries()
+    fetchSchedules() // 일정 데이터 로드
   }, [])
 
   const handleItemClick = (itemId: string) => {
@@ -205,7 +277,7 @@ const DashboardPage: React.FC = () => {
     } catch (error) {
       // 사용자 친화적인 에러 메시지 생성
       let errorMessage = '비밀번호 변경에 실패했습니다.'
-      
+
       if (error && typeof error === 'object' && 'code' in error) {
         const errorCode = (error as any).code
         const errorMsg = (error as any).message
@@ -234,7 +306,7 @@ const DashboardPage: React.FC = () => {
       } else if (error instanceof Error) {
         errorMessage = error.message
       }
-      
+
       alert(errorMessage)
     }
   }
@@ -244,25 +316,25 @@ const DashboardPage: React.FC = () => {
     if (!confirm('정말로 회원탈퇴를 하시겠습니까?\n\n⚠️ 주의: 이 작업은 되돌릴 수 없습니다.')) {
       return
     }
-    
+
     // 추가 확인
     if (!confirm('회원탈퇴를 진행하시겠습니까?\n\n모든 데이터가 영구적으로 삭제됩니다.')) {
       return
     }
-    
+
     try {
       // 회원탈퇴 API 호출
       await deleteAccountMutation.mutateAsync()
       
       alert('회원탈퇴가 완료되었습니다.')
-      
+
       // 로그아웃 처리 및 로그인 페이지로 이동
       logout()
-      
+
     } catch (error) {
       // 사용자 친화적인 에러 메시지 생성
       let errorMessage = '회원탈퇴에 실패했습니다.'
-      
+
       if (error && typeof error === 'object' && 'code' in error) {
         const errorCode = (error as any).code
         const errorMsg = (error as any).message
@@ -285,7 +357,7 @@ const DashboardPage: React.FC = () => {
       } else if (error instanceof Error) {
         errorMessage = error.message
       }
-      
+
       alert(errorMessage)
     }
   }
@@ -373,8 +445,54 @@ const DashboardPage: React.FC = () => {
     // TODO: 이벤트 추가 모달 또는 페이지로 이동
   }
 
-  const handleMonthChange = () => {
-    // TODO: 해당 월의 이벤트 데이터 로드
+  // 월 변경 시 일정 데이터 다시 로드
+  const handleMonthChange = (date: Date) => {
+    // 선택된 월의 시작과 끝 날짜 계산
+    const year = date.getFullYear()
+    const month = date.getMonth()
+    const from = new Date(year, month, 1).toISOString()
+    const to = new Date(year, month + 1, 0).toISOString()
+
+    // 해당 월의 일정 데이터 로드
+    fetchSchedulesForMonth(from, to)
+  }
+
+  // 특정 월의 일정 데이터를 가져오는 함수
+  const fetchSchedulesForMonth = async (from: string, to: string) => {
+    try {
+      setIsScheduleLoading(true)
+      const schedulesData = await scheduleService.getMySchedules(from, to)
+      setSchedules(schedulesData) // schedules 상태 설정
+
+      // API 응답을 CalendarEvent 형식으로 변환
+      const events: CalendarEvent[] = schedulesData.map(schedule => {
+        const startDate = new Date(schedule.startDatetime)
+        const endDate = new Date(schedule.endDatetime)
+
+        // 스터디별로 다른 색상 할당
+        const getEventColor = (studyName: string) => {
+          if (studyName.includes('알고리즘')) return '#AA64FF'
+          if (studyName.includes('면접')) return '#FF6B6B'
+          if (studyName.includes('CS')) return '#4ECDC4'
+          return '#6B7280' // 기본 색상
+        }
+
+        return {
+          date: startDate,
+          color: getEventColor(schedule.title),
+          title: schedule.title,
+          startTime: startDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+          endTime: endDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+        }
+      })
+
+      setCalendarEvents(events)
+    } catch (error) {
+      console.error('월별 일정 데이터 로드 실패:', error)
+      // 에러 시 기존 이벤트 유지
+    } finally {
+      setIsScheduleLoading(false)
+    }
   }
 
   return (

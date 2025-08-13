@@ -1,7 +1,7 @@
 export interface UserActionItem {
   id: string
   label: string
-  icon: string
+  icon: React.ReactNode
 }
 
 export interface SidebarUserActionsProps {

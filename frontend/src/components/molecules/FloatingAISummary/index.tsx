@@ -67,6 +67,35 @@ const FloatingAISummary: React.FC<FloatingAISummaryProps> = ({
     }
   }, [isDragging, dragOffset])
 
+  const handleSubmit = async () => {
+    if (!title.trim() || selectedContents.length === 0) {
+      alert('제목을 입력하고 자료를 선택해주세요.')
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const summaryData = {
+        fileId: selectedContents.map(content => parseInt(content.id)), // ContentItem.id를 number로 변환
+        title: title,
+        description: description,
+        modelType: selectedModel,
+        promptType: prompt || 'study-summary.v1'
+      }
+
+      // 요청 데이터 로깅
+      console.log('📝 FloatingAISummary에서 준비된 데이터:', {
+        summaryData,
+        selectedContents: selectedContents.map(c => ({ id: c.id, title: c.title })),
+        userInputs: { title, description, selectedModel, prompt }
+      })
+
+      await onSubmit(summaryData)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   if (!isVisible) return null
 
   return (
@@ -182,7 +211,8 @@ const FloatingAISummary: React.FC<FloatingAISummaryProps> = ({
               onChange={(e) => onModelChange(e.target.value)}
               className="px-2 py-1 border-transparent rounded text-xs bg-white focus:outline-none focus:ring-1 focus:ring-purple-500"
             >
-              <option value="gpt-mini">GPT mini</option>
+              <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+              <option value="gpt-40-mini">GPT-4o Mini</option>
               <option value="gpt-4">GPT-4</option>
               <option value="claude">Claude</option>
             </select>
@@ -199,16 +229,9 @@ const FloatingAISummary: React.FC<FloatingAISummaryProps> = ({
           {/* Bottom Section with Submit Button */}
           <div className="absolute top-1/2 right-2 transform -translate-y-1/2 flex items-center justify-end">
             <button
-              onClick={async () => {
-                setIsLoading(true)
-                try {
-                  await onSubmit()
-                } finally {
-                  setIsLoading(false)
-                }
-              }}
-              disabled={isLoading}
-              className="p-1 text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50"
+              onClick={handleSubmit}
+              disabled={isLoading || !title.trim() || selectedContents.length === 0}
+              className="p-1 text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">

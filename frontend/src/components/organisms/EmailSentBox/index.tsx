@@ -1,6 +1,4 @@
 import React from 'react'
-import Lottie from 'lottie-react'
-import emailSentAnimation from '@/assets/email-sent.json'
 import WelcomeText from '@/components/molecules/WelcomeText'
 import LinkText from '@/components/atoms/LinkText'
 import type { EmailSentBoxProps } from './types'
@@ -12,12 +10,9 @@ const EmailSentBox: React.FC<EmailSentBoxProps> = ({
   <div className="bg-white rounded-2xl shadow-xl p-12 w-full max-w-md flex flex-col items-center">
     <WelcomeText actionText="가입을 축하드려요." />
   <div className="my-8 w-64 h-64 flex items-center justify-center">
-    <Lottie
-      animationData={emailSentAnimation}
-      loop={true}
-      autoplay={true}
-      className="w-full h-full"
-    />
+    <div className="w-full h-full flex items-center justify-center text-6xl text-purple-500">
+      ✉️
+    </div>
   </div>
     <div className="text-center mb-6">
       {message.split('\n').map((line, index) => (

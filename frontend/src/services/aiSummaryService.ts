@@ -6,7 +6,6 @@ import type {
   AiSummarySidebarListRes,
   AiSummaryEditReq,
   AiSummaryEditRes,
-  AiSummaryDeleteReq,
   AiSummaryDeleteRes
 } from '@/types/aiSummary'
 
@@ -14,7 +13,7 @@ import type {
 const toCamelCase = (obj: any): any => {
   if (obj === null || typeof obj !== 'object') return obj
   if (Array.isArray(obj)) return obj.map(toCamelCase)
-  
+
   return Object.keys(obj).reduce((acc, key) => {
     const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())
     acc[camelKey] = toCamelCase(obj[key])
@@ -78,4 +77,30 @@ export const deleteAiSummary = async (id: number): Promise<AiSummaryDeleteRes> =
   } catch (error) {
     throw error
   }
+}
+
+export const createAISummary = async (summaryData: {
+  fileId: number[]
+  title: string
+  description: string
+  modelType: string
+  promptType: string
+}) => {
+  // 요청 데이터 로깅
+  console.log('🚀 AI 요약본 생성 요청:', {
+    endpoint: 'POST /ai/create',
+    requestData: summaryData,
+    timestamp: new Date().toISOString()
+  })
+
+  const response = await api.post('/ai/create', summaryData)
+
+  // 응답 데이터 로깅
+  console.log('✅ AI 요약본 생성 응답:', {
+    status: response.status,
+    responseData: response.data,
+    timestamp: new Date().toISOString()
+  })
+
+  return response.data
 }
