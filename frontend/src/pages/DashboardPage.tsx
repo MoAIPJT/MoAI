@@ -214,11 +214,7 @@ const DashboardPage: React.FC = () => {
 
   // 사용자 프로필 데이터를 ProfileData 형식으로 변환
   const profileData: ProfileData = {
-<<<<<<< HEAD
-    nickname: userProfile?.name || '안덕현',
-=======
     name: userProfile?.name || '안덕현',
->>>>>>> d8c4ee7835b34a9b8461420f2815bba41b2d2b30
     email: userProfile?.email || 'dksejrqus2@gmail.com',
     profileImageUrl: userProfile?.profileImageUrl || '/src/assets/MoAI/smiling.png',
     providerType: userProfile?.providerType || 'LOCAL'
@@ -404,28 +400,28 @@ const DashboardPage: React.FC = () => {
         newPassword: data.newPassword,
         confirmNewPassword: data.confirmPassword
       })
-      
+
       // 실제 비밀번호 변경 API 호출
       const response = await changePasswordMutation.mutateAsync({
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
         confirmNewPassword: data.confirmPassword
       })
-      
+
       console.log('비밀번호 변경 성공 응답:', response)
       alert('비밀번호가 성공적으로 변경되었습니다.')
     } catch (error) {
       console.error('비밀번호 변경 실패 상세:', error)
-      
+
       // 사용자 친화적인 에러 메시지 생성
       let errorMessage = '비밀번호 변경에 실패했습니다.'
-      
+
       if (error && typeof error === 'object' && 'code' in error) {
         const errorCode = (error as any).code
         const errorMsg = (error as any).message
-        
+
         console.log('에러 코드:', errorCode, '에러 메시지:', errorMsg)
-        
+
         switch (errorCode) {
           case 'INVALID_PASSWORD':
             errorMessage = '현재 비밀번호가 올바르지 않습니다.'
@@ -450,7 +446,7 @@ const DashboardPage: React.FC = () => {
       } else if (error instanceof Error) {
         errorMessage = error.message
       }
-      
+
       alert(errorMessage)
     }
   }
@@ -460,36 +456,36 @@ const DashboardPage: React.FC = () => {
     if (!confirm('정말로 회원탈퇴를 하시겠습니까?\n\n⚠️ 주의: 이 작업은 되돌릴 수 없습니다.')) {
       return
     }
-    
+
     // 추가 확인
     if (!confirm('회원탈퇴를 진행하시겠습니까?\n\n모든 데이터가 영구적으로 삭제됩니다.')) {
       return
     }
-    
+
     try {
       console.log('회원탈퇴 요청 시작')
-      
+
       // 회원탈퇴 API 호출
       await deleteAccountMutation.mutateAsync()
-      
+
       console.log('회원탈퇴 성공')
       alert('회원탈퇴가 완료되었습니다.')
-      
+
       // 로그아웃 처리 및 로그인 페이지로 이동
       logout()
-      
+
     } catch (error) {
       console.error('회원탈퇴 실패:', error)
-      
+
       // 사용자 친화적인 에러 메시지 생성
       let errorMessage = '회원탈퇴에 실패했습니다.'
-      
+
       if (error && typeof error === 'object' && 'code' in error) {
         const errorCode = (error as any).code
         const errorMsg = (error as any).message
-        
+
         console.log('에러 코드:', errorCode, '에러 메시지:', errorMsg)
-        
+
         switch (errorCode) {
           case 'UNAUTHORIZED':
             errorMessage = '인증이 만료되었습니다. 다시 로그인해주세요.'
@@ -508,7 +504,7 @@ const DashboardPage: React.FC = () => {
       } else if (error instanceof Error) {
         errorMessage = error.message
       }
-      
+
       alert(errorMessage)
     }
   }

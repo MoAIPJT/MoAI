@@ -51,13 +51,10 @@ interface StudyDetailTemplateProps {
   onUploadData: () => void
   onCreateRoom: () => void
   onEditNotice: () => void
-<<<<<<< HEAD
   onLeaveStudy?: () => void
-=======
   onSettingsClick: () => void
   onLogout?: () => void
   onLogoClick?: () => void
->>>>>>> d8c4ee7835b34a9b8461420f2815bba41b2d2b30
   // Content Management 관련 핸들러들
   onCategoryToggle: (categoryId: number) => void
   onAddCategory: () => void
@@ -93,11 +90,7 @@ interface StudyDetailTemplateProps {
     imageUrl: string
     status: 'PENDING' | 'APPROVED' | 'REJECTED'
   }>
-<<<<<<< HEAD
-  onAcceptJoinRequest?: (userId: number, role: 'ADMIN' | 'DELEGATE' | 'MEMBER') => void
-=======
-  onAcceptJoinRequest?: (userId: number, role?: "ADMIN" | "DELEGATE" | "MEMBER") => void
->>>>>>> d8c4ee7835b34a9b8461420f2815bba41b2d2b30
+  onAcceptJoinRequest?: (userId: number, role?: 'ADMIN' | 'DELEGATE' | 'MEMBER') => void
   onRejectJoinRequest?: (userId: number) => void
 }
 
@@ -133,13 +126,10 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   onUploadData,
   onCreateRoom,
   onEditNotice,
-<<<<<<< HEAD
   onLeaveStudy,
-=======
   onSettingsClick,
   onLogout,
   onLogoClick,
->>>>>>> d8c4ee7835b34a9b8461420f2815bba41b2d2b30
   // Content Management 관련 핸들러들
   onCategoryToggle,
   onAddCategory,

@@ -42,9 +42,9 @@ const AISummaryPage: React.FC = () => {
     description: string;
   } | null>(null)
   const [profileData, setProfileData] = useState<ProfileData>({
-    nickname: '안덕현',
-    email: 'dksejrqus2@gmail.com',
-    profileImage: ''
+    name: 'null',
+    email: 'null',
+    profileImageUrl: ''
   })
 
   // AITestViewer 관련 state들

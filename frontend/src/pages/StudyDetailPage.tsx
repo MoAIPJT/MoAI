@@ -351,14 +351,11 @@ const StudyDetailPage: React.FC = () => {
     setIsNoticeModalOpen(false)
   }
 
-<<<<<<< HEAD
-=======
   const handleSettingsClick = () => {
     // 프로필 설정 모달을 열거나 설정 페이지로 이동
     // 현재는 대시보드로 이동하여 설정을 할 수 있도록 함
     navigate('/dashboard')
   }
->>>>>>> d8c4ee7835b34a9b8461420f2815bba41b2d2b30
   const handleJoinStudy = async () => {
     if (!studyDetail?.studyId || !hashId) return
     try {
@@ -853,8 +850,6 @@ return (
         onUploadData={handleUploadData}
         onCreateRoom={handleCreateRoom}
         onEditNotice={handleEditNotice}
-<<<<<<< HEAD
-=======
         onSettingsClick={handleSettingsClick}
         onLogout={() => {
           // 로그아웃 처리
@@ -863,7 +858,6 @@ return (
           navigate('/login')
         }}
         onLogoClick={() => navigate('/dashboard')}
->>>>>>> d8c4ee7835b34a9b8461420f2815bba41b2d2b30
         participants={participants.map((member: Member) => ({
           id: member.email,
           name: member.member,
