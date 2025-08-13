@@ -46,7 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         summaries: study.summaries.map((summary, summaryIndex) => {
           console.log(`=== Summary ${summaryIndex} 변환 ===`) // 디버깅용 로그
           console.log(`Summary ${summaryIndex}:`, summary) // 디버깅용 로그
-          console.log(`Summary ${summaryIndex} 원본 ID:`, summary.id) // 디버깅용 로그
+          console.log(`Summary ${summaryIndex} 원본 ID:`, summary.summaryId) // 디버깅용 로그
           console.log(`Summary ${summaryIndex} 원본 summary_id:`, (summary as { summary_id?: string }).summary_id) // 디버깅용 로그
           console.log(`Summary ${summaryIndex} summaryId:`, summary.summaryId) // 디버깅용 로그
 

@@ -287,11 +287,11 @@ const DashboardPage: React.FC = () => {
 
       // API 응답을 기존 AISummary 타입에 맞게 변환
       const convertedSummaries: AISummary[] = response.summaries.map(summary => ({
-        id: parseInt(summary.summary_id) || Date.now(), // summary_id를 숫자로 변환
+        id: parseInt(summary.summaryId) || Date.now(), // summaryId를 숫자로 변환
         title: summary.title,
         description: summary.description,
         createdAt: new Date().toISOString().split('T')[0], // 임시 날짜
-        pdfUrl: `/pdfs/${summary.summary_id}.pdf` // 임시 PDF 경로
+        pdfUrl: `/pdfs/${summary.summaryId}.pdf` // 임시 PDF 경로
       }))
 
       setSummaries(convertedSummaries)
