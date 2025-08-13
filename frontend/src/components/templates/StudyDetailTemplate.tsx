@@ -214,23 +214,32 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
                   content={noticeContent}
                   onEdit={onEditNotice}
                   userName={userName}
+                  studyName={currentStudy?.name}
+                  isAdmin={currentUserRole === 'ADMIN'}
                 />
               </div>
               <div className="flex-1">
                 <StudyVideoConference
                   onCreateRoom={onCreateRoom}
                   participants={participants}
+                  currentUserRole={currentUserRole}
                 />
               </div>
             </div>
 
-            {/* 오른쪽: 캘린더 (4/10) */}
+            {/* 오른쪽: 일정 (4/10) */}
             <div className="col-span-4">
-              <StudyCalendar
-                schedules={studySchedules || []}
-                isLoading={isSchedulesLoading}
-                studyId={studyId}
-              />
+              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm h-fit">
+                <div className="flex items-center mb-6">
+                  <div className="w-2 h-8 rounded-full mr-3" style={{ backgroundColor: '#F8BB50' }}></div>
+                  <h2 className="text-2xl font-bold text-gray-900">일정</h2>
+                </div>
+                <StudyCalendar
+                  schedules={studySchedules || []}
+                  isLoading={isSchedulesLoading}
+                  studyId={studyId}
+                />
+              </div>
             </div>
           </div>
 

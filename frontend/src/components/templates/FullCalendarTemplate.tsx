@@ -75,13 +75,9 @@ const FullCalendarTemplate: React.FC<FullCalendarTemplateProps> = ({
   onDeleteEvent,
   studyId,
 }) => {
-  // Convert string date to Date object for sidebar and selected date
-  const currentDateObj = typeof currentDate === 'string' ? new Date(currentDate + 'T00:00:00') : currentDate
-  const selectedDateObj = selectedDate || currentDateObj
-
-  console.log('FullCalendarTemplate - currentDate prop:', currentDate)
-  console.log('FullCalendarTemplate - currentDateObj:', currentDateObj)
-  console.log('FullCalendarTemplate - selectedDateObj:', selectedDateObj)
+  // 현재 날짜와 선택된 날짜를 Date 객체로 변환
+  const currentDateObj = currentDate ? new Date(currentDate) : new Date()
+  const selectedDateObj = selectedDate ? new Date(selectedDate) : new Date()
 
   return (
     <div className="relative h-full w-full overflow-hidden">

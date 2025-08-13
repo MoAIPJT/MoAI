@@ -32,7 +32,6 @@ const ResetPasswordConfirmTemplate: React.FC = () => {
       })
     } catch (error) {
       // 에러는 mutation에서 처리됨
-      console.error('비밀번호 변경 실패:', error)
     }
   }
 

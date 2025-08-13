@@ -567,7 +567,7 @@ const DashboardPage: React.FC = () => {
                 <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                   <div className="flex items-center mb-6">
                     <div className="w-2 h-8 rounded-full mr-3" style={{ backgroundColor: '#477866' }}></div>
-                    <h2 className="text-2xl font-bold text-gray-900">My AI 요약본</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">AI 요약 자료</h2>
                   </div>
                   <AISummaryList
                     summaries={summaries}
@@ -582,7 +582,7 @@ const DashboardPage: React.FC = () => {
                 <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm h-fit">
                   <div className="flex items-center mb-6">
                     <div className="w-2 h-8 rounded-full mr-3" style={{ backgroundColor: '#F8BB50' }}></div>
-                    <h2 className="text-2xl font-bold text-gray-900">일정 관리</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">일정</h2>
                   </div>
                   <Calendar
                     events={calendarEvents}

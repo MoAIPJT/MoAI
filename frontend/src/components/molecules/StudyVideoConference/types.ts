@@ -8,4 +8,5 @@ export interface StudyVideoConferenceProps {
   hasActiveMeeting?: boolean
   onCreateRoom?: () => void
   participants?: Participant[]
+  currentUserRole?: string
 }

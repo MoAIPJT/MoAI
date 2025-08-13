@@ -33,17 +33,10 @@ const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
-  const [selectedDate, setSelectedDate] = useState<Date>(() => {
-    // 현재 날짜로 초기화
+  const [selectedDate, setSelectedDate] = useState(() => {
     const now = new Date()
-    console.log('CalendarSidebar selectedDate 초기값:', now)
-    console.log('CalendarSidebar currentDate prop:', currentDate)
     return now
   })
-
-  // studyId 디버깅
-  console.log('CalendarSidebar에서 받은 studyId:', studyId)
-  console.log('CalendarSidebar에서 받은 studyId 타입:', typeof studyId)
 
   // 날짜 클릭 핸들러
   const handleDateClick = (date: Date) => {

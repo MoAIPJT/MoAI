@@ -356,7 +356,9 @@ const AITestViewer: React.FC<AITestViewerProps> = ({
               setCurrentPage(p => Math.min(Math.max(1, p), numPages))
             }}
             loading={<div className="text-center p-8">PDF 문서를 불러오는 중...</div>}
-            onLoadError={console.error}
+            onLoadError={() => {
+              // 에러 처리
+            }}
           >
             <div
               ref={pageRef}
