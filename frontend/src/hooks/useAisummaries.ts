@@ -67,3 +67,18 @@ export const useDeleteAiSummary = (userId: number, summaryId: number) => {
     }
   })
 }
+
+export const useCreateAISummary = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: aiSummaryService.createAISummary,
+    onSuccess: () => {
+      // 성공 시 AI 요약본 목록을 다시 불러옴
+      queryClient.invalidateQueries({ queryKey: ['aiSummaries'] })
+    },
+    onError: (error) => {
+      console.error('AI 요약본 생성 실패:', error)
+    }
+  })
+}

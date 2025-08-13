@@ -143,8 +143,24 @@ const StudyDetailPage: React.FC = () => {
     originalFileId: file.fileId, // 원본 파일 ID 보존
   })
 
-  // ✅ 변환된 공부 자료 목록
-  const convertedContents = refFiles.map(convertFileToContent)
+  // ✅ 변환된 공부 자료 목록을 state로 관리
+  const [convertedContents, setConvertedContents] = useState<(ContentItem & { originalFileId: number })[]>([])
+
+  // refFiles가 변경될 때 convertedContents 업데이트
+  useEffect(() => {
+    setConvertedContents(refFiles.map(convertFileToContent))
+  }, [refFiles])
+
+  // 체크박스 선택 상태 변경 핸들러
+  const handleContentSelect = (contentId: string) => {
+    setConvertedContents(prev =>
+      prev.map(content =>
+        content.id === contentId
+          ? { ...content, isSelected: !content.isSelected }
+          : content
+      )
+    )
+  }
 
   // 공지사항 관련 상태
   const [notice, setNotice] = useState<string>('')
@@ -613,12 +629,6 @@ const StudyDetailPage: React.FC = () => {
 
       alert('카테고리 생성에 실패했습니다. 다시 시도해주세요.')
     }
-  }
-
-  const handleContentSelect = (contentId: string) => {
-    // This function is no longer needed as ContentItem is directly used.
-    // Keeping it for now in case it's called from the template.
-    console.log('Content select:', contentId)
   }
 
   // ✅ 공부 자료 수정 핸들러

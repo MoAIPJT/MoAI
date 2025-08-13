@@ -1,5 +1,7 @@
 import React from 'react'
 import type { ContentListProps } from './types'
+import checkboxChecked from '@/assets/icons/checkbox.svg'
+import checkboxUnchecked from '@/assets/icons/none-checkbox.svg'
 
 const ContentList: React.FC<ContentListProps> = ({
   contents,
@@ -22,86 +24,94 @@ const ContentList: React.FC<ContentListProps> = ({
       {contents.map((content) => (
         <div
           key={content.id}
-          className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+          className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer relative"
           onClick={() => onContentPreview(content.id)}
         >
-          <div className="flex items-start gap-4">
-            <input
-              type="checkbox"
-              checked={content.isSelected}
-              onChange={(e) => {
+          {/* 체크박스를 오른쪽 상단에 배치 */}
+          <div className="absolute top-3 right-3 z-10">
+            <button
+              onClick={(e) => {
                 e.stopPropagation()
+                console.log('체크박스 클릭:', content.id, '현재 상태:', content.isSelected)
                 onContentSelect(content.id)
               }}
-              className="mt-1"
-            />
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <h4 className="font-medium text-gray-900">{content.title}</h4>
-                <div className="flex gap-1">
-                  {content.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <p className="text-sm text-gray-600 mb-2">{content.description}</p>
-              <div className="flex items-center justify-between text-xs text-gray-500">
-                <div className="flex items-center gap-1">
-                  <img
-                    src={content.author.avatar}
-                    alt={content.author.name}
-                    className="w-4 h-4 rounded-full"
-                  />
-                  <span>{content.author.name}</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span>{content.date}</span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onContentPreview(content.id)
-                      }}
-                      className="text-purple-600 hover:text-purple-700"
-                    >
-                      미리보기
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onContentDownload(content.id)
-                      }}
-                      className="text-green-600 hover:text-green-700"
-                    >
-                      다운로드
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onContentEdit(content.id)
-                      }}
-                      className="text-blue-600 hover:text-blue-700"
-                    >
-                      수정
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onContentDelete(content.id)
-                      }}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      삭제
-                    </button>
-                  </div>
-                </div>
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              title={content.isSelected ? "선택 해제" : "선택"}
+            >
+              <img
+                src={content.isSelected ? checkboxChecked : checkboxUnchecked}
+                alt={content.isSelected ? "선택됨" : "선택 안됨"}
+                className="w-5 h-5"
+              />
+            </button>
+          </div>
+
+          <div className="flex-1 pr-8">
+            <div className="flex items-center gap-2 mb-2">
+              <h4 className="font-medium text-gray-900">{content.title}</h4>
+              <div className="flex gap-1">
+                {content.tags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full"
+                  >
+                    {tag}
+                  </span>
+                ))}
               </div>
             </div>
+            <p className="text-sm text-gray-600 mb-2">{content.description}</p>
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <div className="flex items-center gap-1">
+                <img
+                  src={content.author.avatar}
+                  alt={content.author.name}
+                  className="w-4 h-4 rounded-full"
+                />
+                <span>{content.author.name}</span>
+                <span className="ml-2">{content.date}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 버튼들을 오른쪽 하단에 가로로 배치 */}
+          <div className="absolute bottom-3 right-3 flex items-center gap-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onContentPreview(content.id)
+              }}
+              className="text-purple-600 hover:text-purple-700 text-xs"
+            >
+              미리보기
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onContentDownload(content.id)
+              }}
+              className="text-green-600 hover:text-green-700 text-xs"
+            >
+              다운로드
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onContentEdit(content.id)
+              }}
+              className="text-blue-600 hover:text-blue-700 text-xs"
+            >
+              수정
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onContentDelete(content.id)
+              }}
+              className="text-red-600 hover:text-red-700 text-xs"
+            >
+              삭제
+            </button>
           </div>
         </div>
       ))}
