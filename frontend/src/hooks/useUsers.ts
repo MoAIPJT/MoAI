@@ -59,6 +59,10 @@ export const useLogin = () => {
       })
       // Invalidate and refetch user profile
       queryClient.invalidateQueries({ queryKey: userKeys.me() })
+    },
+    onError: (error: unknown) => {
+      // 로그인 실패 시 에러 로깅
+      console.error('Login failed:', error)
     }
   })
 }

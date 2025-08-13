@@ -56,12 +56,38 @@ export const useAuth = () => {
       navigate('/dashboard')
       return response
     } catch (err: unknown) {
-      if (err instanceof Error) {
+      // 이메일 인증 에러 처리
+      if (err && typeof err === 'object' && 'code' in err) {
+        const errorCode = (err as any).code
+        if (errorCode === 'VALIDATION_ERROR') {
+          // 검증 에러 처리 - fieldErrors에서 구체적인 메시지 추출
+          const fieldErrors = (err as any).fieldErrors
+          if (fieldErrors) {
+            if (fieldErrors.email) {
+              setError('이메일을 확인해주세요.')
+            } else if (fieldErrors.password) {
+              setError('비밀번호를 확인해주세요.')
+            } else {
+              setError('입력값을 확인해주세요.')
+            }
+          } else {
+            setError('입력값을 확인해주세요.')
+          }
+        } else if (errorCode === 'EMAIL_NOT_VERIFIED') {
+          setError('이메일 인증이 완료되지 않았습니다.')
+        } else if (errorCode === 'USER_NOT_FOUND') {
+          setError('등록되지 않은 이메일입니다.')
+        } else if (errorCode === 'INVALID_PASSWORD') {
+          setError('비밀번호가 올바르지 않습니다.')
+        } else {
+          setError((err as any).message || '로그인에 실패했습니다.')
+        }
+      } else if (err instanceof Error) {
         setError(err.message)
       } else {
         setError('로그인에 실패했습니다.')
       }
-      throw err
+      // throw err 제거하여 에러가 상위로 전파되지 않도록 함
     } finally {
       setLoading(false)
     }

@@ -7,11 +7,7 @@ const LoginPage: React.FC = () => {
   const { login, loading, error } = useAuth()
 
   const handleLogin = async (data: LoginFormData) => {
-    try {
-      await login(data)
-    } catch {
-      // 에러는 useAuth 훅에서 처리됨
-    }
+    await login(data)
   }
 
   const handleKakaoLogin = () => {

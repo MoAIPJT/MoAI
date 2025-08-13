@@ -20,9 +20,11 @@ const normalizeError = (error: unknown): ApiError => {
   if (error && typeof error === 'object' && 'response' in error) {
     const axiosError = error as any
     if (axiosError.response?.data) {
+      const errorData = axiosError.response.data
       return {
-        code: axiosError.response.data.code || axiosError.response.status.toString(),
-        message: axiosError.response.data.message || axiosError.response.statusText || 'An error occurred'
+        code: errorData.code || axiosError.response.status.toString(),
+        message: errorData.message || axiosError.response.statusText || 'An error occurred',
+        fieldErrors: errorData.fieldErrors || undefined
       }
     }
     if (axiosError.response?.status) {
