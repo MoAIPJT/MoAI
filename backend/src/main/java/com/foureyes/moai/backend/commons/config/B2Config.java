@@ -9,6 +9,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import java.net.URI;
 
@@ -34,6 +35,15 @@ public class B2Config {
             .serviceConfiguration(S3Configuration.builder()
                 .pathStyleAccessEnabled(true)
                 .build())
+            .build();
+    }
+    @Bean
+    public S3Presigner s3Presigner() throws Exception {
+        return S3Presigner.builder()
+            .credentialsProvider(StaticCredentialsProvider.create(
+                AwsBasicCredentials.create(props.getAccessKey(), props.getSecretKey())))
+            .region(Region.of(props.getRegion()))
+            .endpointOverride(new URI(props.getEndpoint()))
             .build();
     }
 }

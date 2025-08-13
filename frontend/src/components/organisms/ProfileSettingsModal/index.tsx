@@ -9,7 +9,8 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   profileData,
   onUpdateProfile,
   onWithdrawMembership,
-  onOpenChangePasswordModal
+  onOpenChangePasswordModal,
+  isLoading = false
 }) => {
   const [nickname, setNickname] = useState(profileData.nickname)
   const [isEditingNickname, setIsEditingNickname] = useState(false)
@@ -52,7 +53,7 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">내 프로필 설정</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{profileData.nickname}님의 프로필 설정</h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 text-2xl"
@@ -67,7 +68,7 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
             {/* 왼쪽 - 프로필 이미지 */}
             <div className="flex-shrink-0">
               <div className="w-24 h-24 rounded-full bg-purple-100 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors"
-                   onClick={() => fileInputRef.current?.click()}>
+                onClick={() => fileInputRef.current?.click()}>
                 {previewUrl ? (
                   <img
                     src={previewUrl}
@@ -97,7 +98,12 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
               {/* 닉네임 */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  {isEditingNickname ? (
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+                      <span className="text-gray-500">로딩 중...</span>
+                    </div>
+                  ) : isEditingNickname ? (
                     <>
                       <InputText
                         value={nickname}

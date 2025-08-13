@@ -1,0 +1,81 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # - ./frontend/dist:/usr/share/nginx/html
+      - ./frontend/nginx/nginx.prod.conf:/etc/nginx/conf.d/default.conf
+      - /etc/letsencrypt:/etc/letsencrypt
+      # - ./frontend/certbox/www:/var/www/certbot
+    depends_on:
+      - backend
+    networks:
+      - shared-network
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    container_name: backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    networks:
+      - shared-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:latest
+    container_name: redis-moai
+    env_file:
+      - .env
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shared-network
+
+  mysql:
+    image: 'mysql:8.0'
+    container_name: mysql-moai
+    env_file:
+      - .env
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./db/sql-scripts/01_init.sql:/docker-entrypoint-initdb.d/01_init.sql
+      - ./db/mysql-utf8mb4.cnf:/etc/mysql/conf.d/mysql-utf8mb4.cnf
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shared-network
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+
+networks:
+  shared-network:
+    external : true

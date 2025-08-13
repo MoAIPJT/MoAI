@@ -12,4 +12,5 @@ export interface ProfileSettingsModalProps {
   onChangePassword: () => void
   onWithdrawMembership: () => void
   onOpenChangePasswordModal: () => void
+  isLoading?: boolean
 }

@@ -5,6 +5,9 @@ const ContentList: React.FC<ContentListProps> = ({
   contents,
   onContentSelect,
   onContentPreview,
+  onContentEdit,
+  onContentDelete,
+  onContentDownload,
 }) => {
   if (contents.length === 0) {
     return (
@@ -58,15 +61,44 @@ const ContentList: React.FC<ContentListProps> = ({
                 </div>
                 <div className="flex items-center gap-4">
                   <span>{content.date}</span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onContentPreview(content.id)
-                    }}
-                    className="text-purple-600 hover:text-purple-700"
-                  >
-                    미리보기
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onContentPreview(content.id)
+                      }}
+                      className="text-purple-600 hover:text-purple-700"
+                    >
+                      미리보기
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onContentDownload(content.id)
+                      }}
+                      className="text-green-600 hover:text-green-700"
+                    >
+                      다운로드
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onContentEdit(content.id)
+                      }}
+                      className="text-blue-600 hover:text-blue-700"
+                    >
+                      수정
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onContentDelete(content.id)
+                      }}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      삭제
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

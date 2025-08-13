@@ -4,6 +4,7 @@ import com.foureyes.moai.backend.commons.exception.CustomException;
 import com.foureyes.moai.backend.commons.exception.ErrorCode;
 import com.foureyes.moai.backend.commons.util.StorageService;
 import com.foureyes.moai.backend.domain.study.dto.request.CreateStudyRequest;
+import com.foureyes.moai.backend.domain.study.dto.request.UpdateStudyRequestDto;
 import com.foureyes.moai.backend.domain.study.dto.response.*;
 import com.foureyes.moai.backend.domain.study.entity.StudyGroup;
 import com.foureyes.moai.backend.domain.study.entity.StudyMembership;
@@ -79,8 +80,10 @@ public class StudyServiceImpl implements StudyService {
 
         String imageUrl = null;
         try {
-            imageUrl = storageService.uploadFile(request.getImage());
-            log.info("스터디 이미지 업로드 완료: imageUrl={}", imageUrl);
+            if (request.getImage() != null){
+                imageUrl = storageService.uploadFile(request.getImage());
+                log.info("스터디 이미지 업로드 완료: imageUrl={}", imageUrl);
+            }
         } catch (IOException e) {
             log.error("스터디 이미지 업로드 실패: userId={}, error={}", userId, e.getMessage());
             throw new CustomException(ErrorCode.FILE_UPLOAD_FAILED);
@@ -119,6 +122,7 @@ public class StudyServiceImpl implements StudyService {
             .imageUrl(saved.getImageUrl())
             .createdBy(saved.getCreatedBy())
             .createdAt(saved.getCreatedAt())
+            .hashId(saved.getHashId())
             .build();
     }
 
@@ -135,13 +139,13 @@ public class StudyServiceImpl implements StudyService {
         StudyGroup group = validateStudyGroupExists(studyGroupId);
 
         // PENDING이나 APPROVED 상태인 경우만 중복으로 처리
-        Optional<StudyMembership> existingMembership = 
+        Optional<StudyMembership> existingMembership =
             studyMembershipRepository.findByUserIdAndStudyGroup_Id(userId, studyGroupId);
-        
+
         if (existingMembership.isPresent()) {
             StudyMembership.Status status = existingMembership.get().getStatus();
             if (status == StudyMembership.Status.PENDING || status == StudyMembership.Status.APPROVED) {
-                log.warn("이미 가입 요청한 스터디에 중복 요청: userId={}, studyGroupId={}, status={}", 
+                log.warn("이미 가입 요청한 스터디에 중복 요청: userId={}, studyGroupId={}, status={}",
                         userId, studyGroupId, status);
                 throw new CustomException(ErrorCode.ALREADY_JOINED_STUDY);
             }
@@ -184,6 +188,7 @@ public class StudyServiceImpl implements StudyService {
                     .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
                 return StudyMemberListResponseDto.builder()
+                    .userId(user.getId())
                     .member(user.getName())
                     .email(user.getEmail())
                     .imageUrl(user.getProfileImageUrl())
@@ -385,9 +390,9 @@ public class StudyServiceImpl implements StudyService {
         long currentApprovedCount = studyMembershipRepository
             .countByStudyGroup_IdAndStatus(studyId, StudyMembership.Status.APPROVED);
         StudyGroup studyGroup = admin.getStudyGroup();
-        
+
         if (currentApprovedCount >= studyGroup.getMaxCapacity()) {
-            log.warn("스터디 최대 인원 초과로 가입 승인 실패: studyId={}, currentCount={}, maxCapacity={}", 
+            log.warn("스터디 최대 인원 초과로 가입 승인 실패: studyId={}, currentCount={}, maxCapacity={}",
                     studyId, currentApprovedCount, studyGroup.getMaxCapacity());
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
@@ -475,6 +480,7 @@ public class StudyServiceImpl implements StudyService {
         // 1) 멤버십 없음 → 이름, 이미지
         if (membershipOpt.isEmpty()) {
             return StudyDetailResponseDto.builder()
+                .id(group.getId())
                 .name(group.getName())
                 .imageUrl(group.getImageUrl())
                 .build();
@@ -483,6 +489,7 @@ public class StudyServiceImpl implements StudyService {
         // 2) PENDING → 이름, 이미지, 상태 만
         if (membership.getStatus() == StudyMembership.Status.PENDING) {
             return StudyDetailResponseDto.builder()
+                .id(group.getId())
                 .name(group.getName())
                 .imageUrl(group.getImageUrl())
                 .status(StudyMembership.Status.PENDING.name())
@@ -494,6 +501,7 @@ public class StudyServiceImpl implements StudyService {
                 .countByStudyGroup_IdAndStatus(group.getId(), StudyMembership.Status.APPROVED);
 
             return StudyDetailResponseDto.builder()
+                .id(group.getId())
                 .name(group.getName())
                 .imageUrl(group.getImageUrl())
                 .status(StudyMembership.Status.APPROVED.name())
@@ -534,6 +542,39 @@ public class StudyServiceImpl implements StudyService {
         validateAdminMembership(userId, studyId);
 
         group.setNotice(notice == null ? null : notice.trim());
+        studyGroupRepository.save(group);
+    }
+
+    @Override
+    @Transactional
+    public void updateStudyGroup(int userId, int studyId, UpdateStudyRequestDto request) {
+        StudyGroup group = validateStudyGroupExists(studyId);
+        validateAdminMembership(userId, studyId);
+
+        // 이미지(선택)
+        if (request.getImage() != null && !request.getImage().isEmpty()) {
+            try {
+                String imageUrl = storageService.uploadFile(request.getImage());
+                group.setImageUrl(imageUrl);
+                log.info("스터디 이미지 업로드 완료: imageUrl={}", imageUrl);
+            } catch (IOException e) {
+                log.error("스터디 이미지 업로드 실패: userId={}, error={}", userId, e.getMessage());
+                throw new CustomException(ErrorCode.FILE_UPLOAD_FAILED);
+            }
+        }
+
+        if (request.getName() != null && !request.getName().isBlank()) {
+            group.setName(request.getName().trim());
+        }
+
+        if (request.getDescription() != null) {
+            group.setDescription(request.getDescription().trim());
+        }
+
+        if (request.getMaxCapacity() != 0) {
+            group.setMaxCapacity(request.getMaxCapacity());
+        }
+
         studyGroupRepository.save(group);
     }
 

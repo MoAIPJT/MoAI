@@ -1,7 +1,7 @@
 import apiClient from './api'
 
 export interface SummaryItem {
-  summary_id: string
+  summaryId: string
   title: string
   description: string
   model_type: string

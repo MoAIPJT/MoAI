@@ -24,7 +24,7 @@ public class CreateStudyRequest {
     private MultipartFile image;
 
     @Min(value = 2, message = "최대 수용 인원은 최소 2명 이상이어야 합니다")
-    @Max(value = 50, message = "최대 수용 인원은 50명을 초과할 수 없습니다")
+    @Max(value = 8, message = "최대 수용 인원은 8명을 초과할 수 없습니다")
     @Schema(description = "최대 수용 인원", example = "8", required = true)
     private int maxCapacity;
 }
