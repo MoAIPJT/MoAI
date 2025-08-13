@@ -12,16 +12,18 @@ const ResetPasswordConfirmTemplate: React.FC = () => {
 
   // URL에서 토큰 파라미터 가져오기
   const token = searchParams.get('token')
+  const email = searchParams.get('email')
 
   const handleResetPassword = async (data: ResetPasswordConfirmData) => {
-    if (!token) {
+    if (!token || !email) {
       return
     }
 
     try {
       await resetPasswordMutation.mutateAsync({
-        token: token,
-        password: data.password
+        email: email,
+        code: token,
+        newPassword: data.password
       })
 
       // 성공 시 로그인 페이지로 이동

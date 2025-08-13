@@ -194,7 +194,11 @@ export const refService = {
       // 백엔드에서 카테고리 배열을 직접 반환하므로 response.data가 바로 배열
       if (Array.isArray(response.data)) {
         console.log('카테고리 목록 조회 성공:', response.data)
-        return response.data
+        // Ensure all categories have isActive property
+        return response.data.map(category => ({
+          ...category,
+          isActive: category.isActive ?? true
+        }))
       }
 
       console.warn('API 응답이 배열이 아닙니다, 빈 배열 반환')
@@ -234,7 +238,7 @@ export const refService = {
       if (response.status >= 200 && response.status < 300) {
         console.log('카테고리 생성 성공')
         // data가 있으면 반환, 없으면 빈 객체 반환
-        return response.data || { id: 0, name: name }
+        return response.data || { id: 0, name: name, isActive: true }
       }
 
       throw new Error(`API 요청 실패: ${response.status}`)
@@ -259,7 +263,11 @@ export const refService = {
     const response = await api.patch(`/ref/categories/edit/${id}`, {
       name,
     });
-    return response.data;
+    // Ensure the returned category has isActive property
+    return {
+      ...response.data,
+      isActive: response.data.isActive ?? true
+    };
   },
 
   // 카테고리 삭제

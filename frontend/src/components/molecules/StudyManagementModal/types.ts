@@ -1,4 +1,5 @@
 import type { Member } from '../../../types/study'
+import type { Category } from '../../../types/content'
 
 export interface StudyManagementModalProps {
   isOpen: boolean
@@ -8,16 +9,13 @@ export interface StudyManagementModalProps {
   studyImage?: string
   maxMembers?: number
   members: Member[]
-  categories: Array<{
-    id: string
-    name: string
-  }>
+  categories: Category[]
   currentUserRole?: string
   onStudyNameChange: (name: string) => void
   onStudyDescriptionChange: (description: string) => void
   onStudyImageChange: (image: File | null) => void
   onMaxMembersChange: (maxMembers: number) => void
-  onCategoryRemove?: (categoryId: string) => void
+  onCategoryRemove?: (categoryId: number) => void
   onCategoryAdd?: (category: string) => void
   onMemberRemove?: (userId: number) => void
   onStudyUpdate?: (data: {

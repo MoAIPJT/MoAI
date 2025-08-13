@@ -12,7 +12,7 @@ const ResetPasswordPage: React.FC = () => {
     setError(null)
 
     try {
-      await resetPasswordMutation.mutateAsync(email)
+      await resetPasswordMutation.mutateAsync({ email })
 
       // 성공 시 password-sent 페이지로 이동
       navigate('/password-sent', {

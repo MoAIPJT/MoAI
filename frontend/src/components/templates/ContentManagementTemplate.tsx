@@ -6,11 +6,7 @@ import FloatingAISummary from '../molecules/FloatingAISummary'
 import type { Category, ContentItem } from '@/types/content'
 
 interface ContentManagementTemplateProps {
-  categories: Array<{
-    id: string
-    name: string
-    isActive?: boolean
-  }>
+  categories: Category[]
   selectedCategories: number[]
   contents: ContentItem[]
   searchTerm: string

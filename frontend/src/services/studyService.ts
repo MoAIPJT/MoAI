@@ -160,7 +160,7 @@ export const getStudyMembers = async (studyId: string): Promise<Member[]> => {
     // 디버깅을 위해 멤버 데이터 자세히 로깅
     response.data.forEach(member => {
       console.log('Member details:', {
-        id: member.id,
+        id: member.userId,
         name: member.member,
         role: member.role,
         email: member.email

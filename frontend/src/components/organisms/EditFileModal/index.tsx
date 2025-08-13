@@ -24,7 +24,7 @@ const EditFileModal: React.FC<EditFileModalProps> = ({
       const categoryIds = initialData.tags
         .map(tag => {
           const category = categories.find(cat => cat.name === tag)
-          return category ? parseInt(category.id) : null
+          return category ? category.id : null
         })
         .filter((id): id is number => id !== null)
       setSelectedCategories(categoryIds)
@@ -110,8 +110,8 @@ const EditFileModal: React.FC<EditFileModalProps> = ({
                   <CheckBox
                     id={`category-${category.id}`}
                     label={category.name}
-                    checked={selectedCategories.includes(parseInt(category.id))}
-                    onChange={handleCategoryToggle(parseInt(category.id))}
+                    checked={selectedCategories.includes(category.id)}
+                    onChange={handleCategoryToggle(category.id)}
                   />
                 </div>
               ))}

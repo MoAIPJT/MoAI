@@ -6,7 +6,6 @@ import type {
   AiSummarySidebarListRes,
   AiSummaryEditReq,
   AiSummaryEditRes,
-  AiSummaryDeleteReq,
   AiSummaryDeleteRes
 } from '@/types/aiSummary'
 
@@ -14,7 +13,7 @@ import type {
 const toCamelCase = (obj: any): any => {
   if (obj === null || typeof obj !== 'object') return obj
   if (Array.isArray(obj)) return obj.map(toCamelCase)
-  
+
   return Object.keys(obj).reduce((acc, key) => {
     const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())
     acc[camelKey] = toCamelCase(obj[key])

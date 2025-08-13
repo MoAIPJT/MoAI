@@ -417,19 +417,12 @@ const StudyDetailPage: React.FC = () => {
     }
   }
 
-  const handleCategoryRemove = async (categoryId: string) => {
+  const handleCategoryRemove = async (categoryId: number) => {
     if (!studyDetail?.studyId) return
 
     try {
-      // 실제 카테고리 ID로 변환 (string -> number)
-      const numericId = parseInt(categoryId)
-      if (isNaN(numericId)) {
-        console.error('Invalid category ID:', categoryId)
-        return
-      }
-
       // 카테고리 삭제 API 호출
-      await deleteCategoryMutation.mutateAsync(numericId)
+      await deleteCategoryMutation.mutateAsync(categoryId)
       console.log('카테고리 삭제 완료')
     } catch (error) {
       console.error('카테고리 삭제 실패:', error)
@@ -852,11 +845,7 @@ return (
         noticeTitle={noticeTitle}
         noticeContent={noticeContent}
         // Content Management 관련 props - ref API의 Category 타입을 content 타입으로 변환
-        categories={categories.map(cat => ({
-          id: cat.id.toString(),
-          name: cat.name,
-          isActive: false // ref API에는 isActive가 없으므로 기본값 설정
-        }))}
+        categories={categories}
         selectedCategories={selectedCategories}
         contents={filteredContents}
         searchTerm={searchTerm}
@@ -911,11 +900,7 @@ return (
         setEditingContent(null)
       }}
       onEdit={handleFileEditSubmit}
-      categories={categories.map(cat => ({
-        id: cat.id.toString(),
-        name: cat.name,
-        isActive: false
-      }))}
+      categories={categories}
       initialData={editingContent ? {
         id: editingContent.id,
         title: editingContent.title,

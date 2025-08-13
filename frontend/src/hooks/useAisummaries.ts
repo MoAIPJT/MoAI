@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { aiKeys } from './queryKeys'
 import * as aiSummaryService from '@/services/aiSummaryService'
 import type {
-  AiSummaryCreateReq,
   AiSummaryEditReq
 } from '@/types/aiSummary'
 

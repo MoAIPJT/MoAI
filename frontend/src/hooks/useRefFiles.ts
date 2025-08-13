@@ -27,8 +27,8 @@ export const useRefFiles = () => {
   // 파일 수정
   const useEditRef = (studyId: number) => {
     return useMutation({
-      mutationFn: ({ id, form }: { id: number; form: FormData }) =>
-        refService.editFile(id, form),
+      mutationFn: ({ id, data }: { id: number; data: { title: string; description: string; categoryId: number[] } }) =>
+        refService.editFile(id, data),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: refKeys.list(studyId) });
       },
@@ -38,8 +38,8 @@ export const useRefFiles = () => {
   // 파일 삭제
   const useDeleteRef = (studyId: number) => {
     return useMutation({
-      mutationFn: ({ id, req }: { id: number; req: { fileId: number; studyId: number; uploaderId: number; categoryId?: number } }) =>
-        refService.deleteFile(id, req),
+      mutationFn: (id: number) =>
+        refService.deleteFile(id),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: refKeys.list(studyId) });
       },

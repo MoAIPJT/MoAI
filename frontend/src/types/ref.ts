@@ -35,6 +35,7 @@ export interface DeleteReq {
 export interface Category {
   id: number;
   name: string;
+  isActive: boolean;
 }
 
 export interface FileListResponse {

@@ -85,7 +85,7 @@ const DashboardPage: React.FC = () => {
 
         return {
           date: startDate, // Date 객체로 변환
-          color: getEventColor(schedule.name),
+          color: getEventColor(schedule.title),
           title: schedule.title,
           startTime: startDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
           endTime: endDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
@@ -155,9 +155,19 @@ const DashboardPage: React.FC = () => {
         // API에서 가져온 일정 데이터에서 해당 제목의 일정을 찾아 스터디 정보 반환
         const schedule = schedules.find(s => s.title === eventTitle)
         if (schedule) {
-          return {
-            name: schedule.name,
-            image: schedule.image
+          // Schedule doesn't have name/image, so we'll find study info from the title
+          const study = studies.find(s => {
+            if (eventTitle.includes('알고리즘')) return s.name.includes('알고리즘')
+            if (eventTitle.includes('면접')) return s.name.includes('면접')
+            if (eventTitle.includes('프로젝트') || eventTitle.includes('CS')) return s.name.includes('CS')
+            return false
+          })
+
+          if (study && study.imageUrl) {
+            return {
+              name: study.name,
+              image: study.imageUrl
+            }
           }
         }
 
@@ -486,13 +496,13 @@ const DashboardPage: React.FC = () => {
         const getEventColor = (studyName: string) => {
           if (studyName.includes('알고리즘')) return '#AA64FF'
           if (studyName.includes('면접')) return '#FF6B6B'
-          if (schedule.name.includes('CS')) return '#4ECDC4'
+          if (studyName.includes('CS')) return '#4ECDC4'
           return '#6B7280' // 기본 색상
         }
 
         return {
           date: startDate,
-          color: getEventColor(schedule.name),
+          color: getEventColor(schedule.title),
           title: schedule.title,
           startTime: startDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
           endTime: endDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })

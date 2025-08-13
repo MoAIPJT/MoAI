@@ -70,7 +70,7 @@ interface StudyDetailTemplateProps {
   onStudyDescriptionChange?: (description: string) => void
   onStudyImageChange?: (image: File | null) => void
   onMaxMembersChange?: (maxMembers: number) => void
-  onCategoryRemove?: (category: string) => void
+  onCategoryRemove?: (categoryId: number) => void
   onCategoryAdd?: (category: string) => void
   onMemberRemove?: (userId: number) => void
   onMemberRoleChange?: (userId: number, newRole: 'ADMIN' | 'DELEGATE' | 'MEMBER') => void

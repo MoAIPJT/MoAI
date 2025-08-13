@@ -3,14 +3,6 @@ import { studyKeys } from './queryKeys'
 import * as studyService from '@/services/studyService'
 import { useAppStore } from '@/store/appStore'
 import type {
-  CreateStudyReq,
-  LeaveStudyReq,
-  DeleteMemberReq,
-  ChangeMemberRoleReq,
-  AcceptJoinRequestReq,
-  RejectJoinRequestReq,
-  UpdateStudyNoticeReq,
-  StudyDetail,
   Member,
   CreateStudyRes,
   StudyAllItem,
@@ -109,7 +101,7 @@ export const useCreateStudy = (userId: number, options?: {
 
       return { previousAllStudies, previousSidebarStudies }
     },
-    onError: (err, newStudy, context) => {
+    onError: (_, __, context) => {
       // 에러 발생 시 이전 데이터로 롤백
       if (context?.previousAllStudies) {
         queryClient.setQueryData(studyKeys.allMine(), context.previousAllStudies)
@@ -166,13 +158,13 @@ export const useLeaveStudy = (userId: number, studyId: number, hashId?: string) 
       }
       return { previousMembers: undefined }
     },
-    onError: (err, variables, context) => {
+    onError: (_, __, context) => {
       // 에러 발생 시 이전 데이터로 롤백
       if (studyId && context?.previousMembers) {
         queryClient.setQueryData(studyKeys.members(String(studyId)), context.previousMembers)
       }
     },
-    onSettled: (data, error, variables, context) => {
+    onSettled: () => {
       // 성공/실패 관계없이 실행
       if (studyId) {
         // 멤버 목록 쿼리 무효화하여 최신 데이터 가져오기
