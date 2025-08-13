@@ -4,6 +4,8 @@ export interface StudyHeaderProps {
   studyImageUrl?: string
   loading?: boolean
   userCount?: number
+  currentUserRole?: string
   onSettingsClick?: () => void
   onUserCountClick?: () => void
+  onLeaveStudy?: () => void
 }

@@ -13,7 +13,7 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -22,7 +22,7 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
         title: title.trim(),
         description: description.trim(),
         file: selectedFile,
-        selectedCategories,
+        categoryId: selectedCategories,
       })
       handleCancel()
     }
@@ -41,7 +41,7 @@ const UploadDataModal: React.FC<UploadDataModalProps> = ({
     setSelectedFile(file)
   }
 
-  const handleCategoryToggle = (categoryId: string) => (_e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCategoryToggle = (categoryId: number) => (_e: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedCategories(prev => {
       if (prev.includes(categoryId)) {
         return prev.filter(id => id !== categoryId)

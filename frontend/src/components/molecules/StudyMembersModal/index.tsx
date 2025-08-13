@@ -1,7 +1,18 @@
 import React from 'react'
 import type { StudyMembersModalProps } from './types'
 
-const StudyMembersModal: React.FC<StudyMembersModalProps> = ({ isOpen, onClose, members, studyName }) => {
+const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
+  isOpen,
+  onClose,
+  members,
+  studyName,
+  currentUserRole,
+  joinRequests = [],
+  onAcceptJoinRequest,
+  onRejectJoinRequest,
+  onMemberRoleChange
+
+    }) => {
   if (!isOpen) return null
 
   return (
@@ -13,49 +24,54 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({ isOpen, onClose, 
             <button className="bg-purple-500 text-white px-4 py-2 rounded-full hover:bg-purple-600">
               초대하기
             </button>
-            <button 
-              onClick={onClose} 
+            <button
+              onClick={onClose}
               className="text-gray-500 hover:text-gray-700 text-2xl"
             >
               &times;
             </button>
           </div>
         </div>
-        
+
         <p className="text-gray-500 mb-6">Invite your team members to study</p>
 
         <div className="space-y-4 max-h-80 overflow-y-auto">
           {members.map((member, index) => {
-            const isOwner = member.role === 'Owner'
-            const isCurrentUserOwner = members.some(m => m.role === 'Owner' && m.member === 'Kuromi') // 임시로 Kuromi를 현재 사용자로 가정
-            
+            const isAdmin = member.role === 'ADMIN'
+            const isCurrentUserAdmin = currentUserRole === 'ADMIN'
+            const canChangeRole = isCurrentUserAdmin && !isAdmin // ADMIN은 자신의 권한을 변경할 수 없음
+
             return (
               <div key={index} className="flex items-center justify-between p-2 border-b border-gray-200 last:border-b-0">
                 <div className="flex items-center">
                   <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-xl mr-3">
-                    {member.avatar || '👤'}
+                    {member.imageUrl || '👤'}
                   </div>
                   <div>
                     <p className="font-semibold text-gray-800">{member.member}</p>
                     <p className="text-sm text-gray-500">{member.email || '이메일 없음'}</p>
                   </div>
                 </div>
-                
+
                 <div className="relative">
-                  {isCurrentUserOwner && !isOwner ? (
+                  {canChangeRole ? (
                     <select
                       className="block appearance-none w-full bg-white border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
                       value={member.role}
-                      onChange={() => {}} // 실제 역할 변경 로직 필요 시 추가
+                      onChange={(e) => {
+                        const newRole = e.target.value as 'ADMIN' | 'DELEGATE' | 'MEMBER'
+                        console.log('권한 변경 시도:', { member: member.member, userId: member.userId, newRole })
+                        onMemberRoleChange?.(member.userId, newRole) // member.userId 사용
+                      }}
                     >
-                      <option value="Owner">Owner</option>
-                      <option value="Member">Member</option>
-                      <option value="Developer">Developer</option>
+                      <option value="MEMBER">MEMBER</option>
+                      <option value="DELEGATE">DELEGATE</option>
+                      <option value="ADMIN">ADMIN</option>
                     </select>
                   ) : (
                     <span className="text-gray-600 font-medium">{member.role}</span>
                   )}
-                  {isCurrentUserOwner && !isOwner && (
+                  {canChangeRole && (
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                       <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                         <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
@@ -67,9 +83,52 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({ isOpen, onClose, 
             )
           })}
         </div>
+
+        {/* 가입 요청 섹션: admin만 볼 수 있음 */}
+        {currentUserRole === 'ADMIN' && joinRequests && joinRequests.length > 0 && (
+          <div className="mt-6 border-t pt-6">
+            <h3 className="text-lg font-semibold mb-4 text-black">
+              가입 요청 ({joinRequests.length})
+            </h3>
+            <div className="space-y-3 max-h-60 overflow-y-auto">
+              {joinRequests.map((request) => (
+                <div key={request.userID} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-xl mr-3">
+                      {request.imageUrl ? (
+                        <img src={request.imageUrl} alt={request.name} className="w-10 h-10 rounded-full" />
+                      ) : (
+                        '👤'
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-800">{request.name}</p>
+                      <p className="text-sm text-gray-500">{request.userEmail}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => onAcceptJoinRequest?.(request.userID, 'MEMBER')}
+                      className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600"
+                    >
+                      승인
+                    </button>
+                    <button
+                      onClick={() => onRejectJoinRequest?.(request.userID)}
+                      className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+                    >
+                      거절
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
-export default StudyMembersModal 
+export default StudyMembersModal

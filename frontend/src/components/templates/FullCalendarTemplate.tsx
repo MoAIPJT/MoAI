@@ -2,11 +2,11 @@ import React from 'react'
 import CalendarSidebar from '../organisms/CalendarSidebar'
 import CalendarHeader from '../molecules/CalendarHeader'
 import CalendarGrid from '../organisms/CalendarGrid'
-import type { Event as CalendarEvent } from '../atoms/CalendarEvent/types'
+import type { CalendarEvent } from '../organisms/CalendarGrid/types'
 
 export interface FullCalendarTemplateProps {
   currentMonth: string
-  currentDate: string
+  currentDate: Date
   currentView: string
   weekDays: string[]
   weekDates: number[]
@@ -25,6 +25,27 @@ export interface FullCalendarTemplateProps {
   onCreateEvent?: () => void
   selectedDate?: Date // 사용자가 선택한 날짜
   weekDateObjects?: Date[] // 현재 주의 전체 Date 객체들
+  // 일정 생성 관련 props 추가
+  onCreateSchedule?: (data: {
+    studyId: number
+    startDatetime: string
+    endDatetime: string
+    title: string
+    memo?: string
+  }) => Promise<void>
+  // 일정 수정 관련 props 추가
+  onEditSchedule?: (data: {
+    scheduleId: number
+    studyId: number
+    startDatetime: string
+    endDatetime: string
+    title: string
+    memo?: string
+  }) => Promise<void>
+  // 일정 수정/삭제 이벤트 props 추가
+  onEditEvent?: (event: CalendarEvent) => void
+  onDeleteEvent?: (event: CalendarEvent) => void
+  studyId?: number // 현재 스터디 ID
 }
 
 const FullCalendarTemplate: React.FC<FullCalendarTemplateProps> = ({
@@ -48,10 +69,19 @@ const FullCalendarTemplate: React.FC<FullCalendarTemplateProps> = ({
   onCreateEvent,
   selectedDate,
   weekDateObjects,
+  onCreateSchedule,
+  onEditSchedule,
+  onEditEvent,
+  onDeleteEvent,
+  studyId,
 }) => {
   // Convert string date to Date object for sidebar and selected date
-  const currentDateObj = new Date(currentDate)
+  const currentDateObj = typeof currentDate === 'string' ? new Date(currentDate + 'T00:00:00') : currentDate
   const selectedDateObj = selectedDate || currentDateObj
+
+  console.log('FullCalendarTemplate - currentDate prop:', currentDate)
+  console.log('FullCalendarTemplate - currentDateObj:', currentDateObj)
+  console.log('FullCalendarTemplate - selectedDateObj:', selectedDateObj)
 
   return (
     <div className="relative h-full w-full overflow-hidden">
@@ -75,13 +105,16 @@ const FullCalendarTemplate: React.FC<FullCalendarTemplateProps> = ({
           onNextMonth={onNextMonth}
           onDateClick={onDateClick}
           onCreateEvent={onCreateEvent}
+          onCreateSchedule={onCreateSchedule}
+          onEditSchedule={onEditSchedule}
+          studyId={studyId}
         />
 
         {/* Calendar View */}
         <div className="flex-1 flex flex-col">
           {/* Calendar Controls */}
           <CalendarHeader
-            currentDate={currentDate}
+            currentDate={currentDateObj.toISOString().split('T')[0]}
             currentView={currentView}
             onViewChange={onViewChange}
             onPrevious={onPrevious}
@@ -100,12 +133,12 @@ const FullCalendarTemplate: React.FC<FullCalendarTemplateProps> = ({
               onDateClick={onDateClick}
               selectedDate={selectedDateObj}
               weekDateObjects={weekDateObjects}
+              onEditEvent={onEditEvent}
+              onDeleteEvent={onDeleteEvent}
             />
           </div>
         </div>
       </main>
-
-
     </div>
   )
 }

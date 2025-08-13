@@ -3,12 +3,16 @@ package com.foureyes.moai.backend.domain.user.security;
 import com.foureyes.moai.backend.domain.user.entity.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import java.time.LocalDateTime;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
 
+/**
+ * Spring Security 인증 객체로 사용할 CustomUserDetails.
+ * User 엔티티를 감싸서 인증 후 사용자 정보를 쉽게 꺼낼 수 있도록 한다.
+ */
 @Getter
 public class CustomUserDetails implements UserDetails {
 
@@ -18,31 +22,68 @@ public class CustomUserDetails implements UserDetails {
         this.user = user;
     }
 
-    @Override // 권한 반환
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        // 권한이 따로 없으면 ROLE_USER 기본 제공
-        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+    public int getId() {
+        return user.getId();
     }
 
-    @Override // 사용자의 패스워드 반환
+    public String getEmail() {
+        return user.getEmail();
+    }
+
+    public String getName() {
+        return user.getName();
+    }
+
+    public String getProviderType() {
+        return user.getProviderType();
+    }
+
+    public String getProfileImageUrl() {
+        return user.getProfileImageUrl();
+    }
+
+    public boolean isVerified() {
+        return user.isVerified();
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return user.getCreatedAt();
+    }
+
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.singleton(() -> "ROLE_USER");
+    }
+
+    @Override
     public String getPassword() {
         return user.getPassword();
     }
 
-    @Override  // 사용자의 이메일 반환
+    @Override
     public String getUsername() {
-        return user.getEmail(); // 로그인 시 email을 username으로 사용
+        return user.getEmail();
     }
 
-    @Override // 계정 만료 여부 반환
+    @Override
     public boolean isAccountNonExpired() {
-        return true; // 계정 만료 여부 (true = 만료되지 않음)
+        return true;
     }
 
-    @Override // 패스워드의 만료 여부 반환
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
     public boolean isCredentialsNonExpired() {
-        // 패스워드가 만료되었는지 확인하는 로직
-        return true; // 비밀번호 만료 여부
+        return true;
     }
 
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }
+

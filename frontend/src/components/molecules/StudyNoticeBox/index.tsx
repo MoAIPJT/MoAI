@@ -5,6 +5,7 @@ const StudyNoticeBox: React.FC<StudyNoticeBoxProps> = ({
   title = '공지 제목1',
   content = 'Lorem ipsum dolor sit amet consectetur. Nascetur fringilla vel lorem bibendum amet cursus urna.',
   onEdit,
+  userName,
 }) => {
   return (
     <div className="bg-purple-100 rounded-lg p-4 relative">
@@ -12,6 +13,11 @@ const StudyNoticeBox: React.FC<StudyNoticeBoxProps> = ({
         <div className="flex items-center gap-2">
           <span className="text-lg">📢</span>
           <h3 className="font-semibold text-gray-800">{title}</h3>
+          {userName && (
+            <span className="text-sm text-purple-600 font-medium">
+              ({userName}님이 작성)
+            </span>
+          )}
         </div>
         {onEdit && (
           <button

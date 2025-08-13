@@ -58,12 +58,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       name: study.study_name,
       image: study.study_image_url || '/src/assets/MoAI/thinking.png',
       summaries: study.summaries.map(summary => ({
-        id: summary.summary_id,
+        id: summary.summaryId,
         title: summary.title,
         description: summary.description,
         model_type: summary.model_type,
         prompt_type: summary.prompt_type,
-        pdfPath: `/src/assets/pdfs/${summary.summary_id}.pdf` // 임시 PDF 경로
+        pdfPath: `/src/assets/pdfs/${summary.summaryId}.pdf` // 임시 PDF 경로
       }))
     }))
   }

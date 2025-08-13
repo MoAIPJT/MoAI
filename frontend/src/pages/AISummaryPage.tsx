@@ -9,7 +9,8 @@ import { fetchSummaryList, type StudyWithSummaries } from '../services/summarySe
 import { dummySummaryData } from '../types/summary'
 import type { ProfileData } from '../components/organisms/ProfileSettingsModal/types'
 // import type { ChangePasswordData } from '../components/organisms/ChangePasswordModal/types'
-import { useAuth } from '../hooks/useAuth'
+import { useAppStore } from '../store/appStore'
+import { useNavigate } from 'react-router-dom'
 
 const AISummaryPage: React.FC = () => {
   const [activeItem, setActiveItem] = useState<string>('')
@@ -25,7 +26,9 @@ const AISummaryPage: React.FC = () => {
     email: 'dksejrqus2@gmail.com',
     profileImage: ''
   })
-  const { logout } = useAuth()
+
+  const clearAuth = useAppStore((state) => state.auth.clearAuth)
+  const navigate = useNavigate()
   // const [error, setError] = useState<string | null>(null)
 
   // AI 요약본 목록 조회
@@ -34,12 +37,14 @@ const AISummaryPage: React.FC = () => {
       setIsLoading(true)
       // setError(null)
 
+
       // 실제 API 호출
       const userId = localStorage.getItem('userId') || '1' // 실제로는 로그인된 유저 ID를 사용
       const response = await fetchSummaryList(userId)
       setStudiesWithSummaries(response.studies || [])
     } catch {
       // setError('AI 요약본 목록을 불러오는데 실패했습니다.')
+
 
       // 에러 시 더미 데이터 사용 (개발용)
       const dummyStudiesWithSummaries: StudyWithSummaries[] = [
@@ -49,14 +54,14 @@ const AISummaryPage: React.FC = () => {
           study_image_url: '/src/assets/MoAI/thinking.png',
           summaries: [
             {
-              summary_id: 'cats-dogs',
+              summaryId: 'cats-dogs',
               title: 'Cats and Dogs',
               description: 'Fine-grained categorization of pet breeds (37 breeds of cats and dogs).',
               model_type: 'Gemini',
               prompt_type: '요약'
             },
             {
-              summary_id: 'i-love-duck',
+              summaryId: 'i-love-duck',
               title: 'I Love Duck',
               description: 'Duck Duck Duck',
               model_type: 'Gemini',
@@ -70,7 +75,7 @@ const AISummaryPage: React.FC = () => {
           study_image_url: '/src/assets/MoAI/traveling.png',
           summaries: [
             {
-              summary_id: 'hamburger',
+              summaryId: 'hamburger',
               title: '햄버거 맛있겠다',
               description: '햄버거에 대한 상세한 분석과 레시피',
               model_type: 'Gemini',
@@ -115,7 +120,8 @@ const AISummaryPage: React.FC = () => {
   }
 
   const handleLogout = () => {
-    logout()
+    clearAuth()
+    navigate('/login')
   }
 
   const handleUpdateProfile = (data: Partial<ProfileData>) => {
@@ -195,8 +201,8 @@ const AISummaryPage: React.FC = () => {
             <PDFViewer
               pdfUrl={selectedSummary.originalPdfPath}
               title={selectedSummary.title}
-              onLoad={() => {}}
-              onError={() => {}}
+              onLoad={() => { }}
+              onError={() => { }}
             />
           </div>
         </div>

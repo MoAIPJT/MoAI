@@ -1,29 +1,38 @@
 import React from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import LoginIllustration from '@/components/organisms/LoginIllustration'
 import ResetPasswordConfirmForm from '@/components/organisms/ResetPasswordConfirmForm'
-import { useAuth } from '@/hooks/useAuth'
+import { useResetPassword } from '@/hooks/useUsers'
 import type { ResetPasswordConfirmData } from '@/components/organisms/ResetPasswordConfirmForm/types'
 
 const ResetPasswordConfirmTemplate: React.FC = () => {
   const [searchParams] = useSearchParams()
-  const { confirmResetPassword, loading, error } = useAuth()
+  const navigate = useNavigate()
+  const resetPasswordMutation = useResetPassword()
 
   // URL에서 토큰 파라미터 가져오기
   const token = searchParams.get('token')
+  const email = searchParams.get('email')
 
   const handleResetPassword = async (data: ResetPasswordConfirmData) => {
-    if (!token) {
+    if (!token || !email) {
       return
     }
 
     try {
-      await confirmResetPassword({
-        token: token,
-        password: data.password
+      await resetPasswordMutation.mutateAsync({
+        email: email,
+        code: token,
+        newPassword: data.password
       })
-    } catch {
-      // 에러는 useAuth 훅에서 처리됨
+
+      // 성공 시 로그인 페이지로 이동
+      navigate('/login', {
+        state: { message: '비밀번호가 성공적으로 변경되었습니다. 새로운 비밀번호로 로그인해주세요.' }
+      })
+    } catch (error) {
+      // 에러는 mutation에서 처리됨
+      console.error('비밀번호 변경 실패:', error)
     }
   }
 
@@ -61,13 +70,13 @@ const ResetPasswordConfirmTemplate: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-xl p-12 w-full max-w-md">
           <ResetPasswordConfirmForm
             onResetPassword={handleResetPassword}
-            loading={loading}
-            error={error}
+            loading={resetPasswordMutation.isPending}
+            error={resetPasswordMutation.error?.message || null}
           />
         </div>
-              </div>
       </div>
-    )
-  }
+    </div>
+  )
+}
 
-  export default ResetPasswordConfirmTemplate
+export default ResetPasswordConfirmTemplate

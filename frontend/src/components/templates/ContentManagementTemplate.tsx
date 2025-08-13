@@ -7,18 +7,22 @@ import type { Category, ContentItem } from '@/types/content'
 
 interface ContentManagementTemplateProps {
   categories: Category[]
-  selectedCategories: string[]
+  selectedCategories: number[]
   contents: ContentItem[]
   searchTerm: string
   sortOrder: 'newest' | 'oldest'
-  onCategoryToggle: (categoryId: string) => void
+  onCategoryToggle: (categoryId: number) => void
   onAddCategory: () => void
   onSearchChange: (term: string) => void
   onSearch: () => void
   onSortChange: (order: 'newest' | 'oldest') => void
   onContentSelect: (contentId: string) => void
   onContentPreview: (contentId: string) => void
+  onContentEdit: (contentId: string) => void
+  onContentDelete: (contentId: string) => void
+  onContentDownload: (contentId: string) => void
   onUploadData: () => void
+  currentUserRole?: string
 }
 
 const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
@@ -34,7 +38,11 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
   onSortChange,
   onContentSelect,
   onContentPreview,
+  onContentEdit,
+  onContentDelete,
+  onContentDownload,
   onUploadData,
+  currentUserRole,
 }) => {
   // AI Summary Modal 상태 관리
   const [isModalVisible, setIsModalVisible] = useState(false)
@@ -123,6 +131,7 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
           selectedCategories={selectedCategories}
           onCategoryToggle={onCategoryToggle}
           onAddClick={onAddCategory}
+          currentUserRole={currentUserRole}
         />
       </div>
 
@@ -155,6 +164,9 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
             contents={contents}
             onContentSelect={onContentSelect}
             onContentPreview={onContentPreview}
+            onContentEdit={onContentEdit}
+            onContentDelete={onContentDelete}
+            onContentDownload={onContentDownload}
           />
         </div>
       </div>

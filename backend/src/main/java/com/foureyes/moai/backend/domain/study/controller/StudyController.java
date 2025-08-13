@@ -327,4 +327,21 @@ public class StudyController {
 
         return ResponseEntity.ok("수정완료");
     }
+
+    @Operation(
+            summary = "스터디 수정",
+            description = "승인된 관리자만 수정할 수 있습니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PatchMapping(path = "/{study_id}/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> updateGroup(
+            @Parameter(hidden = true)
+            @PathVariable("study_id") int studyId,
+            @RequestHeader("Authorization") String bearerToken,
+            @Valid @ModelAttribute UpdateStudyRequestDto request   // ❗ @RequestBody → @ModelAttribute
+    ) {
+        int userId = extractUserIdFromToken(bearerToken);
+        studyService.updateStudyGroup(userId, studyId, request);
+        return ResponseEntity.ok("수정완료");
+    }
 }
