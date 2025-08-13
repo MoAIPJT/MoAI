@@ -1,4 +1,5 @@
 import React from 'react'
+import logoImage from '../../../assets/(M)logo.png'
 
 interface SidebarLogoProps {
   logoIcon?: string
@@ -16,9 +17,12 @@ const SidebarLogo: React.FC<SidebarLogoProps> = ({
       <div className="flex items-center justify-center">
         {useImage ? (
           <img
-            src="/src/assets/(M)logo.png"
+            src={logoImage}
             alt="MoAI Logo"
             className="w-full max-w-48 h-auto object-contain"
+            onError={(e) => {
+              console.error('Failed to load logo image:', e)
+            }}
           />
         ) : (
           <div className={`w-full max-w-48 h-12 ${iconColor} rounded-full flex items-center justify-center`}>

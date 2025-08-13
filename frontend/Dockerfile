@@ -1,21 +1,14 @@
-# 1. Node.js 공식 이미지 사용 (최신 LTS 권장)
-FROM node:20
-
-# 2. 작업 디렉터리 생성
+# Stage 1: Build the application
+FROM node:20 AS builder
 WORKDIR /app
-
-# 3. package.json과 lock 파일 복사
 COPY package*.json ./
-
-# 4. 의존성 설치
 RUN npm install
-
-# 5. 나머지 소스코드 복사
 COPY . .
+RUN npm run build
 
-# 6. 포트 오픈 (Vite 기본 포트: 5173)
-EXPOSE 5173
-
-# 7. 개발 서버 실행
-CMD ["npm", "run", "dev"]
-
+# Stage 2: Serve the application with Nginx
+FROM nginx:latest
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx/nginx.prod.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
