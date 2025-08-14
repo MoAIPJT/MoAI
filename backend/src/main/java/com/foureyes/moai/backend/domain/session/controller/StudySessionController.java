@@ -3,6 +3,7 @@ package com.foureyes.moai.backend.domain.session.controller;
 
 import com.foureyes.moai.backend.domain.session.dto.response.CloseSessionResponseDto;
 import com.foureyes.moai.backend.domain.session.dto.response.JoinSessionResponseDto;
+import com.foureyes.moai.backend.domain.session.dto.response.ParticipantsResponseDto;
 import com.foureyes.moai.backend.domain.session.dto.response.SessionResponseDto;
 import com.foureyes.moai.backend.domain.session.service.StudySessionServiceImpl;
 import com.foureyes.moai.backend.domain.user.security.CustomUserDetails;
@@ -58,6 +59,17 @@ public class StudySessionController {
         @AuthenticationPrincipal CustomUserDetails user
     ) {
         CloseSessionResponseDto res = service.closeByHashId(hashId, user.getId());
+        return ResponseEntity.ok(res);
+    }
+
+    @Operation(summary = "현재 참여자 목록 조회(이름·프로필)",
+        security = { @SecurityRequirement(name = "bearerAuth") })
+    @GetMapping("/{hashId}/session/participants")
+    public ResponseEntity<ParticipantsResponseDto> participants(
+        @PathVariable String hashId,
+        @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        ParticipantsResponseDto res = service.listParticipantsByHashId(hashId, user.getId());
         return ResponseEntity.ok(res);
     }
 }

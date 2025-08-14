@@ -3,9 +3,7 @@ package com.foureyes.moai.backend.domain.session.service;
 
 import com.foureyes.moai.backend.commons.exception.CustomException;
 import com.foureyes.moai.backend.commons.exception.ErrorCode;
-import com.foureyes.moai.backend.domain.session.dto.response.CloseSessionResponseDto;
-import com.foureyes.moai.backend.domain.session.dto.response.JoinSessionResponseDto;
-import com.foureyes.moai.backend.domain.session.dto.response.SessionResponseDto;
+import com.foureyes.moai.backend.domain.session.dto.response.*;
 import com.foureyes.moai.backend.domain.session.repository.StudySessionRepository;
 import com.foureyes.moai.backend.domain.study.entity.StudyGroup;
 import com.foureyes.moai.backend.domain.study.entity.StudyMembership;
@@ -20,7 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.foureyes.moai.backend.domain.study.entity.StudyMembership.Role.ADMIN;
 import static com.foureyes.moai.backend.domain.study.entity.StudyMembership.Role.DELEGATE;
@@ -36,6 +35,7 @@ public class StudySessionServiceImpl implements StudySessionService{
 
     private final LiveKitAdminClient liveKitAdminClient;
     private final LiveKitTokenGenerator tokenGenerator;
+    private final LiveKitRoomClient liveKitRoomClient;
 
     @Override
     @Transactional
@@ -206,4 +206,103 @@ public class StudySessionServiceImpl implements StudySessionService{
             .closedAt(session.getClosedAt())
             .build();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ParticipantsResponseDto listParticipantsByHashId(String studyHashId, int meUserId) {
+
+        // 1) 스터디 존재 + 내 멤버십 확인(승인 필수)
+        StudyGroup group = studyGroupRepository.findByHashId(studyHashId)
+            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_GROUP_NOT_FOUND));
+        int studyId = group.getId();
+
+        membershipRepository.findByUserIdAndStudyGroup_IdAndStatus(
+            meUserId, studyId, StudyMembership.Status.APPROVED
+        ).orElseThrow(() -> new CustomException(ErrorCode.STUDY_NOT_MEMBER));
+
+        // 2) 열린 세션 확인
+        Optional<StudySession> openOpt = sessionRepository.findByStudyGroupAndClosedAtIsNull(group);
+        if (openOpt.isEmpty()) {
+            return ParticipantsResponseDto.builder()
+                .sessionOpen(false)
+                .count(0)
+                .participants(Collections.emptyList())
+                .build();
+        }
+
+        String roomName = openOpt.get().getRoomName();
+
+        // 3) LiveKit에서 현재 참가자(identity, name) 조회
+        List<LiveKitRoomClient.RoomParticipant> livekitParticipants =
+            liveKitRoomClient.listParticipants(roomName);
+
+        if (livekitParticipants.isEmpty()) {
+            return ParticipantsResponseDto.builder()
+                .sessionOpen(true)
+                .count(0)
+                .participants(Collections.emptyList())
+                .build();
+        }
+
+        // 4) identity(=userId 문자열)를 int로 변환 → 우리 DB에서 Users 조회
+        List<Integer> userIds = new ArrayList<>();
+        Map<Integer, String> nameFallback = new HashMap<>(); // LiveKit name fallback
+        for (LiveKitRoomClient.RoomParticipant p : livekitParticipants) {
+            try {
+                int uid = Integer.parseInt(p.getIdentity());
+                userIds.add(uid);
+                if (p.getName() != null) {
+                    nameFallback.put(uid, p.getName());
+                }
+            } catch (NumberFormatException ignore) {
+                // 우리 룰(identity=userId)에 안 맞는 참가자는 무시(외부 게스트 방지)
+            }
+        }
+
+        if (userIds.isEmpty()) {
+            return ParticipantsResponseDto.builder()
+                .sessionOpen(true)
+                .count(0)
+                .participants(Collections.emptyList())
+                .build();
+        }
+
+        List<User> users = userRepository.findAllById(userIds);
+        Map<Integer, User> userMap = users.stream()
+            .collect(Collectors.toMap(User::getId, u -> u));
+
+        // 5) DTO 변환: 이름은 DB 우선, 없으면 LiveKit name, 최종 fallback은 userId
+        List<ParticipantDto> dtos = new ArrayList<>();
+        for (Integer uid : userIds) {
+            User u = userMap.get(uid);
+            String name;
+            String profile;
+
+            if (u != null) {
+                name = (u.getName() != null && !u.getName().isBlank())
+                    ? u.getName().trim()
+                    : nameFallback.getOrDefault(uid, Integer.toString(uid));
+                profile = u.getProfileImageUrl();
+            } else {
+                name = nameFallback.getOrDefault(uid, Integer.toString(uid));
+                profile = null;
+            }
+
+            if (name.length() > 32) {
+                name = name.substring(0, 32);
+            }
+
+            dtos.add(ParticipantDto.builder()
+                .name(name)
+                .profileImageUrl(profile)
+                .build());
+        }
+
+        return ParticipantsResponseDto.builder()
+            .sessionOpen(true)
+            .count(dtos.size())
+            .participants(dtos)
+            .build();
+    }
+
 }

@@ -21,7 +21,7 @@ public class SessionResponseDto {
     @Schema(description = "스터디 그룹 Hash ID(외부 노출용)", example = "aB9xZK31")
     private String studyGroupHashId;
 
-    @Schema(description = "룸 이름", example = "study-42")
+    @Schema(description = "룸 이름", example = "study-aB9xZK31")
     private String roomName;
 
     @Schema(description = "새로 생성되었는지 여부", example = "true")
