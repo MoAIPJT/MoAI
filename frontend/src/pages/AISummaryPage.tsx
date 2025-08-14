@@ -51,7 +51,7 @@ const AISummaryPage: React.FC = () => {
         {
           study_id: 'ssafy-algorithm',
           study_name: '싸피 알고리즘',
-          study_image_url: '/src/assets/MoAI/thinking.png',
+          study_image_url: '/assets/MoAI/thinking.png',
           summaries: [
             {
               summaryId: 'cats-dogs',
@@ -72,7 +72,7 @@ const AISummaryPage: React.FC = () => {
         {
           study_id: 'daejeon-restaurants',
           study_name: '대전 맛집 탐방',
-          study_image_url: '/src/assets/MoAI/traveling.png',
+          study_image_url: '/assets/MoAI/traveling.png',
           summaries: [
             {
               summaryId: 'hamburger',
@@ -153,7 +153,7 @@ const AISummaryPage: React.FC = () => {
       <div className="text-center">
         <div className="mb-6">
           <img
-            src="/src/assets/MoAI/file.png"
+            src="/assets/MoAI/file.png"
             alt="File Icon"
             className="w-72 h-72 mx-auto mb-4"
           />
