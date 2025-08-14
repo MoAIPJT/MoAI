@@ -13,8 +13,6 @@ import type { Member } from '../../types/study'
 import StudyMembersModal from '../molecules/StudyMembersModal'
 import StudyManagementModal from '../molecules/StudyManagementModal'
 
-// 🆕 화상회의 관련 타입 정의 - StudyDetailPage에서 전달받은 props 사용
-
 interface StudyDetailTemplateProps {
   studies: StudyItem[]
   activeStudyId: string | null
@@ -47,11 +45,6 @@ interface StudyDetailTemplateProps {
   isSchedulesLoading?: boolean
   // 스터디 ID
   studyId?: number
-  // 🆕 화상회의 관련 props - StudyDetailPage에서 전달받음
-  hasActiveMeeting?: boolean
-  onlineParticipants?: Array<{ id: string; name: string; avatar: string; isOnline: boolean }>
-  meetingSessionId?: string
-  onCloseSession?: () => void
   onItemClick: (itemId: string) => void
   onStudyClick: (studyId: string) => void
   onSearch: () => void
@@ -108,12 +101,12 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   loading,
   currentStudy,
   participants = [],
-  studyParticipants = [],
-  userName = '',
+  studyParticipants,
+  userName,
   currentUserRole,
   // 공지사항 관련 props
-  noticeTitle,
-  noticeContent,
+  noticeTitle = '공지사항',
+  noticeContent = '공지사항이 없습니다.',
   // Content Management 관련 props
   categories,
   selectedCategories,
@@ -127,10 +120,6 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   isSchedulesLoading,
   // 스터디 ID
   studyId,
-  // 🆕 화상회의 관련 props - API 연결할 자리
-  hasActiveMeeting,
-  onlineParticipants,
-  meetingSessionId,
   onItemClick,
   onStudyClick,
   onSearch,
@@ -164,13 +153,10 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   onMemberRemove,
   onMemberRoleChange,
   onStudyUpdate,
-  joinRequests,
+  joinRequests = [],
   onAcceptJoinRequest,
   onRejectJoinRequest,
 }) => {
-  // 🆕 화상회의 관련 상태 - StudyDetailPage에서 전달받은 props 사용
-  // 자체 API 호출 코드 제거됨
-
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false)
   const [isManagementModalOpen, setIsManagementModalOpen] = useState(false)
 
@@ -237,14 +223,6 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
                   onCreateRoom={onCreateRoom}
                   participants={participants}
                   currentUserRole={currentUserRole}
-                  // 🆕 StudyDetailPage에서 전달받은 props 사용
-                  hasActiveMeeting={hasActiveMeeting}
-                  onlineParticipants={onlineParticipants}
-                  meetingSessionId={meetingSessionId}
-                  // 🆕 추가 props
-                  isLoading={false}
-                  canManageSession={currentUserRole === 'ADMIN' || currentUserRole === 'DELEGATE'}
-                  onCloseSession={onCloseSession}
                 />
               </div>
             </div>
