@@ -97,7 +97,6 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
     }
   ])
 
-
   const handleEventClick = (event: StudyEvent) => {
     setSelectedEvent(event)
   }
@@ -151,18 +150,9 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
     setShowEventModal(false)
   }
 
-  // const handleDeleteEvent = (eventId: number) => {
-  //   setEvents(events.filter(e => e.id !== eventId))
-  //   setSelectedEvent(null)
-  // }
-
   // Get current date info for modal
   const getModalCurrentMonth = () => {
-    const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ]
-    const result = `${months[modalCurrentDate.getMonth()]} ${modalCurrentDate.getFullYear()}`
+    const result = `${modalCurrentDate.getFullYear()}.${modalCurrentDate.getMonth() + 1}`
     return result
   }
 
@@ -266,7 +256,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
   }
 
   // Calendar data for modal
-  const modalWeekDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
+  const modalWeekDays = ["일", "월", "화", "수", "목", "금", "토"]
   const modalWeekDates = getModalWeekDates()
   const modalWeekDateObjects = getModalWeekDateObjects()
   // 8시부터 23시까지 (16개 슬롯)
@@ -275,10 +265,12 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
 
   // Sample my calendars
   const calendars: CalendarType[] = [
-    { name: "My Calendar", color: "bg-blue-500" },
-    { name: "Work", color: "bg-green-500" },
-    { name: "Personal", color: "bg-purple-500" },
-    { name: "Family", color: "bg-orange-500" },
+    // { name: "내 일정", color: "bg-blue-500" },
+    { name: "업무", color: "bg-green-500" },
+    { name: "개인", color: "bg-purple-500" },
+    // { name: "가족", color: "bg-orange-500" },
+    { name: "스터디", color: "bg-red-500" },
+    { name: "회의", color: "bg-yellow-500" },
   ]
 
   // Calendar 컴포넌트용 이벤트 데이터 변환 (dot 표시용)
