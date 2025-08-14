@@ -7,7 +7,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./frontend/nginx/nginx.prod.conf:/etc/nginx/conf.d/nginx.prod.conf
+      - ./frontend/nginx/.conf:/etc/nginx/conf.d
       - /etc/letsencrypt:/etc/letsencrypt
     depends_on:
       - backend
