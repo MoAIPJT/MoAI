@@ -1,15 +1,18 @@
 import React, { useRef, useState, useEffect } from 'react'
 import type { StudyVideoConferenceProps } from './types'
 
-// TODO: OpenVidu 관련 import 추가 예정
-// import { OpenVidu } from 'openvidu-browser'
-// import { useOpenViduSession } from '@/hooks/useOpenVidu'
-
 const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
   hasActiveMeeting = false,
   onCreateRoom,
   participants = [],
   currentUserRole,
+  // 🆕 API 연결 완료 - 새로운 props들
+  onlineParticipants = [],
+  meetingSessionId,
+  // 🆕 추가 props
+  isLoading = false,
+  canManageSession = false,
+  onCloseSession,
 }) => {
   const hasParticipants = participants.length > 0
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -17,207 +20,11 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
   const [startX, setStartX] = useState(0)
   const [scrollLeft, setScrollLeft] = useState(0)
 
-  // TODO: OpenVidu 관련 상태 추가 예정
-  // const [session, setSession] = useState<Session | null>(null)
-  // const [publisher, setPublisher] = useState<Publisher | null>(null)
-  // const [subscribers, setSubscribers] = useState<Subscriber[]>([])
-  // const [isConnecting, setIsConnecting] = useState(false)
-  // const [isConnected, setIsConnected] = useState(false)
-
-  // 관리자 또는 대리자만 방 생성/입장 가능
+  // 관리자 또는 대리자만 방 생성/입장/종료 가능
   const canManageMeeting = currentUserRole === 'ADMIN' || currentUserRole === 'DELEGATE'
 
-  // TODO: OpenVidu 세션 초기화 함수
-  // const initializeSession = async () => {
-  //   try {
-  //     setIsConnecting(true)
-  //     // 백엔드에서 세션 토큰 요청
-  //     const response = await fetch('/api/openvidu/sessions/create', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-  //       },
-  //       body: JSON.stringify({
-  //         studyId: studyId,
-  //         sessionName: `study-${studyId}-${Date.now()}`
-  //       })
-  //     })
-  //     
-  //     if (!response.ok) throw new Error('세션 생성 실패')
-  //     
-  //     const { token } = await response.json()
-  //     
-  //     // OpenVidu 세션 연결
-  //     const ov = new OpenVidu()
-  //     const session = ov.initSession()
-  //     
-  //     session.on('streamCreated', (event) => {
-  //       setSubscribers(prev => [...prev, event.stream])
-  //     })
-  //     
-  //     session.on('streamDestroyed', (event) => {
-  //       setSubscribers(prev => prev.filter(sub => sub !== event.stream))
-  //     })
-  //     
-  //     await session.connect(token)
-  //     setSession(session)
-  //     setIsConnected(true)
-  //     
-  //     // 퍼블리셔 생성
-  //     const publisher = ov.initPublisher(undefined, {
-  //       audioSource: undefined,
-  //       videoSource: undefined,
-  //       publishAudio: true,
-  //       publishVideo: true,
-  //       resolution: '640x480',
-  //       frameRate: 30,
-  //       insertMode: 'APPEND',
-  //       mirror: false
-  //     })
-  //     
-  //     session.publish(publisher)
-  //     setPublisher(publisher)
-  //     
-  //   } catch (error) {
-  //     // 에러 처리
-  //   } finally {
-  //     setIsConnecting(false)
-  //   }
-  // }
-
-  // TODO: 온라인 스터디 참여자 목록 실시간 업데이트
-  // useEffect(() => {
-  //   if (!isConnected || !session) return
-  //   
-  //   // 참여자 목록 실시간 업데이트를 위한 WebSocket 연결
-  //   const ws = new WebSocket(`ws://localhost:8080/ws/study/${studyId}/participants`)
-  //   
-  //   ws.onmessage = (event) => {
-  //     const data = JSON.parse(event.data)
-  //     if (data.type === 'PARTICIPANT_JOINED') {
-  //       // 새로운 참여자 추가
-  //       setParticipants(prev => [...prev, data.participant])
-  //     } else if (data.type === 'PARTICIPANT_LEFT') {
-  //       // 참여자 제거
-  //       setParticipants(prev => prev.filter(p => p.id !== data.participantId))
-  //     }
-  //   }
-  //   
-  //   return () => ws.close()
-  // }, [isConnected, session, studyId])
-
-  // TODO: 온라인 스터디 상태 확인
-  // useEffect(() => {
-  //   const checkOnlineStudyStatus = async () => {
-  //     try {
-  //       const response = await fetch(`/api/study/${studyId}/online-status`, {
-  //         headers: {
-  //           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-  //         }
-  //       })
-  //       
-  //       if (response.ok) {
-  //         const { isActive, participants: onlineParticipants } = await response.json()
-  //         setHasActiveMeeting(isActive)
-  //         setParticipants(onlineParticipants)
-  //       }
-  //     } catch (error) {
-  //       // 에러 처리
-  //     }
-  //   }
-  //   
-  //   // 주기적으로 상태 확인 (30초마다)
-  //   const interval = setInterval(checkOnlineStudyStatus, 30000)
-  //   checkOnlineStudyStatus() // 초기 확인
-  //   
-  //   return () => clearInterval(interval)
-  // }, [studyId])
-
-  // TODO: 방 생성/입장 핸들러
-  // const handleCreateRoom = async () => {
-  //   if (!canManageMeeting) return
-  //   
-  //   try {
-  //     // 백엔드에 온라인 스터디 세션 생성 요청
-  //     const response = await fetch('/api/study/online-session/create', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-  //       },
-  //       body: JSON.stringify({
-  //         studyId: studyId,
-  //         sessionName: `study-${studyId}`,
-  //         maxParticipants: 20
-  //       })
-  //     })
-  //     
-  //     if (!response.ok) throw new Error('온라인 스터디 세션 생성 실패')
-  //     
-  //     const { sessionId } = await response.json()
-  //     
-  //     // OpenVidu 세션 초기화
-  //     await initializeSession()
-  //     
-  //     // 참여자 목록 업데이트
-  //     setHasActiveMeeting(true)
-  //     
-  //   } catch (error) {
-  //     // 에러 처리
-  //   }
-  // }
-
-  // TODO: 방 입장 핸들러
-  // const handleJoinRoom = async () => {
-  //   try {
-  //     // 기존 세션에 참여
-  //     const response = await fetch(`/api/study/${studyId}/online-session/join`, {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-  //       }
-  //     })
-  //     
-  //     if (!response.ok) throw new Error('방 입장 실패')
-  //     
-  //     const { token } = await response.json()
-  //     
-  //     // OpenVidu 세션에 참여
-  //     await initializeSession()
-  //     
-  //   } catch (error) {
-  //     // 에러 처리
-  //   }
-  // }
-
-  // TODO: 온라인 스터디 종료
-  // const handleEndSession = async () => {
-  //   if (!canManageMeeting || !session) return
-  //   
-  //   try {
-  //     // 백엔드에 세션 종료 요청
-  //     await fetch(`/api/study/${studyId}/online-session/end`, {
-  //       method: 'DELETE',
-  //       headers: {
-  //         'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-  //       }
-  //     })
-  //     
-  //     // OpenVidu 세션 종료
-  //     session.disconnect()
-  //     setSession(null)
-  //     setPublisher(null)
-  //     setSubscribers([])
-  //     setIsConnected(false)
-  //     setHasActiveMeeting(false)
-  //     setParticipants([])
-  //     
-  //   } catch (error) {
-  //     // 에러 처리
-  //   }
-  // }
+  // 🆕 LiveKit 화상회의 연결은 VideoConferencePage에서 처리
+  // 이 컴포넌트는 세션 상태 표시와 방 생성/참가 버튼만 담당
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true)
@@ -256,10 +63,25 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
           <>
             {/* 참여자 정보 */}
             <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-medium text-gray-700">현재 참여중인 인원:</span>
-                <span className="text-lg font-medium text-gray-800">{participants.length}명</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-medium text-gray-700">현재 참여중인 인원:</span>
+                  <span className="text-lg font-medium text-gray-800">{participants.length}명</span>
+                </div>
+                {canManageSession && onCloseSession && (
+                  <button
+                    onClick={onCloseSession}
+                    className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 transition-colors"
+                  >
+                    세션 종료
+                  </button>
+                )}
               </div>
+              {meetingSessionId && (
+                <div className="text-sm text-gray-500 mt-1">
+                  세션 ID: {meetingSessionId}
+                </div>
+              )}
             </div>
               
             {/* 참여자 목록 - 개선된 UI */}
@@ -302,9 +124,10 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
             <div className="flex justify-center mt-auto">
               <button
                 onClick={onCreateRoom}
-                className="bg-purple-500 text-white px-6 py-2 rounded-lg hover:bg-[#553C9A] transition-colors font-medium shadow-md hover:shadow-lg"
+                disabled={isLoading}
+                className="bg-purple-500 text-white px-6 py-2 rounded-lg hover:bg-[#553C9A] transition-colors font-medium shadow-md hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
-                온라인 스터디 참여
+                {isLoading ? '연결 중...' : '온라인 스터디 참여'}
               </button>
             </div>
           </>
@@ -315,13 +138,14 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
             </p>
             
             {/* 관리자/대리자만 방 생성 가능 */}
-            {canManageMeeting && (
+            {canManageSession && (
               <div className="flex justify-center">
                 <button
                   onClick={onCreateRoom}
-                  className="bg-purple-500 text-white px-6 py-2 rounded-lg hover:bg-[#553C9A] transition-colors font-medium shadow-md hover:shadow-lg"
+                  disabled={isLoading}
+                  className="bg-purple-500 text-white px-6 py-2 rounded-lg hover:bg-[#553C9A] transition-colors font-medium shadow-md hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  온라인 스터디 시작
+                  {isLoading ? '생성 중...' : '온라인 스터디 시작'}
                 </button>
               </div>
             )}
