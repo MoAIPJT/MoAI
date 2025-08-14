@@ -1,7 +1,7 @@
 export interface ProfileData {
   name: string
   email: string
-  profileImageUrl?: string
+  profileImageUrl?: string | File
   providerType?: string
 }
 

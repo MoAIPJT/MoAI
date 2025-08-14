@@ -568,15 +568,41 @@ const StudyDetailPage: React.FC = () => {
     }
   }
   const handleJoinStudy = async () => {
+    console.log('🎯 handleJoinStudy 함수 시작')
+    console.log('📊 현재 상태:', {
+      isLoggedIn,
+      studyDetail,
+      hashId,
+      userProfile
+    })
+
     // 로그인되지 않은 경우 로그인 페이지로 리다이렉트
     if (!isLoggedIn) {
+      console.log('❌ 로그인되지 않음 - 로그인 페이지로 이동')
       navigate('/login')
       return
     }
 
-    if (!studyDetail?.studyId || !hashId) {
+    // studyId가 0이거나 없는 경우 hashId를 사용
+    let targetStudyId = studyDetail?.studyId
+    if (!targetStudyId || targetStudyId === 0) {
+      console.log('⚠️ studyId가 0이거나 없음. hashId 사용 시도:', hashId)
+      if (!isNaN(Number(hashId))) {
+        targetStudyId = Number(hashId)
+        console.log('✅ hashId를 studyId로 사용:', targetStudyId)
+      } else {
+        console.log('❌ hashId도 숫자가 아님:', hashId)
+        alert('스터디 ID를 찾을 수 없습니다. 페이지를 새로고침해주세요.')
+        return
+      }
+    }
+
+    if (!targetStudyId || !hashId) {
+      console.log('❌ 필수 데이터 누락:', { studyId: targetStudyId, hashId })
       return
     }
+
+    console.log('🚀 가입 요청 시작 - studyId:', targetStudyId)
 
     try {
       // ✅ 즉시 로컬 상태 업데이트 (API 호출 전에 먼저 실행)
@@ -585,6 +611,8 @@ const StudyDetailPage: React.FC = () => {
           ...studyDetail,
           status: 'PENDING'
         }
+
+        console.log('📝 로컬 상태 업데이트:', updatedStudyDetail)
 
         // React Query 캐시 즉시 업데이트
         queryClient.setQueryData(['studyDetail', hashId], updatedStudyDetail)
@@ -603,13 +631,17 @@ const StudyDetailPage: React.FC = () => {
               : study
           )
 
+          console.log('📝 사이드바 데이터 업데이트:', updatedSidebarData)
+
           // 사이드바 데이터 즉시 업데이트
           queryClient.setQueryData(studyKeys.sidebar(userProfile.id), updatedSidebarData)
         }
       }
 
+      console.log('📡 API 호출 시작 - joinStudy')
       // 가입 요청 API 호출
-      await joinStudy({ studyId: studyDetail.studyId })
+      const result = await joinStudy({ studyId: targetStudyId })
+      console.log('✅ API 호출 성공:', result)
 
       // ✅ API 성공 후 추가 캐시 무효화 (백그라운드에서 최신 데이터 동기화)
       if (hashId) {
@@ -621,11 +653,17 @@ const StudyDetailPage: React.FC = () => {
       }
 
       // ✅ 가입 성공 후 성공 메시지 표시하고 페이지 자동 새로고침
+      alert('가입 요청이 성공적으로 전송되었습니다!')
+      console.log('🔄 페이지 새로고침 예정 (100ms 후)')
+
       setTimeout(() => {
+        console.log('🔄 페이지 새로고침 실행')
         window.location.reload()
       }, 100) // 0.1초 후 새로고침하여 "가입 승인 대기" 상태 표시
 
     } catch (error) {
+      console.error('❌ 가입 요청 실패:', error)
+
       // ✅ API 실패 시 원래 상태로 롤백
       if (studyDetail && hashId) {
         const originalStudyDetail = {

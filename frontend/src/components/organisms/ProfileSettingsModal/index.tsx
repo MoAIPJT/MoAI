@@ -18,6 +18,7 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   const [name, setName] = useState(profileData.name)
   const [isEditing, setIsEditing] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string>(profileData.profileImageUrl || '/src/assets/MoAI/smiling.png')
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [hasChanges, setHasChanges] = useState(false)
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -33,6 +34,7 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
+      setSelectedFile(file)
       const reader = new FileReader()
       reader.onload = (e) => {
         setPreviewUrl(e.target?.result as string)
@@ -61,7 +63,12 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
 
     // 이미지가 변경된 경우에만 포함 (null이 아닌 경우)
     if (previewUrl !== profileData.profileImageUrl) {
-      updateData.profileImageUrl = previewUrl
+      // 파일이 선택된 경우 파일 객체를, 그렇지 않으면 URL을 전달
+      if (selectedFile) {
+        updateData.profileImageUrl = selectedFile
+      } else {
+        updateData.profileImageUrl = previewUrl
+      }
     }
 
     // 변경사항이 있으면 API 호출
@@ -69,6 +76,7 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
       onUpdateProfile(updateData)
       setHasChanges(false)
       setIsEditing(false)
+      setSelectedFile(null) // 파일 객체 초기화
     }
   }
 

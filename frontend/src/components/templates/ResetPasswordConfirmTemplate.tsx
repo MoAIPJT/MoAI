@@ -1,28 +1,54 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import LoginIllustration from '@/components/organisms/LoginIllustration'
 import ResetPasswordConfirmForm from '@/components/organisms/ResetPasswordConfirmForm'
-import { useResetPassword } from '@/hooks/useUsers'
+import { useResetPassword, useResetPasswordVerify } from '@/hooks/useUsers'
 import type { ResetPasswordConfirmData } from '@/components/organisms/ResetPasswordConfirmForm/types'
 
 const ResetPasswordConfirmTemplate: React.FC = () => {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const resetPasswordMutation = useResetPassword()
+  const verifyTokenMutation = useResetPasswordVerify()
 
-  // URL에서 토큰 파라미터 가져오기
-  const token = searchParams.get('token')
+  const [isTokenValid, setIsTokenValid] = useState<boolean | null>(null)
+  const [isVerifying, setIsVerifying] = useState(true)
+
+  // URL에서 파라미터 가져오기
+  const code = searchParams.get('code') // 'token' 대신 'code' 사용
   const email = searchParams.get('email')
 
+  // 페이지 로드 시 토큰 유효성 검증
+  useEffect(() => {
+    const verifyToken = async () => {
+      if (!code || !email) {
+        setIsTokenValid(false)
+        setIsVerifying(false)
+        return
+      }
+
+      try {
+        await verifyTokenMutation.mutateAsync({ email, code: token })
+        setIsTokenValid(true)
+      } catch {
+        setIsTokenValid(false)
+      } finally {
+        setIsVerifying(false)
+      }
+    }
+
+    verifyToken()
+  }, [code, email, verifyTokenMutation])
+
   const handleResetPassword = async (data: ResetPasswordConfirmData) => {
-    if (!token || !email) {
+    if (!code || !email) {
       return
     }
 
     try {
       await resetPasswordMutation.mutateAsync({
         email: email,
-        code: token,
+        code: code,
         newPassword: data.password
       })
 
@@ -35,8 +61,25 @@ const ResetPasswordConfirmTemplate: React.FC = () => {
     }
   }
 
-  // 토큰이 없으면 에러 메시지 표시
-  if (!token) {
+  // 로딩 중일 때
+  if (isVerifying) {
+    return (
+      <div className="flex min-h-screen bg-[#f9f9f9]">
+        <div className="w-1/2 h-screen">
+          <LoginIllustration />
+        </div>
+        <div className="w-1/2 flex justify-center items-center h-screen">
+          <div className="bg-white rounded-2xl shadow-xl p-12 w-full max-w-md text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">토큰을 검증하고 있습니다...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // 토큰이 유효하지 않거나 없을 때
+  if (!isTokenValid) {
     return (
       <div className="flex min-h-screen bg-[#f9f9f9]">
         <div className="w-1/2 h-screen">
@@ -60,6 +103,7 @@ const ResetPasswordConfirmTemplate: React.FC = () => {
     )
   }
 
+  // 토큰이 유효할 때 비밀번호 재설정 폼 표시
   return (
     <div className="flex min-h-screen bg-[#f9f9f9]">
       <div className="w-1/2 h-screen">

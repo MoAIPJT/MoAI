@@ -114,15 +114,31 @@ export const getStudyDetail = async (hashId: string): Promise<StudyDetail> => {
     const response = await api.get<any>(`/study/detail?hashId=${hashId}`)
     const data = response.data
 
-    console.log('Study detail API response:', data)
+    console.log('🔍 Study detail API response:', data)
+    console.log('🔍 Response data keys:', Object.keys(data))
+    console.log('🔍 Response data values:', Object.values(data))
 
-    // ✅ DB 구조에 맞게 수정: 'id' 필드가 실제 studyId
-    const studyId = data.id  // Study 테이블의 Primary Key
+    // ✅ 다양한 필드명으로 studyId 찾기 시도
+    let studyId = data.id || data.studyId || data.study_id || data.studyGroupId || data.study_group_id
 
-    console.log('Found studyId from id field:', studyId)
+    // 만약 여전히 studyId가 없다면, hashId를 디코딩해서 사용
+    if (!studyId || studyId === 0) {
+      console.log('⚠️ studyId를 찾을 수 없음. hashId 디코딩 시도:', hashId)
+      // hashId가 이미 숫자인 경우 그대로 사용
+      if (!isNaN(Number(hashId))) {
+        studyId = Number(hashId)
+        console.log('✅ hashId를 숫자로 변환하여 studyId로 사용:', studyId)
+      } else {
+        // hashId가 문자열인 경우 기본값 설정
+        studyId = 1 // 임시 기본값
+        console.log('⚠️ studyId를 찾을 수 없어 기본값 사용:', studyId)
+      }
+    }
+
+    console.log('🎯 최종 studyId:', studyId)
 
     const result: StudyDetail = {
-      studyId: studyId,  // data.id를 studyId로 사용
+      studyId: studyId,
       name: data.name || '',
       imageUrl: data.imageUrl || data.image_url || '',
       status: data.status,
@@ -131,11 +147,11 @@ export const getStudyDetail = async (hashId: string): Promise<StudyDetail> => {
       userCount: data.userCount || data.user_count
     }
 
-    console.log('Converted StudyDetail:', result)
+    console.log('✅ Converted StudyDetail:', result)
     return result
 
   } catch (error) {
-    console.error('getStudyDetail API error:', error)
+    console.error('❌ getStudyDetail API error:', error)
     throw normalizeError(error)
   }
 }
