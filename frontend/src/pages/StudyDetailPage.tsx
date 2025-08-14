@@ -5,6 +5,8 @@ import CategoryAddModal from '../components/organisms/CategoryAddModal'
 import EditFileModal from '../components/organisms/EditFileModal'
 import PDFPreviewModal from '../components/organisms/PDFPreviewModal'
 import DashboardSidebar from '../components/organisms/DashboardSidebar'
+import ProfileSettingsModal from '../components/organisms/ProfileSettingsModal'
+import ChangePasswordModal from '../components/organisms/ChangePasswordModal'
 import type { StudyItem } from '../components/organisms/DashboardSidebar/types'
 import type { ContentItem } from '../types/content'
 import type { StudyListItem } from '../types/study'
@@ -19,6 +21,8 @@ import type { UploadData } from '../components/organisms/UploadDataModal/types'
 import { refService } from '../services/refService'
 import { useStudySchedules } from '../hooks/useSchedules'
 import { useMe } from '../hooks/useUsers'
+import { usePatchProfile, useChangePassword, useDeleteAccount } from '../hooks/useUsers'
+import type { ProfileData } from '../components/organisms/ProfileSettingsModal/types'
 
 const StudyDetailPage: React.FC = () => {
   const navigate = useNavigate()
@@ -53,14 +57,14 @@ const StudyDetailPage: React.FC = () => {
   const {
     data: participants = [],
     error: membersError
-  } = useStudyMembers(shouldLoadStudyDetail ? (studyDetail?.studyId || 0) : 0)
+  } = useStudyMembers(shouldLoadStudyDetail && studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0)
 
   // ✅ 스터디별 일정 조회
   const {
     data: studySchedules = [],
     isLoading: isSchedulesLoading
   } = useStudySchedules(
-    shouldLoadStudyDetail ? (studyDetail?.studyId || 0) : 0,
+    shouldLoadStudyDetail && studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0,
     currentMonth.year,
     currentMonth.month
   )
@@ -73,33 +77,38 @@ const StudyDetailPage: React.FC = () => {
     data: categories = [],
     isLoading: isCategoriesLoading,
     error: categoriesError
-  } = useCategories(shouldLoadStudyDetail ? (studyDetail?.studyId || 0) : 0)
+  } = useCategories(shouldLoadStudyDetail && studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0)
 
   // ✅ 공부 자료 목록 조회 - /ref/list 엔드포인트 사용
   const {
     data: refFiles = [],
     isLoading: isRefFilesLoading,
     error: refFilesError
-  } = useRefList(shouldLoadStudyDetail ? (studyDetail?.studyId || 0) : 0)
+  } = useRefList(shouldLoadStudyDetail && studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0)
 
   // 카테고리 생성/삭제 mutation
-  const createCategoryMutation = useCreateCategory(studyDetail?.studyId || 0)
-  const deleteCategoryMutation = useDeleteCategory(studyDetail?.studyId || 0)
+  const createCategoryMutation = useCreateCategory(studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0)
+  const deleteCategoryMutation = useDeleteCategory(studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0)
 
   // ✅ 파일 업로드 mutation
-  const uploadRefMutation = useUploadRef(studyDetail?.studyId || 0)
+  const uploadRefMutation = useUploadRef(studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0)
 
   const {
   data: joinRequests = []
 } = useJoinRequests(
   // 관리자 권한이 있을 때만 가입 요청 목록 조회
-  studyDetail?.role === 'ADMIN' ? (studyDetail?.studyId || 0) : 0
+  studyDetail?.role === 'ADMIN' && studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0
 )
 
   // Mutation 훅들
-  const acceptJoinRequestMutation = useAcceptJoinRequest(studyDetail?.studyId || 0)
-  const rejectJoinRequestMutation = useRejectJoinRequest(studyDetail?.studyId || 0)
-  const changeMemberRoleMutation = useChangeMemberRole(studyDetail?.studyId || 0)
+  const acceptJoinRequestMutation = useAcceptJoinRequest(studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0)
+  const rejectJoinRequestMutation = useRejectJoinRequest(studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0)
+  const changeMemberRoleMutation = useChangeMemberRole(studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0)
+
+  // 프로필 관련 mutation 훅들
+  const patchProfileMutation = usePatchProfile()
+  const changePasswordMutation = useChangePassword()
+  const deleteAccountMutation = useDeleteAccount()
 
   // Content Management 관련 상태
   const [showCategoryModal, setShowCategoryModal] = useState(false)
@@ -118,6 +127,10 @@ const StudyDetailPage: React.FC = () => {
   const [isPDFModalOpen, setIsPDFModalOpen] = useState(false)
   const [previewingContent, setPreviewingContent] = useState<(ContentItem & { originalFileId: number }) | null>(null)
 
+  // 프로필 설정 모달 관련 상태
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false)
+
   // ✅ FileItem을 ContentItem으로 변환하는 함수
   const convertFileToContent = (file: FileItem): ContentItem & { originalFileId: number } => ({
     id: file.fileId.toString(),
@@ -129,27 +142,44 @@ const StudyDetailPage: React.FC = () => {
       avatar: file.profileImageUrl || 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=32&h=32&fit=crop&crop=face'
     },
     date: file.updateDate || file.uploadDate || new Date().toLocaleDateString('ko-KR'),
-    isSelected: false,
+    isSelected: false, // 기본값으로 false 설정
     originalFileId: file.fileId, // 원본 파일 ID 보존
   })
 
-  // ✅ 변환된 공부 자료 목록을 state로 관리
-  const [convertedContents, setConvertedContents] = useState<(ContentItem & { originalFileId: number })[]>([])
+  // 체크박스 선택 상태를 별도로 관리
+  const [selectedContentIds, setSelectedContentIds] = useState<Set<string>>(new Set())
 
-  // refFiles가 변경될 때 convertedContents 업데이트
-  useEffect(() => {
-    setConvertedContents(refFiles.map(convertFileToContent))
-  }, [refFiles])
+  // ✅ 변환된 공부 자료 목록을 useMemo로 직접 계산하여 무한 루프 방지
+  const convertedContents = useMemo(() => {
+    // 비로그인 상태에서는 빈 배열 반환
+    if (!isLoggedIn || !refFiles || refFiles.length === 0) {
+      return []
+    }
+    return refFiles.map(file => ({
+      ...convertFileToContent(file),
+      isSelected: selectedContentIds.has(file.fileId.toString())
+    }))
+  }, [refFiles, isLoggedIn, selectedContentIds])
+
+  // 사용자 프로필 데이터를 ProfileData 형식으로 변환
+  const profileData: ProfileData = {
+    name: userProfile?.name || '',
+    email: userProfile?.email || '',
+    profileImageUrl: userProfile?.profileImageUrl || '',
+    providerType: userProfile?.providerType || 'LOCAL'
+  }
 
   // 체크박스 선택 상태 변경 핸들러
   const handleContentSelect = (contentId: string) => {
-    setConvertedContents(prev =>
-      prev.map(content =>
-        content.id === contentId
-          ? { ...content, isSelected: !content.isSelected }
-          : content
-      )
-    )
+    setSelectedContentIds(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(contentId)) {
+        newSet.delete(contentId)
+      } else {
+        newSet.add(contentId)
+      }
+      return newSet
+    })
   }
 
   // 공지사항 관련 상태
@@ -210,6 +240,9 @@ const StudyDetailPage: React.FC = () => {
 
   // 스터디 목록 로드
   useEffect(() => {
+    // 비로그인 상태에서는 실행하지 않음
+    if (!isLoggedIn) return
+
     const loadStudies = async () => {
       try {
         setError(null)
@@ -230,11 +263,12 @@ const StudyDetailPage: React.FC = () => {
       }
     }
     loadStudies()
-  }, [])
+  }, [isLoggedIn])
 
   // ✅ useMemo를 사용한 더 간단한 방법 - userCount 직접 사용
   const currentStudy = useMemo(() => {
-    if (!studyDetail || !activeStudyId) return null
+    // 비로그인 상태에서는 null 반환
+    if (!isLoggedIn || !studyDetail || !activeStudyId) return null
 
     return {
       id: activeStudyId,
@@ -243,14 +277,17 @@ const StudyDetailPage: React.FC = () => {
       image: studyDetail.imageUrl,
       memberCount: studyDetail.userCount || 0  // ✅ userCount 직접 사용
     }
-  }, [studyDetail, activeStudyId])  // ✅ participants 의존성 제거
+  }, [isLoggedIn, studyDetail, activeStudyId])  // isLoggedIn 의존성 추가
 
   // ✅ 로딩 상태만 별도로 관리 - 더 간단해짐
   useEffect(() => {
+    // 비로그인 상태에서는 실행하지 않음
+    if (!isLoggedIn) return
+
     if (studyDetail) {
       setLoading(false)
     }
-  }, [studyDetail])  // ✅ participants 의존성 제거
+  }, [studyDetail, isLoggedIn])  // isLoggedIn 의존성 추가
 
   // ✅ 에러 처리 - 로그인된 경우에만 스터디 관련 에러 처리
   useEffect(() => {
@@ -264,12 +301,12 @@ const StudyDetailPage: React.FC = () => {
           return
         }
       }
-      
+
       // 그 외 에러는 기존과 동일하게 처리
       setError('스터디 정보를 불러오는데 실패했습니다.')
       setLoading(false)
     }
-    
+
     // 로그인되지 않은 경우 에러 상태 초기화
     if (!isLoggedIn) {
       setError(null)
@@ -379,7 +416,7 @@ const StudyDetailPage: React.FC = () => {
 
       // 성공 메시지 (실제로는 toast 등을 사용)
       console.log('공지사항이 업데이트되었습니다.')
-      
+
       // 성공 시 스터디 상세 정보 React Query 캐시 무효화
       if (hashId) {
         queryClient.invalidateQueries({ queryKey: ['studyDetail', hashId] })
@@ -408,9 +445,127 @@ const StudyDetailPage: React.FC = () => {
   }
 
   const handleSettingsClick = () => {
-    // 프로필 설정 모달을 열거나 설정 페이지로 이동
-    // 현재는 대시보드로 이동하여 설정을 할 수 있도록 함
-    navigate('/dashboard')
+    // 프로필 설정 모달 열기
+    setIsProfileModalOpen(true)
+  }
+
+  const handleUpdateProfile = async (data: Partial<ProfileData>) => {
+    try {
+      // ProfileData를 API 형식에 맞게 변환
+      const updateData = {
+        name: data.name,
+        profileImageUrl: data.profileImageUrl
+      }
+
+      await patchProfileMutation.mutateAsync(updateData)
+      alert('프로필이 성공적으로 업데이트되었습니다.')
+    } catch (error) {
+      alert('프로필 업데이트에 실패했습니다.')
+    }
+  }
+
+  const handleOpenChangePasswordModal = () => {
+    setIsChangePasswordModalOpen(true)
+  }
+
+  const handleChangePasswordSubmit = async (data: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
+    try {
+      // 실제 비밀번호 변경 API 호출
+      await changePasswordMutation.mutateAsync({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+        confirmNewPassword: data.confirmPassword
+      })
+
+      alert('비밀번호가 성공적으로 변경되었습니다.')
+    } catch (error) {
+      // 사용자 친화적인 에러 메시지 생성
+      let errorMessage = '비밀번호 변경에 실패했습니다.'
+
+      if (error && typeof error === 'object' && 'code' in error) {
+        const errorCode = (error as { code: string; message?: string }).code
+        const errorMsg = (error as { code: string; message?: string }).message
+
+        switch (errorCode) {
+          case 'INVALID_PASSWORD':
+            errorMessage = '현재 비밀번호가 올바르지 않습니다.'
+            break
+          case 'PASSWORD_CONFIRM_MISMATCH':
+            errorMessage = '새 비밀번호와 확인 비밀번호가 일치하지 않습니다.'
+            break
+          case 'PASSWORD_SAME_AS_OLD':
+            errorMessage = '새 비밀번호는 현재 비밀번호와 달라야 합니다.'
+            break
+          case 'VALIDATION_ERROR':
+            errorMessage = '입력값을 확인해주세요.'
+            break
+          case 'INTERNAL_SERVER_ERROR':
+            errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
+            break
+          default:
+            if (errorMsg) {
+              errorMessage = errorMsg
+            }
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message
+      }
+
+      alert(errorMessage)
+    }
+  }
+
+  const handleWithdrawMembership = async () => {
+    // 회원탈퇴 확인
+    if (!confirm('정말로 회원탈퇴를 하시겠습니까?\n\n⚠️ 주의: 이 작업은 되돌릴 수 없습니다.')) {
+      return
+    }
+
+    // 추가 확인
+    if (!confirm('회원탈퇴를 진행하시겠습니까?\n\n모든 데이터가 영구적으로 삭제됩니다.')) {
+      return
+    }
+
+    try {
+      // 회원탈퇴 API 호출
+      await deleteAccountMutation.mutateAsync()
+
+      alert('회원탈퇴가 완료되었습니다.')
+
+      // 로그아웃 처리 및 로그인 페이지로 이동
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      navigate('/login')
+
+    } catch (error) {
+      // 사용자 친화적인 에러 메시지 생성
+      let errorMessage = '회원탈퇴에 실패했습니다.'
+
+      if (error && typeof error === 'object' && 'code' in error) {
+        const errorCode = (error as { code: string; message?: string }).code
+        const errorMsg = (error as { code: string; message?: string }).message
+
+        switch (errorCode) {
+          case 'UNAUTHORIZED':
+            errorMessage = '인증이 만료되었습니다. 다시 로그인해주세요.'
+            break
+          case 'USER_NOT_FOUND':
+            errorMessage = '사용자 정보를 찾을 수 없습니다.'
+            break
+          case 'INTERNAL_SERVER_ERROR':
+            errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
+            break
+          default:
+            if (errorMsg) {
+              errorMessage = errorMsg
+            }
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message
+      }
+
+      alert(errorMessage)
+    }
   }
   const handleJoinStudy = async () => {
     // 로그인되지 않은 경우 로그인 페이지로 리다이렉트
@@ -422,7 +577,7 @@ const StudyDetailPage: React.FC = () => {
     if (!studyDetail?.studyId || !hashId) {
       return
     }
-    
+
     try {
       // ✅ 즉시 로컬 상태 업데이트 (API 호출 전에 먼저 실행)
       if (studyDetail) {
@@ -430,7 +585,7 @@ const StudyDetailPage: React.FC = () => {
           ...studyDetail,
           status: 'PENDING'
         }
-        
+
         // React Query 캐시 즉시 업데이트
         queryClient.setQueryData(['studyDetail', hashId], updatedStudyDetail)
       }
@@ -439,15 +594,15 @@ const StudyDetailPage: React.FC = () => {
       if (userProfile?.id) {
         // 현재 사이드바 데이터 가져오기
         const currentSidebarData = queryClient.getQueryData(studyKeys.sidebar(userProfile.id)) as StudyItem[] | undefined
-        
+
         if (currentSidebarData && Array.isArray(currentSidebarData)) {
           // 현재 스터디를 PENDING 상태로 업데이트
-          const updatedSidebarData = currentSidebarData.map((study: StudyItem) => 
-            study.id === hashId 
+          const updatedSidebarData = currentSidebarData.map((study: StudyItem) =>
+            study.id === hashId
               ? { ...study, status: 'PENDING' }
               : study
           )
-          
+
           // 사이드바 데이터 즉시 업데이트
           queryClient.setQueryData(studyKeys.sidebar(userProfile.id), updatedSidebarData)
         }
@@ -455,16 +610,21 @@ const StudyDetailPage: React.FC = () => {
 
       // 가입 요청 API 호출
       await joinStudy({ studyId: studyDetail.studyId })
-      
+
       // ✅ API 성공 후 추가 캐시 무효화 (백그라운드에서 최신 데이터 동기화)
       if (hashId) {
         queryClient.invalidateQueries({ queryKey: ['studyDetail', hashId] })
       }
-      
+
       if (userProfile?.id) {
         queryClient.invalidateQueries({ queryKey: studyKeys.sidebar(userProfile.id) })
       }
-      
+
+      // ✅ 가입 성공 후 성공 메시지 표시하고 페이지 자동 새로고침
+      setTimeout(() => {
+        window.location.reload()
+      }, 100) // 0.1초 후 새로고침하여 "가입 승인 대기" 상태 표시
+
     } catch (error) {
       // ✅ API 실패 시 원래 상태로 롤백
       if (studyDetail && hashId) {
@@ -474,19 +634,19 @@ const StudyDetailPage: React.FC = () => {
         }
         queryClient.setQueryData(['studyDetail', hashId], originalStudyDetail)
       }
-      
+
       if (userProfile?.id) {
         const currentSidebarData = queryClient.getQueryData(studyKeys.sidebar(userProfile.id)) as StudyItem[] | undefined
         if (currentSidebarData && Array.isArray(currentSidebarData)) {
-          const rolledBackSidebarData = currentSidebarData.map((study: StudyItem) => 
-            study.id === hashId 
+          const rolledBackSidebarData = currentSidebarData.map((study: StudyItem) =>
+            study.id === hashId
               ? { ...study, status: studyDetail?.status || null }
               : study
           )
           queryClient.setQueryData(studyKeys.sidebar(userProfile.id), rolledBackSidebarData)
         }
       }
-      
+
       // 에러 메시지 표시
       alert('가입 요청에 실패했습니다. 다시 시도해주세요.')
     }
@@ -907,7 +1067,7 @@ const StudyDetailPage: React.FC = () => {
 
   // status가 left, reject, null인 경우 가입하기 페이지 표시
   if (studyDetail?.status === 'LEFT' || studyDetail?.status === 'REJECTED' || studyDetail?.status === null) {
-    
+
     return (
       <div className="flex h-screen">
         {/* 로그인된 경우에만 DashboardSidebar 표시 */}
@@ -1150,6 +1310,24 @@ return (
         fileName={previewingContent.title}
       />
     )}
+
+    {/* Profile Settings Modal */}
+    <ProfileSettingsModal
+      isOpen={isProfileModalOpen}
+      onClose={() => setIsProfileModalOpen(false)}
+      profileData={profileData}
+      onUpdateProfile={handleUpdateProfile}
+      onChangePassword={handleOpenChangePasswordModal}
+      onWithdrawMembership={handleWithdrawMembership}
+      isLoading={false}
+    />
+
+    {/* Change Password Modal */}
+    <ChangePasswordModal
+      isOpen={isChangePasswordModalOpen}
+      onClose={() => setIsChangePasswordModalOpen(false)}
+      onSubmit={handleChangePasswordSubmit}
+    />
   </>
 )
 }

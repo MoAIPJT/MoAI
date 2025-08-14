@@ -12,6 +12,5 @@ export interface ProfileSettingsModalProps {
   onUpdateProfile: (data: Partial<ProfileData>) => void
   onChangePassword: () => void
   onWithdrawMembership: () => void
-  onOpenChangePasswordModal: () => void
   isLoading?: boolean
 }
