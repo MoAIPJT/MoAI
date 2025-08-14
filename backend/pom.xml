@@ -160,6 +160,15 @@
             <artifactId>hashids</artifactId>
             <version>1.0.3</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/io.livekit/livekit-server -->
+        <!-- LiveKit dependency -->
+        <dependency>
+            <groupId>io.livekit</groupId>
+            <artifactId>livekit-server</artifactId>
+            <version>0.10.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>

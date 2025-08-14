@@ -1,6 +1,7 @@
 // domain/study/session/controller/StudySessionController.java
 package com.foureyes.moai.backend.domain.session.controller;
 
+import com.foureyes.moai.backend.domain.session.dto.response.JoinSessionResponseDto;
 import com.foureyes.moai.backend.domain.session.dto.response.SessionResponseDto;
 import com.foureyes.moai.backend.domain.session.service.StudySessionService;
 import com.foureyes.moai.backend.domain.user.security.CustomUserDetails;
@@ -33,5 +34,17 @@ public class StudySessionController {
         SessionResponseDto response = service.openOrGetByHashId(hashId, user.getId());
         HttpStatus status = response.isCreated() ? HttpStatus.CREATED : HttpStatus.OK;
         return new ResponseEntity<>(response, status);
+    }
+
+    @Operation(summary = "세션 참가(토큰 발급)",
+        description = "세션이 열려 있지 않으면 ADMIN/DELEGATE는 자동으로 열고, 일반 멤버는 403 반환",
+        security = { @SecurityRequirement(name = "bearerAuth") })
+    @PostMapping("/{hashId}/session/join")
+    public ResponseEntity<JoinSessionResponseDto> join(
+        @PathVariable String hashId,
+        @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        JoinSessionResponseDto res = service.joinByHashId(hashId, user.getId());
+        return ResponseEntity.ok(res);
     }
 }
