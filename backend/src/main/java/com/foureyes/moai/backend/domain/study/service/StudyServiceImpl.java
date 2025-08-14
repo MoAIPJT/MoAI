@@ -151,6 +151,8 @@ public class StudyServiceImpl implements StudyService {
             }
             else{
                 StudyMembership studyMembership = existingMembership.get();
+                studyMembership.setStatus(StudyMembership.Status.PENDING);
+                studyMembershipRepository.save(studyMembership);
             }
         }
         else{
