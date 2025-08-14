@@ -43,6 +43,90 @@ export const getStudies = async (): Promise<StudyItem[]> => {
   }
 }
 
+// 🆕 getAllStudies 함수 추가 (DashboardPage에서 사용)
+export const getAllStudies = async (): Promise<StudyItem[]> => {
+  return getStudies()
+}
+
+// 🆕 사이드바 스터디 목록 조회 (StudyDetailPage에서 사용)
+export const getSidebarStudies = async (): Promise<StudyItem[]> => {
+  try {
+    const response = await api.get('/studies/sidebar')
+    return response.data
+  } catch (error) {
+    console.error('Failed to fetch sidebar studies:', error)
+    // 에러 시 더미 데이터 반환 (개발용)
+    return [
+      {
+        id: 'study-1',
+        name: '싸피 알고리즘',
+        description: '알고리즘 문제 풀이와 코드 리뷰를 통해 실력을 향상시키는 스터디입니다.',
+        image: '/api/images/algorithm.jpg',
+        image_url: '/api/images/algorithm.jpg',
+      },
+      {
+        id: 'study-2',
+        name: 'CS 모여라',
+        description: '컴퓨터 과학 기초 지식을 함께 학습하고 토론하는 스터디입니다.',
+        image: '/api/images/cs.jpg',
+        image_url: '/api/images/cs.jpg',
+      },
+    ]
+  }
+}
+
+// 🆕 스터디 공지사항 업데이트 (StudyDetailPage에서 사용)
+export const updateStudyNotice = async (data: { studyId: number; notice: string }): Promise<void> => {
+  try {
+    await api.put(`/studies/${data.studyId}/notice`, { notice: data.notice })
+  } catch (error) {
+    console.error('Failed to update study notice:', error)
+    throw error
+  }
+}
+
+// 🆕 스터디 공지사항 조회 (StudyDetailPage에서 사용)
+export const getStudyNotice = async (studyId: number): Promise<{ notice: string }> => {
+  try {
+    const response = await api.get(`/studies/${studyId}/notice`)
+    return response.data
+  } catch (error) {
+    console.error('Failed to fetch study notice:', error)
+    // 에러 시 기본 공지사항 반환
+    return { notice: '안녕하세요! 스터디 입니다 :)' }
+  }
+}
+
+// 🆕 스터디 가입 (StudyDetailPage에서 사용)
+export const joinStudy = async (data: { studyId: number }): Promise<void> => {
+  try {
+    await api.post(`/studies/${data.studyId}/join`)
+  } catch (error) {
+    console.error('Failed to join study:', error)
+    throw error
+  }
+}
+
+// 🆕 스터디 탈퇴 (StudyDetailPage에서 사용)
+export const leaveStudy = async (data: { studyGroupId: number }): Promise<void> => {
+  try {
+    await api.post(`/studies/${data.studyGroupId}/leave`)
+  } catch (error) {
+    console.error('Failed to leave study:', error)
+    throw error
+  }
+}
+
+// 🆕 스터디 멤버 삭제 (StudyDetailPage에서 사용)
+export const deleteStudyMember = async (data: { studyId: number; userId: number }): Promise<void> => {
+  try {
+    await api.delete(`/studies/${data.studyId}/members/${data.userId}`)
+  } catch (error) {
+    console.error('Failed to delete study member:', error)
+    throw error
+  }
+}
+
 // 특정 스터디 조회
 export const getStudyById = async (studyId: string): Promise<StudyItem> => {
   try {

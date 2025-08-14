@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { OpenVidu, Session, Publisher, Subscriber } from 'openvidu-browser'
-import axios from 'axios'
+import { useParams, useSearchParams } from 'react-router-dom'
+import { Room, RoomEvent, RemoteParticipant, LocalParticipant, connect } from 'livekit-client'
 import CircleButton from '../components/atoms/CircleButton'
 
 interface VideoConferencePageProps {
@@ -14,18 +13,18 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
   studyName = '스터디'
 }) => {
   const { studyId: urlStudyId } = useParams<{ studyId: string }>()
+  const [searchParams] = useSearchParams()
   const studyId = propStudyId || (urlStudyId ? parseInt(urlStudyId) : undefined)
 
-  const [session, setSession] = useState<Session | null>(null)
-  const [publisher, setPublisher] = useState<Publisher | null>(null)
-  const [subscribers, setSubscribers] = useState<Subscriber[]>([])
+  // 🆕 LiveKit 관련 상태
+  const [room, setRoom] = useState<Room | null>(null)
+  const [localParticipant, setLocalParticipant] = useState<LocalParticipant | null>(null)
+  const [remoteParticipants, setRemoteParticipants] = useState<RemoteParticipant[]>([])
   const [isConnected, setIsConnected] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isScreenSharing, setIsScreenSharing] = useState(false)
   const [screenShareStream, setScreenShareStream] = useState<MediaStream | null>(null)
-  const [isDemoMode, setIsDemoMode] = useState(false)
-  const [demoParticipants, setDemoParticipants] = useState<Array<{id: string, name: string, hasAudio: boolean, hasVideo: boolean}>>([])
 
   // 오디오/비디오 상태 관리
   const [isAudioEnabled, setIsAudioEnabled] = useState(true)
@@ -46,15 +45,15 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null)
   const subscribersRef = useRef<HTMLDivElement>(null)
   const screenShareVideoRef = useRef<HTMLVideoElement>(null)
-  const demoVideoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({})
   const chatInputRef = useRef<HTMLInputElement>(null)
   const pdfViewerRef = useRef<HTMLIFrameElement>(null)
 
-  // OpenVidu 서버 설정 (3.x 버전 - LiveKit 기반)
-  const OPENVIDU_SERVER_URL = "/api" // Vite proxy를 통해 접근
-  const OPENVIDU_API_KEY = "devkey" // OpenVidu 3.x 기본 API 키
-  const OPENVIDU_API_SECRET = "secret" // OpenVidu 3.x 기본 API 시크릿
-  const sessionId = studyId ? `study-${studyId}` : `session-${Date.now()}`
+  // 🆕 URL 파라미터에서 LiveKit 정보 추출
+  const token = searchParams.get('token')
+  const wsUrl = searchParams.get('wsUrl')
+  const roomName = searchParams.get('roomName')
+  const displayName = searchParams.get('displayName')
+  
   const studyNameDisplay = studyName !== '스터디' ? studyName : studyId ? `스터디 ${studyId}` : '스터디'
 
   // 사이드바 토글 함수
@@ -81,46 +80,25 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
       };
       setChatMessages(prev => [...prev, message])
       setNewChatMessage('')
-
-      // 데모 모드에서는 자동 응답
-      if (isDemoMode) {
-        setTimeout(() => {
-          const responses = [
-            '네, 알겠습니다!',
-            '좋은 아이디어네요!',
-            '그 부분 다시 설명해주세요.',
-            '잘 이해했습니다.'
-          ];
-          const demoResponse = {
-            id: (Date.now() + 1).toString(),
-            sender: '김철수',
-            message: responses[Math.floor(Math.random() * responses.length)],
-            timestamp: new Date()
-          };
-          setChatMessages(prev => [...prev, demoResponse])
-        }, 1000)
-      }
     }
   }
 
-  // 채팅 엔터키 처리
+  // 채팅 입력 키 이벤트 처리
   const handleChatKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      sendChatMessage()
+      sendChatMessage();
     }
-  }
+  };
 
-  // 데모용 공부자료 목록
+  // 공부자료 목록 (실제 API에서 가져올 예정)
   useEffect(() => {
-    if (isDemoMode) {
-      setStudyMaterials([
-        { id: '1', name: 'React 기초 강의.pdf', type: 'pdf', url: '/src/assets/pdfs/cats-and-dogs.pdf' },
-        { id: '2', name: 'TypeScript 핵심 개념.pptx', type: 'ppt', url: '#' },
-        { id: '3', name: '프로젝트 기획서.docx', type: 'doc', url: '#' },
-        { id: '4', name: '코딩 테스트 문제집.pdf', type: 'pdf', url: '/src/assets/pdfs/hamburger.pdf' },
-      ]);
-    }
-  }, [isDemoMode]);
+    setStudyMaterials([
+      { id: '1', name: 'React 기초 강의.pdf', type: 'pdf', url: '/src/assets/pdfs/cats-and-dogs.pdf' },
+      { id: '2', name: 'TypeScript 핵심 개념.pptx', type: 'ppt', url: '#' },
+      { id: '3', name: '프로젝트 기획서.docx', type: 'doc', url: '#' },
+      { id: '4', name: '코딩 테스트 문제집.pdf', type: 'pdf', url: '/src/assets/pdfs/hamburger.pdf' },
+    ]);
+  }, []);
 
   // 공부자료 클릭 핸들러
   const handleMaterialClick = (material: {id: string, name: string, type: string, url: string}) => {
@@ -140,23 +118,16 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
       setCurrentPdfName(material.name);
 
       // 다른 참가자들에게 PDF 뷰어 모드 공유
-      if (session && !isDemoMode) {
-        session.signal({
-          data: JSON.stringify({
-            type: 'pdf-viewer-mode',
-            action: 'enter',
-            pdfUrl: pdfUrl,
-            pdfName: material.name
-          })
-        });
-      } else if (isDemoMode) {
-        // 데모 모드에서는 로컬 스토리지를 통해 시뮬레이션
-        localStorage.setItem('demo-pdf-viewer', JSON.stringify({
-          pdfUrl: pdfUrl,
-          pdfName: material.name,
-          timestamp: Date.now()
-        }));
-      }
+      // if (session) {
+      //   session.signal({
+      //     data: JSON.stringify({
+      //       type: 'pdf-viewer-mode',
+      //       action: 'enter',
+      //       pdfUrl: pdfUrl,
+      //       pdfName: material.name
+      //     })
+      //   });
+      // }
 
       // 사이드바 닫기
       setSidebarOpen(false);
@@ -174,44 +145,23 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
     setCurrentPdfName('');
 
     // 라이브 세션에서 PDF 뷰어 모드 종료 신호 전송
-    if (session && !isDemoMode) {
-      session.signal({
-        data: JSON.stringify({
-          type: 'pdf-viewer-mode',
-          action: 'exit'
-        })
-      });
-    } else if (isDemoMode) {
-      // 데모 모드에서는 localStorage에서 제거
-      localStorage.removeItem('demo-pdf-viewer');
-    }
+    // if (session) {
+    //   session.signal({
+    //     data: JSON.stringify({
+    //       type: 'pdf-viewer-mode',
+    //       action: 'exit'
+    //     })
+    //   });
+    // }
   };
 
-  // 데모 모드에서 PDF 뷰어 상태 동기화 체크
+  // PDF 뷰어 상태 동기화 체크 (실제 세션에서 사용)
   useEffect(() => {
-    if (isDemoMode) {
-      const checkDemoPdfViewer = () => {
-        const demoPdfViewer = localStorage.getItem('demo-pdf-viewer');
-        if (demoPdfViewer) {
-          try {
-            const data = JSON.parse(demoPdfViewer);
-            setIsPdfViewerMode(true);
-            setCurrentPdfUrl(data.pdfUrl);
-            setCurrentPdfName(data.pdfName);
-          } catch  {
-            //  JSON 파싱 오류 처리
-          }
-        } else {
-          setIsPdfViewerMode(false);
-          setCurrentPdfUrl('');
-          setCurrentPdfName('');
-        }
-      };
-
-      const interval = setInterval(checkDemoPdfViewer, 1000);
-      return () => clearInterval(interval);
+    if (room) {
+      // 실제 OpenVidu 세션에서 PDF 뷰어 상태 동기화
+      // TODO: 백엔드 API 연동 후 구현
     }
-  }, [isDemoMode]);
+  }, [room]);
 
   const getGridLayout = (totalParticipants: number) => {
     if (totalParticipants <= 1) return { cols: 1, rows: 1 };
@@ -223,373 +173,196 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
     return { cols: 4, rows: Math.ceil(totalParticipants / 4) };
   };
 
-  // 데모 모드 초기화
-  const initializeDemoMode = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // 가상 참가자 생성
-      const demoUsers = [
-        { id: 'demo-1', name: '김철수', hasAudio: true, hasVideo: true },
-        { id: 'demo-2', name: '이영희', hasAudio: false, hasVideo: true },
-        { id: 'demo-3', name: '박민수', hasAudio: true, hasVideo: false },
-      ];
-      setDemoParticipants(demoUsers);
-
-      // 데모 비디오 스트림 생성 (색상 패턴)
-      const createDemoVideo = (canvas: HTMLCanvasElement, color: string) => {
-        const ctx = canvas.getContext('2d')!;
-        canvas.width = 640;
-        canvas.height = 480;
-
-        let frame = 0;
-        const animate = () => {
-          ctx.fillStyle = color;
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-          // 움직이는 패턴 추가
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-          ctx.fillRect(
-            (frame * 2) % canvas.width,
-            (frame * 1.5) % canvas.height,
-            100,
-            100
-          );
-
-          frame++;
-          requestAnimationFrame(animate);
-        };
-        animate();
-
-        return canvas.captureStream(30);
-      };
-
-      // 각 데모 참가자에 대한 비디오 스트림 생성
-      setTimeout(() => {
-        demoUsers.forEach((user, index) => {
-          const canvas = document.createElement('canvas');
-          const colors = ['#4F46E5', '#7C3AED', '#059669'];
-          const stream = createDemoVideo(canvas, colors[index % colors.length]);
-
-          const videoElement = demoVideoRefs.current[user.id];
-          if (videoElement) {
-            videoElement.srcObject = stream;
-          }
-        });
-      }, 1000);
-
-      setIsConnected(true);
-      setIsDemoMode(true);
-
-
-    } catch  {
-
-      setError('데모 모드를 초기화할 수 없습니다.');
-    } finally {
-      setIsLoading(false);
+  const initializeSession = async () => {
+    if (!token || !wsUrl || !roomName) {
+      setError('화상회의 연결 정보가 없습니다.')
+      return
     }
-  };
 
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      // LiveKit 방에 연결
+      const newRoom = new Room({
+        adaptiveStream: true,
+        dynacast: true,
+      })
+
+      // 방 이벤트 리스너 설정
+      newRoom.on(RoomEvent.ParticipantConnected, (participant: RemoteParticipant) => {
+        setRemoteParticipants(prev => [...prev, participant])
+      })
+
+      newRoom.on(RoomEvent.ParticipantDisconnected, (participant: RemoteParticipant) => {
+        setRemoteParticipants(prev => prev.filter(p => p !== participant))
+      })
+
+      newRoom.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+        // 원격 참가자의 트랙 구독
+        if (track.kind === 'video') {
+          // 비디오 트랙 처리
+        } else if (track.kind === 'audio') {
+          // 오디오 트랙 처리
+        }
+      })
+
+      newRoom.on(RoomEvent.TrackUnsubscribed, (track, publication, participant) => {
+        // 트랙 구독 해제 처리
+      })
+
+      // 방에 연결
+      await newRoom.connect(wsUrl, token, {
+        autoSubscribe: true,
+      })
+
+      setRoom(newRoom)
+      setLocalParticipant(newRoom.localParticipant)
+      setIsConnected(true)
+
+      // 로컬 비디오/오디오 활성화
+      await newRoom.localParticipant.enableCameraAndMicrophone()
+
+    } catch (error) {
+      console.error('LiveKit 세션 연결 실패:', error)
+      setError('화상회의에 연결할 수 없습니다.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // 🆕 LiveKit 방 연결 (컴포넌트 마운트 시)
   useEffect(() => {
-    // URL 파라미터로 데모 모드 확인
-    const urlParams = new URLSearchParams(window.location.search);
-    const demo = urlParams.get('demo');
-
-    if (demo === 'true') {
-      initializeDemoMode();
+    if (token && wsUrl && roomName) {
+      initializeSession()
     } else {
-      initializeSession();
+      setError('화상회의 연결 정보가 부족합니다.')
     }
 
     return () => {
-      if (session) session.disconnect();
+      if (room) {
+        room.disconnect()
+      }
       if (screenShareStream) {
-        screenShareStream.getTracks().forEach(track => track.stop());
+        screenShareStream.getTracks().forEach(track => track.stop())
       }
-    };
-  }, []);
+    }
+  }, [token, wsUrl, roomName])
 
+  // 🆕 로컬 참가자 비디오 트랙 연결
   useEffect(() => {
-    if (publisher && videoRef.current) {
-      publisher.addVideoElement(videoRef.current);
+    if (localParticipant && videoRef.current) {
+      localParticipant.videoTrack?.addSink(videoRef.current)
     }
-  }, [publisher]);
+  }, [localParticipant])
 
+  // 🆕 원격 참가자 비디오 트랙 연결
   useEffect(() => {
-    if (subscribersRef.current && subscribers.length > 0) {
-      const videoElements = subscribersRef.current.querySelectorAll('video');
-      subscribers.forEach((subscriber, index) => {
-        const videoElement = videoElements[index + (publisher ? 1 : 0)] as HTMLVideoElement;
-        if (videoElement && subscriber) {
-          subscriber.addVideoElement(videoElement);
+    if (subscribersRef.current && remoteParticipants.length > 0) {
+      const videoElements = subscribersRef.current.querySelectorAll('video')
+      remoteParticipants.forEach((participant, index) => {
+        const videoElement = videoElements[index] as HTMLVideoElement
+        if (videoElement && participant) {
+          participant.videoTrack?.addSink(videoElement)
         }
-      });
+      })
     }
-  }, [subscribers, publisher]);
+  }, [remoteParticipants])
 
-  const initializeSession = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const OV = new OpenVidu();
-      const newSession = OV.initSession();
-      setSession(newSession);
-
-      // 다른 참가자 구독 (제공된 예시와 일치)
-      newSession.on('streamCreated', (event: any) => {
-        const subscriber = newSession.subscribe(event.stream);
-        setSubscribers((prev) => [...prev, subscriber]);
-      });
-
-      newSession.on('streamDestroyed', (event: any) => {
-        setSubscribers((prev) =>
-          prev.filter((sub) => sub.stream.streamId !== event.stream.streamId)
-        );
-      });
-
-      // PDF 뷰어 모드 시그널 처리
-      newSession.on('signal', (event: any) => {
-        try {
-          const signalData = JSON.parse(event.data);
-          if (signalData.type === 'pdf-viewer-mode') {
-            if (signalData.action === 'enter') {
-              setIsPdfViewerMode(true);
-              setCurrentPdfUrl(signalData.pdfUrl);
-              setCurrentPdfName(signalData.pdfName);
-              setSidebarOpen(false);
-              setActiveSidebarTab(null);
-            } else if (signalData.action === 'exit') {
-              setIsPdfViewerMode(false);
-              setCurrentPdfUrl('');
-              setCurrentPdfName('');
-            }
-          }
-        } catch {
-          // JSON 파싱 오류 처리
-        }
-      });
-
-      newSession.on('exception', () => {
-        setError('세션 연결 중 오류가 발생했습니다.');
-      });
-
-    } catch {
-      setError('세션을 초기화할 수 없습니다.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // OpenVidu REST API를 통해 세션 생성 (axios 사용)
-  const createSession = async (sessionId: string) => {
-    const response = await axios.post(
-      `${OPENVIDU_SERVER_URL}/sessions`,
-      { customSessionId: sessionId },
-      {
-        headers: {
-          Authorization: "Basic " + btoa(`OPENVIDUAPP:${OPENVIDU_API_SECRET}`),
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    return response.data;
-  };
-
-  // OpenVidu REST API를 통해 토큰 생성 (axios 사용)
-  const createToken = async (sessionId: string) => {
-    const response = await axios.post(
-      `${OPENVIDU_SERVER_URL}/sessions/${sessionId}/connections`,
-      {},
-      {
-        headers: {
-          Authorization: "Basic " + btoa(`OPENVIDUAPP:${OPENVIDU_API_SECRET}`),
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    return response.data;
-  };
-
-  const joinSession = async () => {
-    if (!session) return;
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // 1. 세션 생성 (없으면 새로 생성)
-      try {
-        await createSession(sessionId);
-      } catch {
-        // 세션이 이미 존재하는 경우는 무시
-      }
-
-      // 2. 토큰 생성
-      const tokenData = await createToken(sessionId);
-
-      // 3. 세션 연결 (제공된 예시와 일치)
-      await session.connect(tokenData.token);
-
-      // 4. 퍼블리셔 생성
-      await createPublisher();
-
-      setIsConnected(true);
-
-    } catch (err: any) {
-
-
-      // OpenVidu 서버가 실행되지 않았을 때의 안내 메시지
-      if (err.code === 'ERR_NETWORK' || err.message?.includes('fetch')) {
-        setError(`OpenVidu 서버에 연결할 수 없습니다.
-
-OpenVidu 서버가 실행 중인지 확인해주세요.
-
-서버 실행 방법:
-1. Docker Compose: docker-compose -f docker-compose.openvidu.yml up -d
-2. 또는 OpenVidu 3.x 공식 문서를 참조하여 서버를 설정해주세요.
-
-서버 주소: ${OPENVIDU_SERVER_URL}
-API 키: ${OPENVIDU_API_KEY}
-API 시크릿: ${OPENVIDU_API_SECRET}
-
-브라우저에서 https://localhost:7443로 접속하여 "고급" → "안전하지 않음" → 계속 진행하세요.
-
-또는 데모 모드로 UI를 확인해보세요: ?demo=true`);
-      } else {
-        const errorMessage = err.response?.data?.message || err.message || '알 수 없는 오류';
-        setError(`세션에 참가할 수 없습니다: ${errorMessage}`);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const createPublisher = async () => {
-    if (!session) return;
-
-    try {
-      const OV = new OpenVidu();
-      // 제공된 예시와 일치하는 퍼블리셔 설정
-      const newPublisher = await OV.initPublisherAsync(undefined, {
-        audioSource: undefined,
-        videoSource: undefined,
-        publishAudio: true,
-        publishVideo: true,
-        resolution: "640x480",
-        frameRate: 30,
-      });
-
-      setPublisher(newPublisher);
-      // 오디오/비디오 상태 초기화
-      setIsAudioEnabled(true);
-      setIsVideoEnabled(true);
-      session.publish(newPublisher);
-    } catch {
-      setError('카메라/마이크에 접근할 수 없습니다. 브라우저 권한을 확인해주세요.');
-    }
-  };
-
+  // 🆕 LiveKit 방 연결 해제
   const leaveSession = () => {
-    if (session) {
-      session.disconnect();
+    if (room) {
+      room.disconnect()
     }
     if (isScreenSharing) {
-      stopScreenShare();
+      stopScreenShare()
     }
-    setSession(null);
-    setPublisher(null);
-    setSubscribers([]);
-    setIsConnected(false);
-    setIsDemoMode(false);
-    setDemoParticipants([]);
+    setRoom(null)
+    setLocalParticipant(null)
+    setRemoteParticipants([])
+    setIsConnected(false)
     // 오디오/비디오 상태 초기화
-    setIsAudioEnabled(true);
-    setIsVideoEnabled(true);
-  };
+    setIsAudioEnabled(true)
+    setIsVideoEnabled(true)
+  }
 
-  const toggleAudio = () => {
-    if (publisher) {
-      const newAudioState = !isAudioEnabled;
-      setIsAudioEnabled(newAudioState);
-      publisher.publishAudio(newAudioState);
+  // 🆕 LiveKit 오디오/비디오 토글
+  const toggleAudio = async () => {
+    if (localParticipant) {
+      try {
+        if (isAudioEnabled) {
+          await localParticipant.setMicrophoneEnabled(false)
+        } else {
+          await localParticipant.setMicrophoneEnabled(true)
+        }
+        setIsAudioEnabled(!isAudioEnabled)
+      } catch (error) {
+        console.error('마이크 토글 실패:', error)
+      }
     }
-  };
+  }
 
-  const toggleVideo = () => {
-    if (publisher) {
-      const newVideoState = !isVideoEnabled;
-      setIsVideoEnabled(newVideoState);
-      publisher.publishVideo(newVideoState);
+  const toggleVideo = async () => {
+    if (localParticipant) {
+      try {
+        if (isVideoEnabled) {
+          await localParticipant.setCameraEnabled(false)
+        } else {
+          await localParticipant.setCameraEnabled(true)
+        }
+        setIsVideoEnabled(!isVideoEnabled)
+      } catch (error) {
+        console.error('카메라 토글 실패:', error)
+      }
     }
-  };
+  }
 
   const toggleScreenShare = async () => {
     if (isScreenSharing) {
-      await stopScreenShare();
+      await stopScreenShare()
     } else {
-      await startScreenShare();
+      await startScreenShare()
     }
-  };
+  }
 
   const startScreenShare = async () => {
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: true,
         audio: false
-      });
+      })
 
-      setScreenShareStream(stream);
-      setIsScreenSharing(true);
+      setScreenShareStream(stream)
+      setIsScreenSharing(true)
 
       if (screenShareVideoRef.current) {
-        screenShareVideoRef.current.srcObject = stream;
+        screenShareVideoRef.current.srcObject = stream
       }
 
       stream.getVideoTracks()[0].onended = () => {
-        stopScreenShare();
-      };
+        stopScreenShare()
+      }
 
     } catch {
-      setError('화면 공유를 시작할 수 없습니다.');
+      setError('화면 공유를 시작할 수 없습니다.')
     }
-  };
+  }
 
   const stopScreenShare = async () => {
     if (screenShareStream) {
-      screenShareStream.getTracks().forEach(track => track.stop());
-      setScreenShareStream(null);
+      screenShareStream.getTracks().forEach(track => track.stop())
+      setScreenShareStream(null)
     }
-    setIsScreenSharing(false);
+    setIsScreenSharing(false)
 
     if (screenShareVideoRef.current) {
-      screenShareVideoRef.current.srcObject = null;
+      screenShareVideoRef.current.srcObject = null
     }
+  }
 
-  };
-
-  // 데모 모드에서 참가자 토글
-  // const toggleDemoParticipantAudio = (participantId: string) => {
-  //   setDemoParticipants(prev =>
-  //     prev.map(p =>
-  //       p.id === participantId ? { ...p, hasAudio: !p.hasAudio } : p
-  //     )
-  //   );
-  // };
-
-  // const toggleDemoParticipantVideo = (participantId: string) => {
-  //   setDemoParticipants(prev =>
-  //     prev.map(p =>
-  //       p.id === participantId ? { ...p, hasVideo: !p.hasVideo } : p
-  //     )
-  //   );
-  // };
-
-  const allParticipants = publisher ? [publisher, ...subscribers] : subscribers;
-  const { cols, rows } = getGridLayout(isDemoMode ? demoParticipants.length + 1 : allParticipants.length);
+  // 🆕 LiveKit 참가자 목록 (로컬 + 원격)
+  const allParticipants = localParticipant ? [localParticipant, ...remoteParticipants] : remoteParticipants
+  const { cols, rows } = getGridLayout(allParticipants.length)
 
   // 사이드바 렌더링
   const renderSidebar = () => {
@@ -673,24 +446,14 @@ API 시크릿: ${OPENVIDU_API_SECRET}
                 {/* 내 정보 */}
                 <div className="flex items-center space-x-2 p-2 bg-gray-700 rounded">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-white text-sm">나 (나)</span>
+                  <span className="text-white text-sm">나 ({displayName || '나'})</span>
                 </div>
 
-                {/* 데모 참가자들 */}
-                {isDemoMode && demoParticipants.map((participant) => (
-                  <div key={participant.id} className="flex items-center space-x-2 p-2 bg-gray-700 rounded">
+                {/* 원격 참가자들 */}
+                {remoteParticipants.map((participant, index) => (
+                  <div key={participant.identity} className="flex items-center space-x-2 p-2 bg-gray-700 rounded">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-white text-sm">{participant.name}</span>
-                    {!participant.hasAudio && <span className="text-red-400 text-xs">🔇</span>}
-                    {!participant.hasVideo && <span className="text-red-400 text-xs">📹</span>}
-                  </div>
-                ))}
-
-                {/* 실제 참가자들 */}
-                {!isDemoMode && subscribers.map((_, index) => (
-                  <div key={index} className="flex items-center space-x-2 p-2 bg-gray-700 rounded">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-white text-sm">참가자 {index + 1}</span>
+                    <span className="text-white text-sm">{participant.identity || `참가자 ${index + 1}`}</span>
                   </div>
                 ))}
               </div>
@@ -771,7 +534,6 @@ API 시크릿: ${OPENVIDU_API_SECRET}
             <div>
               <h1 className="text-lg font-bold">
                 {studyNameDisplay}
-                {isDemoMode && <span className="ml-2 text-yellow-400 text-sm">(데모 모드)</span>}
                 {isPdfViewerMode && <span className="ml-2 text-blue-400 text-sm">(PDF 뷰어 모드)</span>}
               </h1>
               {isPdfViewerMode && (
@@ -780,14 +542,6 @@ API 시크릿: ${OPENVIDU_API_SECRET}
                 </p>
               )}
             </div>
-            {!isConnected && !isDemoMode && (
-              <button
-                onClick={initializeDemoMode}
-                className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-xs"
-              >
-                데모 모드로 보기
-              </button>
-            )}
             {isPdfViewerMode && (
               <button
                 onClick={exitPdfViewerMode}
@@ -800,32 +554,6 @@ API 시크릿: ${OPENVIDU_API_SECRET}
         </div>
 
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          {!isConnected && !isDemoMode && (
-            <div className="bg-gray-800 m-4 rounded-lg p-4 flex-shrink-0">
-              <h3 className="text-base font-semibold mb-3 text-white">화상회의 참가</h3>
-              <div className="flex gap-3 items-center">
-                <div className="flex-1">
-                  <p className="text-sm text-gray-300 mb-1">
-                    {studyId ? `${studyNameDisplay}의 화상회의 방에 참가합니다.` : '새로운 화상회의 세션을 시작합니다.'}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    세션 ID: {sessionId}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    OpenVidu 서버: {OPENVIDU_SERVER_URL}
-                  </p>
-                </div>
-                <button
-                  onClick={joinSession}
-                  disabled={isLoading}
-                  className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium text-sm"
-                >
-                  {isLoading ? '연결 중...' : '참가하기'}
-                </button>
-              </div>
-            </div>
-          )}
-
           {isScreenSharing && (
             <div className="absolute inset-0 bg-black z-10 flex items-center justify-center">
               <div className="relative w-full h-full">
@@ -845,230 +573,77 @@ API 시크릿: ${OPENVIDU_API_SECRET}
             </div>
           )}
 
-          {isConnected && (isDemoMode ? demoParticipants.length > 0 : allParticipants.length > 0) && (
-            <div className="flex-1 flex items-center justify-center p-2 min-h-0 overflow-hidden">
-              {isPdfViewerMode ? (
-                // PDF 뷰어 모드 레이아웃
-                <div className="flex w-full h-full gap-4">
-                  {/* 좌측: 사용자 화면들 (1/4 크기, 1열 4행) */}
-                  <div className="w-1/4 flex flex-col gap-2">
-                    <div className="text-center text-white text-xs mb-2">
-                      <span className="bg-gray-700 px-2 py-1 rounded">참가자 화면</span>
-                    </div>
-                    <div
-                      ref={subscribersRef}
-                      className="flex flex-col gap-2 h-full overflow-y-auto relative"
-                    >
-                      {isDemoMode ? (
-                        <>
-                          {/* 내 비디오 (데모) */}
-                          <div className="relative bg-gray-800 rounded-lg overflow-hidden flex-1 min-h-[120px]">
-                            <video
-                              ref={videoRef}
-                              autoPlay
-                              playsInline
-                              muted
-                              className="w-full h-full object-cover"
-                            />
-                            <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
-                              나 (데모)
-                            </div>
-                          </div>
-
-                          {/* 데모 참가자들 */}
-                          {demoParticipants.map((participant) => (
-                            <div key={participant.id} className="relative bg-gray-800 rounded-lg overflow-hidden flex-1 min-h-[120px]">
-                              <video
-                                ref={(el) => { demoVideoRefs.current[participant.id] = el; }}
-                                autoPlay
-                                playsInline
-                                muted
-                                className="w-full h-full object-cover"
-                              />
-                              <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
-                                {participant.name}
-                              </div>
-                            </div>
-                          ))}
-                        </>
-                      ) : (
-                        allParticipants.map((_, index) => (
-                          <div key={index} className="relative bg-gray-800 rounded-lg overflow-hidden flex-1 min-h-[120px]">
-                            <video
-                              ref={index === 0 ? videoRef : undefined}
-                              autoPlay
-                              playsInline
-                              muted={index === 0}
-                              className="w-full h-full object-cover"
-                            />
-                            <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
-                              {index === 0 ? '나' : `참가자 ${index}`}
-                            </div>
-                          </div>
-                        ))
-                      )}
-
-                      {/* 스크롤 안내 */}
-                      {(isDemoMode ? demoParticipants.length > 3 : allParticipants.length > 4) && (
-                        <div className="text-center text-gray-400 text-xs py-2">
-                          <div className="animate-bounce">⬇️</div>
-                          <span>더 많은 참가자 보기</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 중앙: PDF 뷰어 */}
-                  <div className="flex-1 bg-white rounded-lg overflow-hidden">
-                    {currentPdfUrl ? (
-                      <iframe
-                        ref={pdfViewerRef}
-                        src={currentPdfUrl}
-                        className="w-full h-full"
-                        title={currentPdfName}
-                        onError={() => {
-                          // PDF 로드 실패 처리
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                        <div className="text-center">
-                          <div className="text-6xl mb-4">📄</div>
-                          <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                            {currentPdfName}
-                          </h3>
-                          <p className="text-gray-500">
-                            PDF 파일을 불러오는 중입니다...
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                // 일반 모드 레이아웃
-                <div
-                  ref={subscribersRef}
-                  className="w-full h-full max-w-6xl"
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: `repeat(${cols}, 1fr)`,
-                    gridTemplateRows: `repeat(${rows}, 1fr)`,
-                    gap: '0.5rem',
-                    height: '100%',
-                    width: '100%'
-                  }}
-                >
-                  {isDemoMode ? (
-                    <>
-                      {/* 내 비디오 (데모) */}
-                      <div className="relative bg-gray-800 rounded-lg overflow-hidden w-full h-full">
-                        <video
-                          ref={videoRef}
-                          autoPlay
-                          playsInline
-                          muted
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
-                          나 (데모)
-                        </div>
-                      </div>
-
-                      {/* 데모 참가자들 */}
-                      {demoParticipants.map((participant) => (
-                        <div key={participant.id} className="relative bg-gray-800 rounded-lg overflow-hidden w-full h-full">
-                          <video
-                            ref={(el) => { demoVideoRefs.current[participant.id] = el; }}
-                            autoPlay
-                            playsInline
-                            muted
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
-                            {participant.name}
-                          </div>
-                        </div>
-                      ))}
-                    </>
-                  ) : (
-                    allParticipants.map((_, index) => (
-                      <div key={index} className="relative bg-gray-800 rounded-lg overflow-hidden w-full h-full">
-                        <video
-                          ref={index === 0 ? videoRef : undefined}
-                          autoPlay
-                          playsInline
-                          muted={index === 0}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
-                          {index === 0 ? '나' : `참가자 ${index}`}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {isConnected && (
-          <div className="bg-gray-800 border-t border-gray-700 p-3 flex-shrink-0">
-            <div className="flex justify-center items-center gap-3">
-              <CircleButton
-                variant={isDemoMode ? 'lightPurple' : (isAudioEnabled ? 'lightPurple' : 'red')}
-                size="sm"
-                onClick={isDemoMode ? () => {} : toggleAudio}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-                  <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-                </svg>
-              </CircleButton>
-
-              <CircleButton
-                variant={isDemoMode ? 'lightPurple' : (isVideoEnabled ? 'lightPurple' : 'red')}
-                size="sm"
-                onClick={isDemoMode ? () => {} : toggleVideo}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
-                </svg>
-              </CircleButton>
-
-              <CircleButton
-                variant={isScreenSharing ? 'red' : 'purple'}
-                size="sm"
-                onClick={toggleScreenShare}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
-                </svg>
-              </CircleButton>
-
-              <CircleButton
-                variant="gray"
-                size="sm"
-                onClick={() => toggleSidebar('participants')}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
-                </svg>
-              </CircleButton>
-
-              <CircleButton
-                variant="red"
-                size="sm"
-                onClick={leaveSession}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                </svg>
-              </CircleButton>
+          {/* {isConnected && (allParticipants.length > 0) && ( */}
+          {/* TODO: 백엔드 API 연동 후 실제 연결 상태 확인 */}
+          <div className="flex-1 flex items-center justify-center p-2 min-h-0 overflow-hidden">
+            <div className="text-center text-white">
+              <div className="text-6xl mb-4">📹</div>
+              <h3 className="text-lg font-semibold mb-2">화상회의 준비 중</h3>
+              <p className="text-gray-400">
+                백엔드 API 연동 후 화상회의 기능을 사용할 수 있습니다.
+              </p>
             </div>
           </div>
-        )}
+          {/* )} */}
+        </div>
+
+        {/* {isConnected && ( */}
+        {/* TODO: 백엔드 API 연동 후 실제 연결 상태 확인 */}
+        <div className="bg-gray-800 border-t border-gray-700 p-3 flex-shrink-0">
+          <div className="flex justify-center items-center gap-3">
+            <CircleButton
+              variant={isAudioEnabled ? 'lightPurple' : 'red'}
+              size="sm"
+              onClick={toggleAudio}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+              </svg>
+            </CircleButton>
+
+            <CircleButton
+              variant={isVideoEnabled ? 'lightPurple' : 'red'}
+              size="sm"
+              onClick={toggleVideo}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
+              </svg>
+            </CircleButton>
+
+            <CircleButton
+              variant={isScreenSharing ? 'red' : 'purple'}
+              size="sm"
+              onClick={toggleScreenShare}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+              </svg>
+            </CircleButton>
+
+            <CircleButton
+              variant="gray"
+              size="sm"
+              onClick={() => toggleSidebar('participants')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+              </svg>
+            </CircleButton>
+
+            <CircleButton
+              variant="red"
+              size="sm"
+              onClick={leaveSession}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+              </svg>
+            </CircleButton>
+          </div>
+        </div>
+        {/* )} */}
       </div>
 
       {/* 사이드바 */}

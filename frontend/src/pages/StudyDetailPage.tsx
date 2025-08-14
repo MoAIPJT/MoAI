@@ -342,8 +342,16 @@ const StudyDetailPage: React.FC = () => {
     setIsUploadModalOpen(true)
   }
 
-  const handleCreateRoom = () => {
-  }
+  // ❌ handleCreateRoom 제거 - StudyDetailTemplate에서 처리
+  // const handleCreateRoom = () => {
+  //   // 화상회의 페이지로 이동 (스터디 ID와 함께)
+  //   if (studyDetail?.studyId) {
+  //     navigate(`/video-conference/${studyDetail.studyId}`)
+  //   } else {
+  //     // 스터디 ID가 없는 경우 기본 화상회의 페이지로 이동
+  //     navigate('/video-conference')
+  //   }
+  // }
 
   const handleEditNotice = () => {
     setIsNoticeModalOpen(true)
@@ -1018,7 +1026,15 @@ return (
       onStudyClick={handleStudyClick}
       onSearch={handleSearch}
       onUploadData={handleUploadData}
-      onCreateRoom={handleCreateRoom}
+      onCreateRoom={() => {
+        // 화상회의 페이지로 이동 (스터디 ID와 함께)
+        if (studyDetail?.studyId) {
+          navigate(`/video-conference/${studyDetail.studyId}`)
+        } else {
+          // 스터디 ID가 없는 경우 기본 화상회의 페이지로 이동
+          navigate('/video-conference')
+        }
+      }}
       onEditNotice={handleEditNotice}
       onSettingsClick={handleSettingsClick}
       onLogout={() => {
@@ -1075,6 +1091,10 @@ return (
       onContentDelete={handleContentDelete}
       onContentDownload={handleContentDownload}
       studyId={studyDetail?.studyId}
+      // 🆕 화상회의 관련 props - API 연결할 자리
+      hasActiveMeeting={false} // TODO: API에서 온라인 스터디 상태 확인
+      onlineParticipants={[]} // TODO: API에서 온라인 참여자 목록 가져오기
+      meetingSessionId={undefined} // TODO: API에서 세션 ID 가져오기
     />
 
     {/* Category Add Modal */}

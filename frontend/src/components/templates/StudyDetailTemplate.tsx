@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import DashboardSidebar from '../organisms/DashboardSidebar'
 import StudyHeader from '../molecules/StudyHeader'
 import StudyNoticeBox from '../molecules/StudyNoticeBox'
@@ -12,6 +12,38 @@ import type { UploadData } from '../organisms/UploadDataModal/types'
 import type { Member } from '../../types/study'
 import StudyMembersModal from '../molecules/StudyMembersModal'
 import StudyManagementModal from '../molecules/StudyManagementModal'
+
+// 🆕 화상회의 관련 타입 정의
+interface VideoSession {
+  id: string
+  studyGroupHashId: string
+  roomName: string
+  created: boolean
+}
+
+interface JoinSessionResponse {
+  roomName: string
+  wsUrl: string
+  displayName: string
+  token: string
+}
+
+interface ParticipantsResponse {
+  sessionOpen: boolean
+  count: number
+  participants: Array<{
+    name: string
+    profileImageUrl: string
+  }>
+}
+
+interface CloseSessionResponse {
+  id: string
+  studyGroupHashId: string
+  roomName: string
+  closed: boolean
+  closedAt: string
+}
 
 interface StudyDetailTemplateProps {
   studies: StudyItem[]
@@ -45,6 +77,10 @@ interface StudyDetailTemplateProps {
   isSchedulesLoading?: boolean
   // 스터디 ID
   studyId?: number
+  // 🆕 화상회의 관련 props - API 연결할 자리
+  hasActiveMeeting?: boolean
+  onlineParticipants?: Array<{ id: string; name: string; avatar: string; isOnline: boolean }>
+  meetingSessionId?: string
   onItemClick: (itemId: string) => void
   onStudyClick: (studyId: string) => void
   onSearch: () => void
@@ -101,12 +137,12 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   loading,
   currentStudy,
   participants = [],
-  studyParticipants,
-  userName,
+  studyParticipants = [],
+  userName = '',
   currentUserRole,
   // 공지사항 관련 props
-  noticeTitle = '공지사항',
-  noticeContent = '공지사항이 없습니다.',
+  noticeTitle,
+  noticeContent,
   // Content Management 관련 props
   categories,
   selectedCategories,
@@ -120,6 +156,10 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   isSchedulesLoading,
   // 스터디 ID
   studyId,
+  // 🆕 화상회의 관련 props - API 연결할 자리
+  hasActiveMeeting,
+  onlineParticipants,
+  meetingSessionId,
   onItemClick,
   onStudyClick,
   onSearch,
@@ -153,10 +193,151 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   onMemberRemove,
   onMemberRoleChange,
   onStudyUpdate,
-  joinRequests = [],
+  joinRequests,
   onAcceptJoinRequest,
   onRejectJoinRequest,
 }) => {
+  // 🆕 화상회의 관련 상태
+  const [videoSession, setVideoSession] = useState<VideoSession | null>(null)
+  const [isSessionOpen, setIsSessionOpen] = useState(false)
+  const [sessionParticipants, setSessionParticipants] = useState<Array<{ name: string; profileImageUrl: string }>>([])
+  const [isLoadingSession, setIsLoadingSession] = useState(false)
+
+  // 🆕 화상회의 API 호출 함수들
+  const openVideoSession = async () => {
+    if (!activeStudyId || !userName) return
+
+    try {
+      setIsLoadingSession(true)
+      const response = await fetch('/api/open', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        body: JSON.stringify({
+          studyGroupHashId: activeStudyId
+        })
+      })
+
+      if (!response.ok) throw new Error('세션 생성 실패')
+
+      const sessionData: VideoSession = await response.json()
+      setVideoSession(sessionData)
+      setIsSessionOpen(true)
+      
+      // 참가자 목록 새로고침
+      await fetchSessionParticipants()
+    } catch (error) {
+      console.error('화상회의 세션 생성 실패:', error)
+    } finally {
+      setIsLoadingSession(false)
+    }
+  }
+
+  const joinVideoSession = async () => {
+    if (!videoSession || !userName) return
+
+    try {
+      const response = await fetch('/api/join', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        body: JSON.stringify({
+          roomName: videoSession.roomName,
+          displayName: userName
+        })
+      })
+
+      if (!response.ok) throw new Error('세션 참가 실패')
+
+      const joinData: JoinSessionResponse = await response.json()
+      
+      // VideoConferencePage로 이동하면서 토큰 전달
+      const params = new URLSearchParams({
+        roomName: joinData.roomName,
+        wsUrl: joinData.wsUrl,
+        token: joinData.token,
+        displayName: joinData.displayName
+      })
+      
+      window.open(`/video-conference/${activeStudyId}?${params.toString()}`, '_blank')
+    } catch (error) {
+      console.error('화상회의 세션 참가 실패:', error)
+    }
+  }
+
+  const fetchSessionParticipants = async () => {
+    if (!activeStudyId) return
+
+    try {
+      const response = await fetch(`/api/participants?studyGroupHashId=${activeStudyId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        }
+      })
+
+      if (!response.ok) throw new Error('참가자 목록 조회 실패')
+
+      const participantsData: ParticipantsResponse = await response.json()
+      setIsSessionOpen(participantsData.sessionOpen)
+      setSessionParticipants(participantsData.participants)
+    } catch (error) {
+      console.error('참가자 목록 조회 실패:', error)
+    }
+  }
+
+  const closeVideoSession = async () => {
+    if (!videoSession) return
+
+    try {
+      const response = await fetch('/api/close', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        body: JSON.stringify({
+          id: videoSession.id,
+          studyGroupHashId: videoSession.studyGroupHashId
+        })
+      })
+
+      if (!response.ok) throw new Error('세션 종료 실패')
+
+      const closeData: CloseSessionResponse = await response.json()
+      setVideoSession(null)
+      setIsSessionOpen(false)
+      setSessionParticipants([])
+    } catch (error) {
+      console.error('화상회의 세션 종료 실패:', error)
+    }
+  }
+
+  // 🆕 화상회의 상태 주기적 확인
+  useEffect(() => {
+    if (activeStudyId) {
+      fetchSessionParticipants()
+      
+      // 30초마다 참가자 목록 새로고침
+      const interval = setInterval(fetchSessionParticipants, 30000)
+      return () => clearInterval(interval)
+    }
+  }, [activeStudyId])
+
+  // 🆕 화상회의 방 생성/참가 핸들러
+  const handleVideoConference = async () => {
+    if (isSessionOpen) {
+      // 기존 세션이 있으면 참가
+      await joinVideoSession()
+    } else {
+      // 세션이 없으면 새로 생성
+      await openVideoSession()
+    }
+  }
+
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false)
   const [isManagementModalOpen, setIsManagementModalOpen] = useState(false)
 
@@ -220,9 +401,26 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
               </div>
               <div className="flex-1">
                 <StudyVideoConference
-                  onCreateRoom={onCreateRoom}
-                  participants={participants}
+                  onCreateRoom={handleVideoConference}
+                  participants={sessionParticipants.map(p => ({
+                    id: p.name,
+                    name: p.name,
+                    avatar: p.profileImageUrl || '👤'
+                  }))}
                   currentUserRole={currentUserRole}
+                  // 🆕 API 연결 완료 - 실제 상태 사용
+                  hasActiveMeeting={isSessionOpen}
+                  onlineParticipants={sessionParticipants.map(p => ({
+                    id: p.name,
+                    name: p.name,
+                    avatar: p.profileImageUrl || '👤',
+                    isOnline: true
+                  }))}
+                  meetingSessionId={videoSession?.id}
+                  // 🆕 추가 props
+                  isLoading={isLoadingSession}
+                  canManageSession={currentUserRole === 'ADMIN' || currentUserRole === 'DELEGATE'}
+                  onCloseSession={closeVideoSession}
                 />
               </div>
             </div>
