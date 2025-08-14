@@ -2,6 +2,7 @@ import React from 'react'
 import WelcomeText from '@/components/molecules/WelcomeText'
 import LinkText from '@/components/atoms/LinkText'
 import type { EmailSentBoxProps } from './types'
+import emailSentVideo from '@/assets/email-sent.mp4'
 
 const EmailSentBox: React.FC<EmailSentBoxProps> = ({
   message = '이메일 인증 메일이 전송되었습니다.',
@@ -10,9 +11,16 @@ const EmailSentBox: React.FC<EmailSentBoxProps> = ({
   <div className="bg-white rounded-2xl shadow-xl p-12 w-full max-w-md flex flex-col items-center">
     <WelcomeText actionText="가입을 축하드려요." />
   <div className="my-8 w-64 h-64 flex items-center justify-center">
-    <div className="w-full h-full flex items-center justify-center text-6xl text-purple-500">
-      ✉️
-    </div>
+    <video
+      src={emailSentVideo}
+      autoPlay
+      loop
+      muted
+      className="w-full h-full object-cover rounded-lg"
+      playsInline
+    >
+      Your browser does not support the video tag.
+    </video>
   </div>
     <div className="text-center mb-6">
       {message.split('\n').map((line, index) => (

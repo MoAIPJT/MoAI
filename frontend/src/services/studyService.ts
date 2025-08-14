@@ -85,6 +85,192 @@ export const updateStudyNotice = async (data: { studyId: number; notice: string 
   }
 }
 
+export const getStudyDetail = async (hashId: string): Promise<StudyDetail> => {
+  try {
+    const response = await api.get<any>(`/study/detail?hashId=${hashId}`)
+    const data = response.data
+
+    console.log('🔍 Study detail API response:', data)
+    console.log('🔍 Response data keys:', Object.keys(data))
+    console.log('🔍 Response data values:', Object.values(data))
+
+    // ✅ 다양한 필드명으로 studyId 찾기 시도
+    let studyId = data.id || data.studyId || data.study_id || data.studyGroupId || data.study_group_id
+
+    // 만약 여전히 studyId가 없다면, hashId를 디코딩해서 사용
+    if (!studyId || studyId === 0) {
+      console.log('⚠️ studyId를 찾을 수 없음. hashId 디코딩 시도:', hashId)
+      // hashId가 이미 숫자인 경우 그대로 사용
+      if (!isNaN(Number(hashId))) {
+        studyId = Number(hashId)
+        console.log('✅ hashId를 숫자로 변환하여 studyId로 사용:', studyId)
+      } else {
+        // hashId가 문자열인 경우 기본값 설정
+        studyId = 1 // 임시 기본값
+        console.log('⚠️ studyId를 찾을 수 없어 기본값 사용:', studyId)
+      }
+    }
+
+    console.log('🎯 최종 studyId:', studyId)
+
+    const result: StudyDetail = {
+      studyId: studyId,
+      name: data.name || '',
+      imageUrl: data.imageUrl || data.image_url || '',
+      status: data.status,
+      role: data.role,
+      description: data.description,
+      userCount: data.userCount || data.user_count
+    }
+
+    console.log('✅ Converted StudyDetail:', result)
+    return result
+
+  } catch (error) {
+    console.error('❌ getStudyDetail API error:', error)
+    throw normalizeError(error)
+  }
+}
+
+export const getStudyMembers = async (studyId: string): Promise<Member[]> => {
+  try {
+    console.log('getStudyMembers API call with studyId:', studyId)
+    const response = await api.get<Member[]>(`/study/${studyId}/members`)
+    console.log('getStudyMembers API response:', response.data)
+    // 디버깅을 위해 멤버 데이터 자세히 로깅
+    response.data.forEach(member => {
+      console.log('Member details:', {
+        id: member.userId,
+        name: member.member,
+        role: member.role,
+        email: member.email
+      })
+    })
+    return response.data
+  } catch (error) {
+    console.error('getStudyMembers API error:', error)
+    // 404 lists -> [] (empty array)
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as { response?: { status?: number } }
+      if (axiosError.response?.status === 404) {
+        console.log('getStudyMembers: 404 error, returning empty array')
+        return []
+      }
+    }
+    throw normalizeError(error)
+  }
+}
+
+export const leaveStudy = async (payload: LeaveStudyReq): Promise<void> => {
+  try {
+    await api.patch('/study/leave', payload)
+  } catch (error) {
+    throw normalizeError(error)
+  }
+}
+
+// 새로운 API 엔드포인트들
+export const deleteStudyMember = async (payload: DeleteMemberReq): Promise<void> => {
+  try {
+    await api.patch('/study/delete', payload)
+  } catch (error) {
+    throw normalizeError(error)
+  }
+}
+
+export const changeMemberRole = async (payload: ChangeMemberRoleReq): Promise<void> => {
+  try {
+
+    await api.patch('/study/designate', payload)
+  } catch (error) {
+    throw normalizeError(error)
+  }
+}
+
+export const acceptJoinRequest = async (payload: AcceptJoinRequestReq): Promise<void> => {
+  try {
+    await api.patch('/study/accept', payload)
+  } catch (error) {
+    throw normalizeError(error)
+  }
+}
+
+export const rejectJoinRequest = async (payload: RejectJoinRequestReq): Promise<void> => {
+  try {
+    await api.patch('/study/reject', payload)
+  } catch (error) {
+    throw normalizeError(error)
+  }
+}
+
+
+
+export const updateStudyNotice = async (payload: UpdateStudyNoticeReq): Promise<void> => {
+  try {
+    await api.patch('/study/notice', payload)
+  } catch (error) {
+    throw normalizeError(error)
+  }
+}
+
+// 스터디 수정 API 추가
+export const updateStudy = async (studyId: number, data: {
+  name: string
+  description: string
+  image?: File
+  maxCapacity: number
+}): Promise<void> => {
+  try {
+
+    if (data.image) {
+      // 이미지가 있는 경우 FormData 사용
+      const formData = new FormData()
+      formData.append('name', data.name)
+      formData.append('description', data.description)
+      formData.append('image', data.image)
+
+
+      formData.append('maxCapacity', data.maxCapacity.toString())
+
+
+      console.log('FormData 사용 - maxCapacity:', data.maxCapacity.toString())
+      console.log('FormData 내용:')
+      for (const [key, value] of formData.entries()) {
+        console.log(`${key}:`, value)
+      }
+
+      await api.patch(`/study/${studyId}/update`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+    } else {
+      // 이미지가 없는 경우 JSON 형식으로 전송
+      // 백엔드 스펙에 맞춰 다양한 형식 시도
+      const requestBody = {
+        name: data.name,
+        description: data.description,
+        maxCapacity: data.maxCapacity,
+        maxMembers: data.maxCapacity, // 대안 1
+        maxMemberCount: data.maxCapacity, // 대안 2
+        // 추가로 필요한 필드들
+        studyId: studyId
+      }
+
+      console.log('JSON 사용 - requestBody:', requestBody)
+
+      await api.patch(`/study/${studyId}/update`, requestBody)
+    }
+
+    console.log('=== updateStudy API 성공 ===')
+  } catch (error) {
+    console.error('=== updateStudy API 에러 ===')
+    console.error('에러 상세:', error)
+    throw normalizeError(error)
+  }
+}
+
+// 공지사항 조회 API 추가
 // 🆕 스터디 공지사항 조회 (StudyDetailPage에서 사용)
 export const getStudyNotice = async (studyId: number): Promise<{ notice: string }> => {
   try {
@@ -231,7 +417,7 @@ export const getStudyMaterials = async (studyId: string): Promise<Array<{id: str
       { id: '3', name: '맛집 탐방 계획.pdf', type: 'pdf', url: '/pdfs/i-love-duck.pdf' },
     ],
   }
-  
+
   return materialsData[studyId as keyof typeof materialsData] || [
     { id: '1', name: '기본 자료.pdf', type: 'pdf', url: '/pdfs/cats-and-dogs.pdf' },
     { id: '2', name: '스터디 가이드.pdf', type: 'pdf', url: '/pdfs/hamburger.pdf' },

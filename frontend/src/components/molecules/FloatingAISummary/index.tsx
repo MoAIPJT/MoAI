@@ -204,10 +204,10 @@ const FloatingAISummary: React.FC<FloatingAISummaryProps> = ({
               onChange={(e) => onModelChange(e.target.value)}
               className="px-2 py-1 border-transparent rounded text-xs bg-white focus:outline-none focus:ring-1 focus:ring-purple-500"
             >
-              <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-              <option value="gpt-40-mini">GPT-4o Mini</option>
-              <option value="gpt-4">GPT-4</option>
-              <option value="claude">Claude</option>
+              <option value="gpt-4o">GPT-4</option>
+              <option value="gpt-4o-mini">GPT-4o Mini</option>
+              <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+              <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite</option>
             </select>
           </div>
 

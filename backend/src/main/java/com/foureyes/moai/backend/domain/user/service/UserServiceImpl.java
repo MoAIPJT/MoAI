@@ -6,6 +6,7 @@ import com.foureyes.moai.backend.commons.exception.ErrorCode;
 import com.foureyes.moai.backend.commons.mail.EmailService;
 import com.foureyes.moai.backend.commons.mail.EmailType;
 import com.foureyes.moai.backend.commons.mail.EmailVerificationService;
+import com.foureyes.moai.backend.commons.util.StorageService;
 import com.foureyes.moai.backend.domain.user.dto.request.PasswordChangeRequestDto;
 import com.foureyes.moai.backend.domain.user.dto.request.UserLoginRequestDto;
 import com.foureyes.moai.backend.domain.user.dto.request.UserProfileUpdateRequestDto;
@@ -21,6 +22,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -34,6 +37,7 @@ public class UserServiceImpl implements UserService {
     private final JwtTokenProvider jwtTokenProvider;
     private final EmailVerificationService emailVerificationService;
     private final EmailService emailService;
+    private final StorageService storageService;
 
     /**
      * 입력: UserSignupRequest request
@@ -283,8 +287,14 @@ public class UserServiceImpl implements UserService {
             user.setName(request.getName());
         }
 
-        if (request.getProfileImageUrl() != null && !request.getProfileImageUrl().isBlank()) {
-            user.setProfileImageUrl(request.getProfileImageUrl());
+        if (request.getImage() != null) {
+            String url = null;
+            try {
+                url = storageService.uploadFile(request.getImage());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            user.setProfileImageUrl(url);
         }
 
         userRepository.save(user);

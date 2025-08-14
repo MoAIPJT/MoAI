@@ -3,9 +3,8 @@ import axios from 'axios'
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   timeout: 600000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  // GET 요청에는 Content-Type이 필요하지 않으므로 기본 헤더 제거
+  // POST/PUT/PATCH 요청에서 필요할 때 개별적으로 설정
 })
 
 // 요청 인터셉터

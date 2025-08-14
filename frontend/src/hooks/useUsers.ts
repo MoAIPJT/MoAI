@@ -16,7 +16,7 @@ export const useMe = (): ReturnType<typeof useQuery<Profile>> => {
     gcTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error: unknown) => {
       // Don't retry on 404 (user not found) or 403 (forbidden/token expired)
-      if (error && typeof error === 'object' && 'code' in error && 
+      if (error && typeof error === 'object' && 'code' in error &&
           (error.code === '404' || error.code === '403')) return false
       return failureCount < 3
     }

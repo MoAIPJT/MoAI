@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -203,10 +204,10 @@ public class UserController {
         description = "사용자 정보를 수정합니다.",
         security = { @SecurityRequirement(name = "bearerAuth") }
     )
-    @PatchMapping("/profile")
-    public ResponseEntity<UserProfileResponseDto>
-    updateUserProfile(@AuthenticationPrincipal CustomUserDetails user,
-                      @Valid @RequestBody UserProfileUpdateRequestDto request) {
+    @PatchMapping(value = "/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE )
+    public ResponseEntity<UserProfileResponseDto> updateUserProfile(
+            @AuthenticationPrincipal CustomUserDetails user,
+            @Valid @ModelAttribute UserProfileUpdateRequestDto request) {
         if (user == null) {
             log.warn("[PATCH] /users/profile - 인증 정보 없음");
             return ResponseEntity.status(401).build();
