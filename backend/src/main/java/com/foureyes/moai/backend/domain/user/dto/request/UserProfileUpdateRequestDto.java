@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@Setter
 public class UserProfileUpdateRequestDto {
 
 

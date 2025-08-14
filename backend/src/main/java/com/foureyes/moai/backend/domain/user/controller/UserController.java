@@ -205,9 +205,9 @@ public class UserController {
         security = { @SecurityRequirement(name = "bearerAuth") }
     )
     @PatchMapping(value = "/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE )
-    public ResponseEntity<UserProfileResponseDto>
-    updateUserProfile(@AuthenticationPrincipal CustomUserDetails user,
-                      @Valid @RequestBody UserProfileUpdateRequestDto request) {
+    public ResponseEntity<UserProfileResponseDto> updateUserProfile(
+            @AuthenticationPrincipal CustomUserDetails user,
+            @Valid @ModelAttribute UserProfileUpdateRequestDto request) {
         if (user == null) {
             log.warn("[PATCH] /users/profile - 인증 정보 없음");
             return ResponseEntity.status(401).build();
