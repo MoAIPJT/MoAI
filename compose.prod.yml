@@ -3,13 +3,24 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    volumes:
+      - frontend-dist:/app/dist
+    networks:
+      - shared-network
+    restart: unless-stopped
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx.Dockerfile
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./frontend/nginx/nginx:/etc/nginx/conf.d
       - /etc/letsencrypt:/etc/letsencrypt
+      - frontend-dist:/usr/share/nginx/html
     depends_on:
+      - frontend
       - backend
     networks:
       - shared-network
@@ -69,6 +80,7 @@ services:
 
 volumes:
   mysql_data:
+  frontend-dist:
 
 networks:
   shared-network:
