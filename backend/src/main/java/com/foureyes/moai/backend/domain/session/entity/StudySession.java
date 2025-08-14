@@ -1,5 +1,5 @@
 // domain/study/session/entity/StudySession.java
-package com.foureyes.moai.backend.domain.study.session.entity;
+package com.foureyes.moai.backend.domain.session.entity;
 
 import com.foureyes.moai.backend.domain.study.entity.StudyGroup;
 import jakarta.persistence.*;
@@ -13,24 +13,18 @@ import java.time.LocalDateTime;
 @NoArgsConstructor @AllArgsConstructor @Builder
 public class StudySession {
 
-    public enum Platform { LIVEKIT, OPENVIDU }
-
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private int id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "study_group_id", nullable = false)
     private StudyGroup studyGroup;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Platform platform;
-
     @Column(name = "room_name", nullable = false, length = 128)
     private String roomName;
 
     @Column(name = "created_by", nullable = false)
-    private Long createdBy; // userId
+    private int createdBy; // userId
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

@@ -133,11 +133,10 @@ CREATE TABLE IF NOT EXISTS ai_summary_documents (
 )CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci';
 
 CREATE TABLE IF NOT EXISTS study_sessions (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    study_group_id BIGINT NOT NULL,
-    platform ENUM('LIVEKIT','OPENVIDU') NOT NULL,
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    study_group_id INT NOT NULL,
     room_name VARCHAR(128) NOT NULL,
-    created_by BIGINT NOT NULL,
+    created_by INT NOT NULL,
     created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     closed_at DATETIME(6) NULL,
     is_open TINYINT AS (IF(closed_at IS NULL, 1, NULL)) STORED,

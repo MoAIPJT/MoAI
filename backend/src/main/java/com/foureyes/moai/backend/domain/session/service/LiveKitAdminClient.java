@@ -1,5 +1,5 @@
 // domain/study/session/service/LiveKitAdminClient.java
-package com.foureyes.moai.backend.domain.study.session.service;
+package com.foureyes.moai.backend.domain.session.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

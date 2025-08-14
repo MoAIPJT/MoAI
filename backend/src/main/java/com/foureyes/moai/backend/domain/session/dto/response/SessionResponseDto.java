@@ -1,7 +1,6 @@
 // domain/study/session/dto/response/SessionResponse.java
-package com.foureyes.moai.backend.domain.study.session.dto.response;
+package com.foureyes.moai.backend.domain.session.dto.response;
 
-import com.foureyes.moai.backend.domain.study.session.entity.StudySession;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -11,16 +10,16 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @Schema(description = "세션 메타 정보 응답")
-public class SessionResponse {
+public class SessionResponseDto {
 
     @Schema(description = "세션 ID", example = "101")
-    private Long id;
+    private int id;
 
-    @Schema(description = "스터디 그룹 ID", example = "42")
-    private Long studyGroupId;
+    @Schema(description = "스터디 그룹 ID(내부용)", example = "42", deprecated = true)
+    private int studyGroupId;
 
-    @Schema(description = "플랫폼", example = "LIVEKIT")
-    private StudySession.Platform platform;
+    @Schema(description = "스터디 그룹 Hash ID(외부 노출용)", example = "aB9xZK31")
+    private String studyGroupHashId;
 
     @Schema(description = "룸 이름", example = "study-42")
     private String roomName;
