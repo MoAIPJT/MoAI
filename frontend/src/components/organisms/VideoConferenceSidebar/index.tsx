@@ -184,8 +184,6 @@ const VideoConferenceSidebar: React.FC<VideoConferenceSidebarProps> = ({
                   >
                     <span className="text-blue-400">
                       {material.type === 'pdf' && '📄'}
-                      {material.type === 'ppt' && '📊'}
-                      {material.type === 'doc' && '📝'}
                     </span>
                     <span className="text-white text-sm flex-1">{material.name}</span>
                     {material.type === 'pdf' && (

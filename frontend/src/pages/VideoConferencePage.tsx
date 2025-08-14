@@ -1,133 +1,93 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useLocation } from 'react-router-dom'
 import { Room, RoomEvent, RemoteParticipant, LocalParticipant } from 'livekit-client'
 import CircleButton from '../components/atoms/CircleButton'
+import AITestViewer from '../components/organisms/AITestViewer'
+import VideoConferenceHeader from '../components/organisms/VideoConferenceHeader'
+import VideoConferenceMainContent from '../components/organisms/VideoConferenceMainContent'
+import VideoConferenceSidebar from '../components/organisms/VideoConferenceSidebar'
+
 
 interface VideoConferencePageProps {
   studyId?: number
   studyName?: string
 }
 
+interface StudyMaterial {
+  id: string
+  name: string
+  type: string
+  url: string
+}
+
+interface ChatMessage {
+  id: string
+  sender: string
+  message: string
+  timestamp: Date
+}
+
 const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
   studyId: propStudyId,
   studyName = '스터디'
-}) => {
+}: VideoConferencePageProps) => {
   const { studyId: urlStudyId } = useParams<{ studyId: string }>()
-  const [searchParams] = useSearchParams()
+  const location = useLocation()
   const studyId = propStudyId || (urlStudyId ? parseInt(urlStudyId) : undefined)
+  
+  // StudyDetailPage에서 전달된 세션 정보
+  const sessionInfo = location.state as {
+    wsUrl: string
+    token: string
+    roomName: string
+    sessionId: string
+  } | null
 
-  // LiveKit 관련 상태
-  const [room, setRoom] = useState<Room | null>(null)
-  const [localParticipant, setLocalParticipant] = useState<LocalParticipant | null>(null)
-  const [remoteParticipants, setRemoteParticipants] = useState<RemoteParticipant[]>([])
-  const [isConnected, setIsConnected] = useState(false)
+  // ===== 로딩 및 에러 상태 =====
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // ===== LiveKit 화상회의 관련 상태 =====
+  const [room, setRoom] = useState<Room | null>(null)
+  const [localParticipant, setLocalParticipant] = useState<LocalParticipant | null>(null)
+  const [remoteParticipants, setRemoteParticipants] = useState<Map<string, RemoteParticipant>>(new Map())
+  const [remoteParticipantStates, setRemoteParticipantStates] = useState<Map<string, {audio: boolean, video: boolean}>>(new Map())
+  const [isConnected, setIsConnected] = useState(false)
+
+  // ===== 화면 공유 관련 상태 =====
   const [isScreenSharing, setIsScreenSharing] = useState(false)
   const [screenShareStream, setScreenShareStream] = useState<MediaStream | null>(null)
+  const [screenShareParticipant, setScreenShareParticipant] = useState<string>('')
 
-  // 오디오/비디오 상태 관리
+  // ===== 오디오/비디오 상태 관리 =====
   const [isAudioEnabled, setIsAudioEnabled] = useState(true)
   const [isVideoEnabled, setIsVideoEnabled] = useState(true)
 
-  // 사이드바 상태 관리
+  // ===== 사이드바 상태 관리 =====
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeSidebarTab, setActiveSidebarTab] = useState<'participants' | 'chat' | 'materials' | null>(null)
-  const [chatMessages, setChatMessages] = useState<Array<{id: string, sender: string, message: string, timestamp: Date}>>([])
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [newChatMessage, setNewChatMessage] = useState('')
-  const [studyMaterials, setStudyMaterials] = useState<Array<{id: string, name: string, type: string, url: string}>>([])
+  const [studyMaterials, setStudyMaterials] = useState<StudyMaterial[]>([])
+  const [hasUnreadChatMessages, setHasUnreadChatMessages] = useState(false)
 
-  // PDF 뷰어 모드 상태
+  // ===== PDF 뷰어 모드 상태 =====
   const [isPdfViewerMode, setIsPdfViewerMode] = useState(false)
   const [currentPdfName, setCurrentPdfName] = useState<string>('')
+  const [currentPdfUrl, setCurrentPdfUrl] = useState<string>('')
 
-  const screenShareVideoRef = useRef<HTMLVideoElement>(null)
-  const chatInputRef = useRef<HTMLInputElement>(null)
 
-  // URL 파라미터에서 LiveKit 정보 추출
-  const token = searchParams.get('token')
-  const wsUrl = searchParams.get('wsUrl')
-  const roomName = searchParams.get('roomName')
-  const displayName = searchParams.get('displayName')
-  
+
+  // ===== refs =====
+  const pdfViewerRef = useRef<HTMLIFrameElement>(null)
+
   const studyNameDisplay = studyName !== '스터디' ? studyName : studyId ? `스터디 ${studyId}` : '스터디'
 
-  // 사이드바 토글 함수
-  const toggleSidebar = (tab: 'participants' | 'chat' | 'materials') => {
-    if (sidebarOpen) {
-      // 사이드바가 열려있으면 닫기
-      setSidebarOpen(false)
-      setActiveSidebarTab(null)
-    } else {
-      // 사이드바가 닫혀있으면 열기 (기본값: participants)
-      setSidebarOpen(true)
-      setActiveSidebarTab(tab || 'participants')
-    }
-  }
 
-  // 채팅 메시지 전송
-  const sendChatMessage = () => {
-    if (newChatMessage.trim()) {
-      const message = {
-        id: Date.now().toString(),
-        sender: '나',
-        message: newChatMessage.trim(),
-        timestamp: new Date()
-      };
-      setChatMessages(prev => [...prev, message])
-      setNewChatMessage('')
-    }
-  }
 
-  // 채팅 입력 키 이벤트 처리
-  const handleChatKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      sendChatMessage();
-    }
-  };
-
-  // 공부자료 목록 (실제 API에서 가져올 예정)
-  useEffect(() => {
-    setStudyMaterials([
-      { id: '1', name: 'React 기초 강의.pdf', type: 'pdf', url: '/src/assets/pdfs/cats-and-dogs.pdf' },
-      { id: '2', name: 'TypeScript 핵심 개념.pptx', type: 'ppt', url: '#' },
-      { id: '3', name: '프로젝트 기획서.docx', type: 'doc', url: '#' },
-      { id: '4', name: '코딩 테스트 문제집.pdf', type: 'pdf', url: '/src/assets/pdfs/hamburger.pdf' },
-    ]);
-  }, []);
-
-  // 공부자료 클릭 핸들러
-  const handleMaterialClick = (material: {id: string, name: string, type: string, url: string}) => {
-    if (material.type === 'pdf') {
-      setIsPdfViewerMode(true);
-      setCurrentPdfName(material.name);
-
-      // 사이드바 닫기
-      setSidebarOpen(false);
-      setActiveSidebarTab(null);
-    } else {
-      // PDF가 아닌 경우 알림
-      alert(`${material.name}은 PDF 파일이 아닙니다.`);
-    }
-  };
-
-  // PDF 뷰어 모드 종료
-  const exitPdfViewerMode = () => {
-    setIsPdfViewerMode(false);
-    setCurrentPdfName('');
-  };
-
-  const initializeSession = async () => {
-    if (!token || !wsUrl || !roomName) {
-      setError('화상회의 연결 정보가 없습니다.')
-      return
-    }
-
+  // ===== LiveKit 세션 초기화 =====
+  const initializeLiveKitSession = async (wsUrl: string, token: string) => {
     try {
-      setIsLoading(true)
-      setError(null)
-
-      // LiveKit 방에 연결
       const newRoom = new Room({
         adaptiveStream: true,
         dynacast: true,
@@ -135,14 +95,24 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
 
       // 방 이벤트 리스너 설정
       newRoom.on(RoomEvent.ParticipantConnected, (participant: RemoteParticipant) => {
-        setRemoteParticipants(prev => [...prev, participant])
+        setRemoteParticipants((prev: Map<string, RemoteParticipant>) => new Map(prev.set(participant.identity, participant)))
+        setRemoteParticipantStates((prev: Map<string, {audio: boolean, video: boolean}>) => new Map(prev.set(participant.identity, {audio: true, video: true})))
       })
 
       newRoom.on(RoomEvent.ParticipantDisconnected, (participant: RemoteParticipant) => {
-        setRemoteParticipants(prev => prev.filter(p => p !== participant))
+        setRemoteParticipants((prev: Map<string, RemoteParticipant>) => {
+          const newMap = new Map(prev)
+          newMap.delete(participant.identity)
+          return newMap
+        })
+        setRemoteParticipantStates((prev: Map<string, {audio: boolean, video: boolean}>) => {
+          const newMap = new Map(prev)
+          newMap.delete(participant.identity)
+          return newMap
+        })
       })
 
-      newRoom.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+      newRoom.on(RoomEvent.TrackSubscribed, (track: any, publication: any, participant: any) => {
         // 원격 참가자의 트랙 구독
         if (track.kind === 'video') {
           // 비디오 트랙 처리
@@ -151,7 +121,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
         }
       })
 
-      newRoom.on(RoomEvent.TrackUnsubscribed, (track, publication, participant) => {
+      newRoom.on(RoomEvent.TrackUnsubscribed, (track: any, publication: any, participant: any) => {
         // 트랙 구독 해제 처리
       })
 
@@ -170,30 +140,44 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
     } catch (error) {
       console.error('LiveKit 세션 연결 실패:', error)
       setError('화상회의에 연결할 수 없습니다.')
-    } finally {
-      setIsLoading(false)
     }
   }
 
-  // LiveKit 방 연결 (컴포넌트 마운트 시)
-  useEffect(() => {
-    if (token && wsUrl && roomName) {
-      initializeSession()
-    } else {
-      setError('화상회의 연결 정보가 부족합니다.')
-    }
 
+
+  // ===== 컴포넌트 마운트 시 초기화 =====
+  useEffect(() => {
+    // StudyDetailPage에서 전달된 세션 정보가 있으면 LiveKit에 연결
+    if (sessionInfo) {
+      setIsLoading(true)
+      initializeLiveKitSession(sessionInfo.wsUrl, sessionInfo.token)
+        .then(() => {
+          setIsLoading(false)
+        })
+        .catch((error) => {
+          console.error('LiveKit 연결 실패:', error)
+          setError('화상회의에 연결할 수 없습니다.')
+          setIsLoading(false)
+        })
+    } else {
+      // 세션 정보가 없으면 에러 메시지 표시
+      setError('화상회의 세션 정보가 없습니다. 스터디 상세 페이지에서 화상회의를 시작해주세요.')
+    }
+  }, [sessionInfo])
+
+  // ===== 컴포넌트 언마운트 시 정리 =====
+  useEffect(() => {
     return () => {
       if (room) {
         room.disconnect()
       }
       if (screenShareStream) {
-        screenShareStream.getTracks().forEach(track => track.stop())
+        screenShareStream.getTracks().forEach((track: any) => track.stop())
       }
     }
-  }, [token, wsUrl, roomName])
+  }, [room, screenShareStream])
 
-  // LiveKit 방 연결 해제
+  // ===== LiveKit 방 연결 해제 =====
   const leaveSession = () => {
     if (room) {
       room.disconnect()
@@ -203,14 +187,15 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
     }
     setRoom(null)
     setLocalParticipant(null)
-    setRemoteParticipants([])
+    setRemoteParticipants(new Map())
+    setRemoteParticipantStates(new Map())
     setIsConnected(false)
     // 오디오/비디오 상태 초기화
     setIsAudioEnabled(true)
     setIsVideoEnabled(true)
   }
 
-  // LiveKit 오디오/비디오 토글
+  // ===== LiveKit 오디오/비디오 토글 =====
   const toggleAudio = async () => {
     if (localParticipant) {
       try {
@@ -241,6 +226,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
     }
   }
 
+  // ===== 화면 공유 토글 =====
   const toggleScreenShare = async () => {
     if (isScreenSharing) {
       await stopScreenShare()
@@ -249,6 +235,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
     }
   }
 
+  // ===== 화면 공유 시작 =====
   const startScreenShare = async () => {
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -258,10 +245,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
 
       setScreenShareStream(stream)
       setIsScreenSharing(true)
-
-      if (screenShareVideoRef.current) {
-        screenShareVideoRef.current.srcObject = stream
-      }
+      setScreenShareParticipant('나')
 
       stream.getVideoTracks()[0].onended = () => {
         stopScreenShare()
@@ -272,240 +256,129 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
     }
   }
 
+  // ===== 화면 공유 중지 =====
   const stopScreenShare = async () => {
     if (screenShareStream) {
-      screenShareStream.getTracks().forEach(track => track.stop())
+      screenShareStream.getTracks().forEach((track: any) => track.stop())
       setScreenShareStream(null)
     }
     setIsScreenSharing(false)
+    setScreenShareParticipant('')
+  }
 
-    if (screenShareVideoRef.current) {
-      screenShareVideoRef.current.srcObject = null
+  // ===== 사이드바 관련 함수들 =====
+  const toggleSidebar = (tab: 'participants' | 'chat' | 'materials') => {
+    if (sidebarOpen && activeSidebarTab === tab) {
+      setSidebarOpen(false)
+      setActiveSidebarTab(null)
+    } else {
+      setSidebarOpen(true)
+      setActiveSidebarTab(tab)
     }
   }
 
-  // 사이드바 렌더링
-  const renderSidebar = () => {
-    if (!sidebarOpen || !activeSidebarTab) return null;
+  const closeSidebar = () => {
+    setSidebarOpen(false)
+    setActiveSidebarTab(null)
+  }
 
-    return (
-      <div className="w-1/4 bg-gray-800 border-l border-gray-700 flex flex-col">
-        {/* 사이드바 헤더 */}
-        <div className="p-3 border-b border-gray-700 flex justify-between items-center">
-          <h3 className="text-white font-semibold">
-            {activeSidebarTab === 'participants' && '참가자 목록'}
-            {activeSidebarTab === 'chat' && '채팅'}
-            {activeSidebarTab === 'materials' && '공부자료'}
-          </h3>
-          <button
-            onClick={() => {
-              setSidebarOpen(false);
-              setActiveSidebarTab(null);
-            }}
-            className="text-gray-400 hover:text-white"
-          >
-            ✕
-          </button>
-        </div>
+  const handleTabChange = (tab: 'participants' | 'chat' | 'materials') => {
+    setActiveSidebarTab(tab)
+  }
 
-        {/* 탭 네비게이션 */}
-        <div className="flex border-b border-gray-700 bg-gray-800">
-          <button
-            onClick={() => setActiveSidebarTab('participants')}
-            className={`flex-1 py-3 px-3 text-sm font-medium transition-all duration-200 ${
-              activeSidebarTab === 'participants'
-                ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-700 shadow-inner'
-                : 'text-gray-400 hover:text-white hover:bg-gray-700'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A1.5 1.5 0 0 0 18.54 8H17c-.8 0-1.54.37-2.01 1l-1.7 2.26V16h-1.5v6h5z"/>
-                <path d="M12.5 11.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5S11 9.17 11 10s.67 1.5 1.5 1.5zM5.5 6c1.11 0 2-.89 2-2s-.89-2-2-2-2 .89-2 2 .89 2 2 2zm2 16v-7H9V9c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v6h1.5v7h4z"/>
-              </svg>
-              참가자
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveSidebarTab('chat')}
-            className={`flex-1 py-3 px-3 text-sm font-medium transition-all duration-200 ${
-              activeSidebarTab === 'chat'
-                ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-700 shadow-inner'
-                : 'text-gray-400 hover:text-white hover:bg-gray-700'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
-              </svg>
-              채팅
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveSidebarTab('materials')}
-            className={`flex-1 py-3 px-3 text-sm font-medium transition-all duration-200 ${
-              activeSidebarTab === 'materials'
-                ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-700 shadow-inner'
-                : 'text-gray-400 hover:text-white hover:bg-gray-700'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/>
-              </svg>
-              자료
-            </div>
-          </button>
-        </div>
+  // ===== 채팅 관련 함수들 =====
+  const sendChatMessage = () => {
+    if (newChatMessage.trim()) {
+      const message: ChatMessage = {
+        id: Date.now().toString(),
+        sender: '나',
+        message: newChatMessage.trim(),
+        timestamp: new Date()
+      }
+      setChatMessages((prev: ChatMessage[]) => [...prev, message])
+      setNewChatMessage('')
+    }
+  }
 
-        {/* 사이드바 내용 */}
-        <div className="flex-1 overflow-hidden">
-          {activeSidebarTab === 'participants' && (
-            <div className="p-3">
-              <div className="space-y-2">
-                {/* 내 정보 */}
-                <div className="flex items-center space-x-2 p-2 bg-gray-700 rounded">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-white text-sm">나 ({displayName || '나'})</span>
-                </div>
+  const handleNewChatMessageChange = (message: string) => {
+    setNewChatMessage(message)
+  }
 
-                {/* 원격 참가자들 */}
-                {remoteParticipants.map((participant, index) => (
-                  <div key={participant.identity} className="flex items-center space-x-2 p-2 bg-gray-700 rounded">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-white text-sm">{participant.identity || `참가자 ${index + 1}`}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+  // ===== 공부자료 관련 함수들 =====
+  const handleMaterialClick = (material: StudyMaterial) => {
+    if (material.type === 'pdf') {
+      setIsPdfViewerMode(true)
+      setCurrentPdfName(material.name)
+      setCurrentPdfUrl(material.url)
+      setSidebarOpen(false)
+      setActiveSidebarTab(null)
+    } else {
+      alert(`${material.name}은 PDF 파일이 아닙니다.`)
+    }
+  }
 
-          {activeSidebarTab === 'chat' && (
-            <div className="flex flex-col h-full">
-              {/* 채팅 메시지 영역 */}
-              <div className="flex-1 p-3 overflow-y-auto space-y-2">
-                {chatMessages.map((msg) => (
-                  <div key={msg.id} className="bg-gray-700 p-2 rounded">
-                    <div className="flex justify-between items-start">
-                      <span className="text-blue-400 text-xs font-medium">{msg.sender}</span>
-                      <span className="text-gray-400 text-xs">
-                        {msg.timestamp.toLocaleTimeString()}
-                      </span>
-                    </div>
-                    <p className="text-white text-sm mt-1">{msg.message}</p>
-                  </div>
-                ))}
-              </div>
+  const exitPdfViewerMode = () => {
+    setIsPdfViewerMode(false)
+    setCurrentPdfName('')
+    setCurrentPdfUrl('')
+  }
 
-              {/* 채팅 입력 영역 */}
-              <div className="p-3 border-t border-gray-700">
-                <div className="flex space-x-2">
-                  <input
-                    ref={chatInputRef}
-                    type="text"
-                    value={newChatMessage}
-                    onChange={(e) => setNewChatMessage(e.target.value)}
-                    onKeyPress={handleChatKeyPress}
-                    placeholder="메시지를 입력하세요..."
-                    className="flex-1 bg-gray-700 text-white px-3 py-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <button
-                    onClick={sendChatMessage}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-sm"
-                  >
-                    전송
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
-          {activeSidebarTab === 'materials' && (
-            <div className="p-3">
-              <div className="space-y-2">
-                {studyMaterials.map((material) => (
-                  <div
-                    key={material.id}
-                    className="flex items-center space-x-2 p-2 bg-gray-700 rounded hover:bg-gray-600 cursor-pointer"
-                    onClick={() => handleMaterialClick(material)}
-                  >
-                    <span className="text-blue-400">
-                      {material.type === 'pdf' && '📄'}
-                      {material.type === 'ppt' && '📊'}
-                      {material.type === 'doc' && '📝'}
-                    </span>
-                    <span className="text-white text-sm">{material.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
+
+  // ===== 그리드 계산 =====
+  const calculateGrid = () => {
+    const totalParticipants = remoteParticipants.size + 1 // 원격 참가자 + 나
+    
+    if (totalParticipants <= 4) return { cols: 2, rows: 2 }
+    if (totalParticipants <= 9) return { cols: 3, rows: 3 }
+    if (totalParticipants <= 16) return { cols: 4, rows: 4 }
+    return { cols: 5, rows: 4 }
+  }
+
+  const { cols, rows } = calculateGrid()
 
   return (
     <div className="h-screen bg-gray-900 flex overflow-hidden">
       {/* 메인 비디오 영역 */}
       <div className={`flex flex-col ${sidebarOpen ? 'w-3/4' : 'w-full'} transition-all duration-300`}>
-        <div className="bg-gray-800 text-white p-3 border-b border-gray-700 flex-shrink-0">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-lg font-bold">
-                {studyNameDisplay}
-                {isPdfViewerMode && <span className="ml-2 text-blue-400 text-sm">(PDF 뷰어 모드)</span>}
-              </h1>
-              {isPdfViewerMode && (
-                <p className="text-sm text-gray-400">
-                  현재 보고 있는 자료: {currentPdfName}
-                </p>
-              )}
-            </div>
-            {isPdfViewerMode && (
-              <button
-                onClick={exitPdfViewerMode}
-                className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs"
-              >
-                PDF 뷰어 종료
-              </button>
-            )}
-          </div>
-        </div>
+        {/* 헤더 영역 */}
+        <VideoConferenceHeader
+          studyNameDisplay={studyNameDisplay}
+          isDemoMode={false}
+          isPdfViewerMode={isPdfViewerMode}
+          isScreenSharing={isScreenSharing}
+          screenShareParticipant={screenShareParticipant}
+          currentPdfName={currentPdfName}
+          isConnected={isConnected}
+          onInitializeDemoMode={() => {}}
+          onExitPdfViewerMode={exitPdfViewerMode}
+        />
 
-        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          {isScreenSharing && (
-            <div className="absolute inset-0 bg-black z-10 flex items-center justify-center">
-              <div className="relative w-full h-full">
-                <video
-                  ref={screenShareVideoRef}
-                  autoPlay
-                  playsInline
-                  className="w-full h-full object-contain"
-                />
-                <button
-                  onClick={stopScreenShare}
-                  className="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
-                >
-                  화면 공유 중지
-                </button>
-              </div>
-            </div>
-          )}
+        {/* 메인 콘텐츠 영역 */}
+        <VideoConferenceMainContent
+          isConnected={isConnected}
+          isDemoMode={false}
+          isPdfViewerMode={isPdfViewerMode}
+          isScreenSharing={isScreenSharing}
+          screenShareParticipant={screenShareParticipant}
+          screenShareStream={screenShareStream}
+          demoParticipants={[]}
+          remoteParticipants={remoteParticipants}
+          localVideoTrack={localParticipant?.getTrack('camera')}
+          isVideoEnabled={isVideoEnabled}
+          participantName="나"
+          remoteParticipantStates={remoteParticipantStates}
+          currentPdfUrl={currentPdfUrl}
+          currentPdfName={currentPdfName}
+          cols={cols}
+          rows={rows}
+          pdfViewerRef={pdfViewerRef}
+        />
 
-          <div className="flex-1 flex items-center justify-center p-2 min-h-0 overflow-hidden">
-            <div className="text-center text-white">
-              <div className="text-6xl mb-4">📹</div>
-              <h3 className="text-lg font-semibold mb-2">화상회의 준비 중</h3>
-              <p className="text-gray-400">
-                백엔드 API 연동 후 화상회의 기능을 사용할 수 있습니다.
-              </p>
-            </div>
-          </div>
-        </div>
-
+        {/* 컨트롤 바 영역 */}
         <div className="bg-gray-800 border-t border-gray-700 p-3 flex-shrink-0">
           <div className="flex justify-center items-center gap-3">
+            {/* 마이크 토글 버튼 */}
             <CircleButton
               variant={isAudioEnabled ? 'lightPurple' : 'red'}
               size="sm"
@@ -517,6 +390,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
               </svg>
             </CircleButton>
 
+            {/* 카메라 토글 버튼 */}
             <CircleButton
               variant={isVideoEnabled ? 'lightPurple' : 'red'}
               size="sm"
@@ -527,6 +401,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
               </svg>
             </CircleButton>
 
+            {/* 화면 공유 토글 버튼 */}
             <CircleButton
               variant={isScreenSharing ? 'red' : 'purple'}
               size="sm"
@@ -537,6 +412,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
               </svg>
             </CircleButton>
 
+            {/* 사이드바 토글 버튼 */}
             <CircleButton
               variant="gray"
               size="sm"
@@ -547,6 +423,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
               </svg>
             </CircleButton>
 
+            {/* 회의 종료 버튼 */}
             <CircleButton
               variant="red"
               size="sm"
@@ -561,8 +438,32 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
       </div>
 
       {/* 사이드바 */}
-      {renderSidebar()}
+      <VideoConferenceSidebar
+        sidebarOpen={sidebarOpen}
+        activeSidebarTab={activeSidebarTab}
+        isDemoMode={false}
+        demoParticipants={[]}
+        remoteParticipants={remoteParticipants}
+        remoteParticipantStates={remoteParticipantStates}
+        participantName="나"
+        isAudioEnabled={isAudioEnabled}
+        isVideoEnabled={isVideoEnabled}
+        chatMessages={chatMessages}
+        newChatMessage={newChatMessage}
+        studyMaterials={studyMaterials}
+        hasUnreadChatMessages={hasUnreadChatMessages}
+        onCloseSidebar={closeSidebar}
+        onTabChange={handleTabChange}
+        onToggleAudio={toggleAudio}
+        onToggleVideo={toggleVideo}
+        onToggleDemoParticipantAudio={() => {}}
+        onToggleDemoParticipantVideo={() => {}}
+        onNewChatMessageChange={handleNewChatMessageChange}
+        onSendChatMessage={sendChatMessage}
+        onMaterialClick={handleMaterialClick}
+      />
 
+      {/* 에러 메시지 표시 */}
       {error && (
         <div className="fixed top-4 right-4 bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 max-w-md">
           <div className="whitespace-pre-line text-sm">{error}</div>
@@ -575,6 +476,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
         </div>
       )}
 
+      {/* 로딩 스피너 */}
       {isLoading && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-gray-800 p-6 rounded-lg">
@@ -588,3 +490,4 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
 };
 
 export default VideoConferencePage
+

@@ -19,6 +19,7 @@ import type { UploadData } from '../components/organisms/UploadDataModal/types'
 import { refService } from '../services/refService'
 import { useStudySchedules } from '../hooks/useSchedules'
 import { useMe } from '../hooks/useUsers'
+import videoConferenceService from '../services/videoConferenceService'
 
 const StudyDetailPage: React.FC = () => {
   const navigate = useNavigate()
@@ -252,6 +253,118 @@ const StudyDetailPage: React.FC = () => {
     }
   }, [studyDetail])  // ✅ participants 의존성 제거
 
+  // ===== 화상회의 세션 관리 =====
+  const [sessionData, setSessionData] = useState<any>(null)
+  const [joinData, setJoinData] = useState<any>(null)
+  const [isSessionLoading, setIsSessionLoading] = useState(false)
+  const [sessionError, setSessionError] = useState<string | null>(null)
+
+  // 세션 열기 (ADMIN/DELEGATE만 가능)
+  const handleOpenSession = async () => {
+    if (!studyDetail?.studyId) return
+    
+    try {
+      setIsSessionLoading(true)
+      setSessionError(null)
+      
+      const data = await videoConferenceService.openSession(studyDetail.studyId)
+      setSessionData(data)
+      console.log('세션이 열렸습니다:', data)
+      
+      // 성공 시 세션 참가
+      await handleJoinSession()
+    } catch (error) {
+      console.error('세션 열기 실패:', error)
+      setSessionError('세션을 열 수 없습니다.')
+    } finally {
+      setIsSessionLoading(false)
+    }
+  }
+
+  // 세션 참가 및 LiveKit 토큰 발급
+  const handleJoinSession = async () => {
+    if (!studyDetail?.studyId) return
+    
+    try {
+      setIsSessionLoading(true)
+      setSessionError(null)
+      
+      const data = await videoConferenceService.joinSession(studyDetail.studyId)
+      setJoinData(data)
+      console.log('세션에 참가했습니다:', data)
+      
+      // 화상회의 페이지로 이동
+      navigate(`/video-conference/${studyDetail.studyId}`, {
+        state: {
+          wsUrl: data.wsUrl,
+          token: data.token,
+          roomName: data.roomName,
+          sessionId: data.sessionId
+        }
+      })
+    } catch (error) {
+      console.error('세션 참가 실패:', error)
+      setSessionError('세션에 참가할 수 없습니다.')
+    } finally {
+      setIsSessionLoading(false)
+    }
+  }
+
+  // 세션 상태 조회
+  const checkSessionStatus = async () => {
+    if (!studyDetail?.studyId) return
+    
+    try {
+      const data = await videoConferenceService.getSessionStatus(studyDetail.studyId)
+      setSessionData(data)
+      
+      if (data.status === 'OPEN') {
+        // 세션이 열려있으면 참가
+        await handleJoinSession()
+      }
+    } catch (error) {
+      console.error('세션 상태 조회 실패:', error)
+    }
+  }
+
+  // 화상회의 시작 버튼 클릭 핸들러
+  const handleCreateRoom = async () => {
+    if (!studyDetail?.studyId) return
+    
+    try {
+      // 세션이 열려있는지 확인
+      await checkSessionStatus()
+      
+      // 세션이 열려있지 않으면 새로 열기
+      if (!sessionData || sessionData.status !== 'OPEN') {
+        await handleOpenSession()
+      }
+    } catch (error) {
+      console.error('화상회의 시작 실패:', error)
+      setSessionError('화상회의를 시작할 수 없습니다.')
+    }
+  }
+
+  // 세션 종료 함수
+  const handleCloseSession = async () => {
+    if (!studyDetail?.studyId) return
+    
+    try {
+      setIsSessionLoading(true)
+      setSessionError(null)
+      
+      await videoConferenceService.closeSession(studyDetail.studyId)
+      setSessionData(null)
+      setJoinData(null)
+      console.log('세션이 종료되었습니다.')
+    } catch (error) {
+      console.error('세션 종료 실패:', error)
+      setSessionError('세션을 종료할 수 없습니다.')
+    } finally {
+      setIsSessionLoading(false)
+    }
+  }
+
   // ✅ 에러 처리 - 로그인된 경우에만 스터디 관련 에러 처리
   useEffect(() => {
     if (isLoggedIn && studyError) {
@@ -342,16 +455,6 @@ const StudyDetailPage: React.FC = () => {
     setIsUploadModalOpen(true)
   }
 
-  // ❌ handleCreateRoom 제거 - StudyDetailTemplate에서 처리
-  // const handleCreateRoom = () => {
-  //   // 화상회의 페이지로 이동 (스터디 ID와 함께)
-  //   if (studyDetail?.studyId) {
-  //     navigate(`/video-conference/${studyDetail.studyId}`)
-  //   } else {
-  //     // 스터디 ID가 없는 경우 기본 화상회의 페이지로 이동
-  //     navigate('/video-conference')
-  //   }
-  // }
 
   const handleEditNotice = () => {
     setIsNoticeModalOpen(true)
@@ -1083,10 +1186,11 @@ return (
       onContentDelete={handleContentDelete}
       onContentDownload={handleContentDownload}
       studyId={studyDetail?.studyId}
-      // 🆕 화상회의 관련 props - API 연결할 자리
-      hasActiveMeeting={false} // TODO: API에서 온라인 스터디 상태 확인
-      onlineParticipants={[]} // TODO: API에서 온라인 참여자 목록 가져오기
-      meetingSessionId={undefined} // TODO: API에서 세션 ID 가져오기
+      // 🆕 화상회의 관련 props - 세션 상태 기반
+      hasActiveMeeting={!!sessionData && sessionData.status === 'OPEN'}
+      onlineParticipants={sessionData?.participants || []}
+      meetingSessionId={sessionData?.sessionId}
+      onCloseSession={handleCloseSession}
     />
 
     {/* Category Add Modal */}
@@ -1161,6 +1265,29 @@ return (
         fileId={previewingContent.originalFileId}
         fileName={previewingContent.title}
       />
+    )}
+
+    {/* 세션 에러 메시지 표시 */}
+    {sessionError && (
+      <div className="fixed top-20 right-4 bg-orange-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 max-w-md">
+        <div className="whitespace-pre-line text-sm">{sessionError}</div>
+        <button
+          onClick={() => setSessionError(null)}
+          className="absolute top-2 right-2 text-white hover:text-gray-300"
+        >
+          ✕
+        </button>
+      </div>
+    )}
+
+    {/* 세션 로딩 스피너 */}
+    {isSessionLoading && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-gray-800 p-6 rounded-lg">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-2 text-center text-white">화상회의 세션 준비 중...</p>
+        </div>
+      </div>
     )}
   </>
 )
