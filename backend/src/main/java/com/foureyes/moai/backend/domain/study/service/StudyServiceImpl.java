@@ -194,7 +194,6 @@ public class StudyServiceImpl implements StudyService {
                     .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
                 return StudyMemberListResponseDto.builder()
-                    .userId(user.getId())
                     .member(user.getName())
                     .email(user.getEmail())
                     .imageUrl(user.getProfileImageUrl())
@@ -486,7 +485,6 @@ public class StudyServiceImpl implements StudyService {
         // 1) 멤버십 없음 → 이름, 이미지
         if (membershipOpt.isEmpty()) {
             return StudyDetailResponseDto.builder()
-                .id(group.getId())
                 .name(group.getName())
                 .imageUrl(group.getImageUrl())
                 .build();
@@ -495,7 +493,6 @@ public class StudyServiceImpl implements StudyService {
         // 2) PENDING → 이름, 이미지, 상태 만
         if (membership.getStatus() == StudyMembership.Status.PENDING) {
             return StudyDetailResponseDto.builder()
-                .id(group.getId())
                 .name(group.getName())
                 .imageUrl(group.getImageUrl())
                 .status(StudyMembership.Status.PENDING.name())
@@ -556,33 +553,30 @@ public class StudyServiceImpl implements StudyService {
     @Transactional
     public void updateStudyGroup(int userId, int studyId, UpdateStudyRequestDto request) {
         StudyGroup group = validateStudyGroupExists(studyId);
-        validateAdminMembership(userId, studyId);
+        validateAdminMembership(userId,studyId);
 
-        // 이미지(선택)
-        if (request.getImage() != null && !request.getImage().isEmpty()) {
-            try {
-                String imageUrl = storageService.uploadFile(request.getImage());
+        String imageUrl = null;
+        try {
+            if (request.getImage() != null){
+                imageUrl = storageService.uploadFile(request.getImage());
                 group.setImageUrl(imageUrl);
                 log.info("스터디 이미지 업로드 완료: imageUrl={}", imageUrl);
-            } catch (IOException e) {
-                log.error("스터디 이미지 업로드 실패: userId={}, error={}", userId, e.getMessage());
-                throw new CustomException(ErrorCode.FILE_UPLOAD_FAILED);
             }
+        } catch (IOException e) {
+            log.error("스터디 이미지 업로드 실패: userId={}, error={}", userId, e.getMessage());
+            throw new CustomException(ErrorCode.FILE_UPLOAD_FAILED);
         }
-
-        if (request.getName() != null && !request.getName().isBlank()) {
-            group.setName(request.getName().trim());
+        if (request.getName() != null){
+            group.setName(request.getName());
         }
-
-        if (request.getDescription() != null) {
-            group.setDescription(request.getDescription().trim());
+        if (request.getDescription() != null){
+            group.setDescription(request.getDescription());
         }
-
-        if (request.getMaxCapacity() != 0) {
+        if (request.getMaxCapacity() != 0){
             group.setMaxCapacity(request.getMaxCapacity());
         }
-
         studyGroupRepository.save(group);
+
     }
 
 }
