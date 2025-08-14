@@ -4,7 +4,6 @@ pipeline {
 
 
     stages {
-        // STAGE 1: Checkout Code
         // This stage clones your repository from GitLab into the Jenkins workspace.
         stage('Checkout') {
             steps {

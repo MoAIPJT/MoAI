@@ -7,10 +7,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      # - ./frontend/dist:/usr/share/nginx/html
       - ./frontend/nginx/nginx.prod.conf:/etc/nginx/conf.d/nginx.prod.conf
       - /etc/letsencrypt:/etc/letsencrypt
-      # - ./frontend/certbox/www:/var/www/certbot
     depends_on:
       - backend
     networks:
