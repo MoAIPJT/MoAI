@@ -1,9 +1,10 @@
 // domain/study/session/controller/StudySessionController.java
 package com.foureyes.moai.backend.domain.session.controller;
 
+import com.foureyes.moai.backend.domain.session.dto.response.CloseSessionResponseDto;
 import com.foureyes.moai.backend.domain.session.dto.response.JoinSessionResponseDto;
 import com.foureyes.moai.backend.domain.session.dto.response.SessionResponseDto;
-import com.foureyes.moai.backend.domain.session.service.StudySessionService;
+import com.foureyes.moai.backend.domain.session.service.StudySessionServiceImpl;
 import com.foureyes.moai.backend.domain.user.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class StudySessionController {
 
-    private final StudySessionService service;
+    private final StudySessionServiceImpl service;
 
     @Operation(
         summary = "세션 열기(없으면 생성, 있으면 반환) - hashId",
@@ -45,6 +46,18 @@ public class StudySessionController {
         @AuthenticationPrincipal CustomUserDetails user
     ) {
         JoinSessionResponseDto res = service.joinByHashId(hashId, user.getId());
+        return ResponseEntity.ok(res);
+    }
+
+    @Operation(summary = "세션 종료",
+        description = "ADMIN/DELEGATE만 가능. 이미 종료 상태여도 200 OK + closed=false 반환",
+        security = { @SecurityRequirement(name = "bearerAuth") })
+    @PostMapping("/{hashId}/session/close")
+    public ResponseEntity<CloseSessionResponseDto> close(
+        @PathVariable String hashId,
+        @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        CloseSessionResponseDto res = service.closeByHashId(hashId, user.getId());
         return ResponseEntity.ok(res);
     }
 }

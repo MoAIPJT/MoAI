@@ -3,6 +3,7 @@ package com.foureyes.moai.backend.domain.session.service;
 
 import com.foureyes.moai.backend.commons.exception.CustomException;
 import com.foureyes.moai.backend.commons.exception.ErrorCode;
+import com.foureyes.moai.backend.domain.session.dto.response.CloseSessionResponseDto;
 import com.foureyes.moai.backend.domain.session.dto.response.JoinSessionResponseDto;
 import com.foureyes.moai.backend.domain.session.dto.response.SessionResponseDto;
 import com.foureyes.moai.backend.domain.session.repository.StudySessionRepository;
@@ -123,6 +124,7 @@ public class StudySessionServiceImpl implements StudySessionService{
     }
 
     /** 참가(토큰 발급): 세션이 없으면 관리자/대리자일 때만 자동 오픈, 아니면 403 */
+    @Override
     @Transactional
     public JoinSessionResponseDto joinByHashId(String studyHashId, int meUserId) {
         StudyGroup group = studyGroupRepository.findByHashId(studyHashId)
@@ -156,6 +158,52 @@ public class StudySessionServiceImpl implements StudySessionService{
             .wsUrl(tokenGenerator.getWsUrl())
             .displayName(displayName)
             .token(token)
+            .build();
+    }
+
+    @Override
+    @Transactional
+    public CloseSessionResponseDto closeByHashId(String studyHashId, int meUserId) {
+        // 1) 스터디 확인
+        StudyGroup group = studyGroupRepository.findByHashId(studyHashId)
+            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_GROUP_NOT_FOUND));
+        int studyId = group.getId();
+
+        // 2) 승인 멤버 확인
+        StudyMembership membership = membershipRepository
+            .findByUserIdAndStudyGroup_IdAndStatus(meUserId, studyId, StudyMembership.Status.APPROVED)
+            .orElseThrow(() -> new CustomException(ErrorCode.STUDY_NOT_MEMBER));
+
+        // 3) 권한 확인
+        boolean canClose = (membership.getRole() == StudyMembership.Role.ADMIN)
+            || (membership.getRole() == StudyMembership.Role.DELEGATE);
+        if (!canClose) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        // 4) 열린 세션 잠금 조회
+        Optional<StudySession> openOpt = sessionRepository.findOpenForUpdate(group);
+        if (openOpt.isEmpty()) {
+            // 열린 세션 없음 → idempotent 응답
+            return CloseSessionResponseDto.builder()
+                .id(0)
+                .studyGroupHashId(studyHashId)
+                .roomName("study-" + studyHashId)
+                .closed(false)
+                .closedAt(null)
+                .build();
+        }
+
+        StudySession session = openOpt.get();
+        session.setClosedAt(LocalDateTime.now()); // UNIQUE 제약상 is_open이 NULL로 바뀜
+        sessionRepository.save(session);
+
+        return CloseSessionResponseDto.builder()
+            .id(session.getId())
+            .studyGroupHashId(studyHashId)
+            .roomName(session.getRoomName())
+            .closed(true)
+            .closedAt(session.getClosedAt())
             .build();
     }
 }
