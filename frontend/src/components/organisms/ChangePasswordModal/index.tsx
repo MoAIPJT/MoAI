@@ -26,7 +26,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
       ...prev,
       [field]: value
     }))
-    
+
     // 에러 메시지 초기화
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }))
@@ -36,7 +36,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     if (field === 'newPassword') {
       const isValidPassword = value.length >= 8
       setIsValid(prev => ({ ...prev, newPassword: isValidPassword }))
-      
+
       if (formData.confirmPassword && value !== formData.confirmPassword) {
         setErrors(prev => ({ ...prev, confirmPassword: '비밀번호가 일치하지 않습니다.' }))
         setIsValid(prev => ({ ...prev, confirmPassword: false }))
@@ -49,7 +49,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     if (field === 'confirmPassword') {
       const isMatch = value === formData.newPassword
       setIsValid(prev => ({ ...prev, confirmPassword: isMatch }))
-      
+
       if (value && !isMatch) {
         setErrors(prev => ({ ...prev, confirmPassword: '비밀번호가 일치하지 않습니다.' }))
       } else if (value && isMatch) {

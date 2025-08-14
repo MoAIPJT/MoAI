@@ -1,11 +1,15 @@
-export interface ChangePasswordData {
-  currentPassword: string
-  newPassword: string
-  confirmPassword: string
-}
-
 export interface ChangePasswordModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: ChangePasswordData) => void
+  onSubmit: (data: {
+    currentPassword: string
+    newPassword: string
+    confirmPassword: string
+  }) => void
+}
+
+export interface ChangePasswordFormData {
+  currentPassword: string
+  newPassword: string
+  confirmPassword: string
 }

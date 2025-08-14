@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import DashboardSidebar from '../components/organisms/DashboardSidebar'
 import TopBar from '../components/molecules/TopBar'
 import StudyList from '../components/organisms/StudyList'
@@ -26,6 +26,7 @@ import { scheduleService } from '@/services/scheduleService'
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const logoutMutation = useLogout()
   const { logout } = useAuth()
   const { data: userProfile, isLoading: isProfileLoading } = useMe()
@@ -268,7 +269,7 @@ const DashboardPage: React.FC = () => {
         newPassword: data.newPassword,
         confirmNewPassword: data.confirmPassword
       })
-      
+
       alert('비밀번호가 성공적으로 변경되었습니다.')
     } catch (error) {
       // 사용자 친화적인 에러 메시지 생성
@@ -277,7 +278,7 @@ const DashboardPage: React.FC = () => {
       if (error && typeof error === 'object' && 'code' in error) {
         const errorCode = (error as any).code
         const errorMsg = (error as any).message
-        
+
         switch (errorCode) {
           case 'INVALID_PASSWORD':
             errorMessage = '현재 비밀번호가 올바르지 않습니다.'
@@ -321,7 +322,7 @@ const DashboardPage: React.FC = () => {
     try {
       // 회원탈퇴 API 호출
       await deleteAccountMutation.mutateAsync()
-      
+
       alert('회원탈퇴가 완료되었습니다.')
 
       // 로그아웃 처리 및 로그인 페이지로 이동
@@ -334,7 +335,7 @@ const DashboardPage: React.FC = () => {
       if (error && typeof error === 'object' && 'code' in error) {
         const errorCode = (error as any).code
         const errorMsg = (error as any).message
-        
+
         switch (errorCode) {
           case 'UNAUTHORIZED':
             errorMessage = '인증이 만료되었습니다. 다시 로그인해주세요.'
@@ -368,22 +369,22 @@ const DashboardPage: React.FC = () => {
         canvas.width = 200
         canvas.height = 200
         const ctx = canvas.getContext('2d')
-        
+
         if (ctx) {
           // 배경색 설정 (보라색 계열)
           ctx.fillStyle = '#F6EEFF'
           ctx.fillRect(0, 0, 200, 200)
-          
+
           // 텍스트 설정
           ctx.fillStyle = '#8B5CF6'
           ctx.font = 'bold 80px Arial'
           ctx.textAlign = 'center'
           ctx.textBaseline = 'middle'
-          
+
           // 첫 글자 그리기
           const firstChar = data.name.charAt(0)
           ctx.fillText(firstChar, 100, 100)
-          
+
           // Canvas를 Blob으로 변환
           canvas.toBlob((blob) => {
             if (blob) {
@@ -407,16 +408,16 @@ const DashboardPage: React.FC = () => {
       // 성공적으로 스터디가 생성되면 초대 링크 모달 표시
       const inviteUrl = `${window.location.origin}/study/${response.hashId}`
       setCurrentInviteUrl(inviteUrl)
-      
+
       // 스터디 목록 새로고침
       await fetchStudies()
-      
+
       // 스터디 생성 모달 닫기
       setIsCreateStudyModalOpen(false)
-      
+
       // 초대 링크 모달 표시 (로딩 완료 후)
       setIsInviteModalOpen(true)
-      
+
     } catch (error) {
       // 백엔드가 실행되지 않은 경우 임시로 프론트엔드에서 처리
       if (error && typeof error === 'object' && 'code' in error && error.code === '500') {
@@ -514,7 +515,7 @@ const DashboardPage: React.FC = () => {
         onSettingsClick={handleSettingsClick}
         onLogoClick={() => navigate('/dashboard')}
       />
-      
+
       <div className="flex-1 flex flex-col ml-64">
         <TopBar userName={displayName} />
         <div className="flex-1 overflow-auto">
@@ -683,9 +684,9 @@ const DashboardPage: React.FC = () => {
       />
 
       {/* 로딩 토스트 */}
-      <LoadingToast 
-        isVisible={isCreatingStudy} 
-        message="스터디 시작하는 중..." 
+      <LoadingToast
+        isVisible={isCreatingStudy}
+        message="스터디 시작하는 중..."
       />
     </div>
   )

@@ -29,7 +29,7 @@ export const useStudySchedules = (studyId: number, year: number, month: number) 
   const from = formatLocalDateTime(new Date(year, month - 1, 1, 0, 0, 0))
   const to = formatLocalDateTime(new Date(year, month, 0, 23, 59, 59))
 
-  console.log('useStudySchedules 호출:', { studyId, year, month, from, to })
+  // console.log('useStudySchedules 호출:', { studyId, year, month, from, to })
 
   return useQuery({
     queryKey: scheduleKeys.byStudyMonth(studyId, year, month),
