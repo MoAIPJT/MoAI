@@ -149,16 +149,22 @@ public class StudyServiceImpl implements StudyService {
                         userId, studyGroupId, status);
                 throw new CustomException(ErrorCode.ALREADY_JOINED_STUDY);
             }
+            else{
+                StudyMembership studyMembership = existingMembership.get();
+            }
+        }
+        else{
+            StudyMembership req = StudyMembership.builder()
+                .userId(userId)
+                .studyGroup(group)
+                .role(StudyMembership.Role.MEMBER)
+                .status(StudyMembership.Status.PENDING)
+                .joinedAt(LocalDateTime.now())
+                .build();
+            studyMembershipRepository.save(req);
         }
 
-        StudyMembership req = StudyMembership.builder()
-            .userId(userId)
-            .studyGroup(group)
-            .role(StudyMembership.Role.MEMBER)
-            .status(StudyMembership.Status.PENDING)
-            .joinedAt(LocalDateTime.now())
-            .build();
-        studyMembershipRepository.save(req);
+
 
         log.info("스터디 가입 요청 완료: userId={}, studyGroupId={}", userId, studyGroupId);
     }

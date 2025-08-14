@@ -14,7 +14,6 @@ public class WebClientConfig {
     public WebClient webClient(WebClient.Builder builder) {
         return builder
             // baseUrl은 생략 (매 요청마다 풀 URL 조립하므로)
-            .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .build();
     }
 }
