@@ -1026,15 +1026,7 @@ return (
       onStudyClick={handleStudyClick}
       onSearch={handleSearch}
       onUploadData={handleUploadData}
-      onCreateRoom={() => {
-        // 화상회의 페이지로 이동 (스터디 ID와 함께)
-        if (studyDetail?.studyId) {
-          navigate(`/video-conference/${studyDetail.studyId}`)
-        } else {
-          // 스터디 ID가 없는 경우 기본 화상회의 페이지로 이동
-          navigate('/video-conference')
-        }
-      }}
+      onCreateRoom={handleCreateRoom}
       onEditNotice={handleEditNotice}
       onSettingsClick={handleSettingsClick}
       onLogout={() => {

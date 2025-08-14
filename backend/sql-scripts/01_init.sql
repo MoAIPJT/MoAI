@@ -130,3 +130,16 @@ CREATE TABLE IF NOT EXISTS ai_summary_documents (
     FOREIGN KEY (summary_id) REFERENCES ai_summaries(id),
     FOREIGN KEY (document_id) REFERENCES documents(id)
 )CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci';
+
+CREATE TABLE IF NOT EXISTS study_sessions (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    study_group_id INT NOT NULL,
+    room_name VARCHAR(128) NOT NULL,
+    created_by INT NOT NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    closed_at DATETIME(6) NULL,
+    is_open TINYINT AS (IF(closed_at IS NULL, 1, NULL)) STORED,
+
+    INDEX idx_study_group (study_group_id),
+    UNIQUE KEY uq_one_open_per_group (study_group_id, is_open)
+    );

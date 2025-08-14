@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
-import { Room, RoomEvent, RemoteParticipant, LocalParticipant, connect } from 'livekit-client'
+import { Room, RoomEvent, RemoteParticipant, LocalParticipant } from 'livekit-client'
 import CircleButton from '../components/atoms/CircleButton'
 
 interface VideoConferencePageProps {
@@ -16,7 +16,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
   const [searchParams] = useSearchParams()
   const studyId = propStudyId || (urlStudyId ? parseInt(urlStudyId) : undefined)
 
-  // 🆕 LiveKit 관련 상태
+  // LiveKit 관련 상태
   const [room, setRoom] = useState<Room | null>(null)
   const [localParticipant, setLocalParticipant] = useState<LocalParticipant | null>(null)
   const [remoteParticipants, setRemoteParticipants] = useState<RemoteParticipant[]>([])
@@ -39,16 +39,12 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
 
   // PDF 뷰어 모드 상태
   const [isPdfViewerMode, setIsPdfViewerMode] = useState(false)
-  const [currentPdfUrl, setCurrentPdfUrl] = useState<string>('')
   const [currentPdfName, setCurrentPdfName] = useState<string>('')
 
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const subscribersRef = useRef<HTMLDivElement>(null)
   const screenShareVideoRef = useRef<HTMLVideoElement>(null)
   const chatInputRef = useRef<HTMLInputElement>(null)
-  const pdfViewerRef = useRef<HTMLIFrameElement>(null)
 
-  // 🆕 URL 파라미터에서 LiveKit 정보 추출
+  // URL 파라미터에서 LiveKit 정보 추출
   const token = searchParams.get('token')
   const wsUrl = searchParams.get('wsUrl')
   const roomName = searchParams.get('roomName')
@@ -104,30 +100,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
   const handleMaterialClick = (material: {id: string, name: string, type: string, url: string}) => {
     if (material.type === 'pdf') {
       setIsPdfViewerMode(true);
-      // 실제 PDF URL 설정
-      let pdfUrl = material.url;
-      if (material.url === '/src/assets/pdfs/cats-and-dogs.pdf') {
-        pdfUrl = '/src/assets/pdfs/cats-and-dogs.pdf';
-      } else if (material.url === '/src/assets/pdfs/hamburger.pdf') {
-        pdfUrl = '/src/assets/pdfs/hamburger.pdf';
-      } else {
-        // 기본 PDF URL (실제 프로젝트에서는 서버에서 가져와야 함)
-        pdfUrl = material.url || `https://example.com/pdfs/${material.name}`;
-      }
-      setCurrentPdfUrl(pdfUrl);
       setCurrentPdfName(material.name);
-
-      // 다른 참가자들에게 PDF 뷰어 모드 공유
-      // if (session) {
-      //   session.signal({
-      //     data: JSON.stringify({
-      //       type: 'pdf-viewer-mode',
-      //       action: 'enter',
-      //       pdfUrl: pdfUrl,
-      //       pdfName: material.name
-      //     })
-      //   });
-      // }
 
       // 사이드바 닫기
       setSidebarOpen(false);
@@ -141,36 +114,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
   // PDF 뷰어 모드 종료
   const exitPdfViewerMode = () => {
     setIsPdfViewerMode(false);
-    setCurrentPdfUrl('');
     setCurrentPdfName('');
-
-    // 라이브 세션에서 PDF 뷰어 모드 종료 신호 전송
-    // if (session) {
-    //   session.signal({
-    //     data: JSON.stringify({
-    //       type: 'pdf-viewer-mode',
-    //       action: 'exit'
-    //     })
-    //   });
-    // }
-  };
-
-  // PDF 뷰어 상태 동기화 체크 (실제 세션에서 사용)
-  useEffect(() => {
-    if (room) {
-      // 실제 OpenVidu 세션에서 PDF 뷰어 상태 동기화
-      // TODO: 백엔드 API 연동 후 구현
-    }
-  }, [room]);
-
-  const getGridLayout = (totalParticipants: number) => {
-    if (totalParticipants <= 1) return { cols: 1, rows: 1 };
-    if (totalParticipants === 2) return { cols: 2, rows: 1 };
-    if (totalParticipants === 3) return { cols: 3, rows: 1 };
-    if (totalParticipants === 4) return { cols: 2, rows: 2 };
-    if (totalParticipants <= 6) return { cols: 3, rows: 2 };
-    if (totalParticipants <= 8) return { cols: 4, rows: 2 };
-    return { cols: 4, rows: Math.ceil(totalParticipants / 4) };
   };
 
   const initializeSession = async () => {
@@ -231,7 +175,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
     }
   }
 
-  // 🆕 LiveKit 방 연결 (컴포넌트 마운트 시)
+  // LiveKit 방 연결 (컴포넌트 마운트 시)
   useEffect(() => {
     if (token && wsUrl && roomName) {
       initializeSession()
@@ -249,27 +193,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
     }
   }, [token, wsUrl, roomName])
 
-  // 🆕 로컬 참가자 비디오 트랙 연결
-  useEffect(() => {
-    if (localParticipant && videoRef.current) {
-      localParticipant.videoTrack?.addSink(videoRef.current)
-    }
-  }, [localParticipant])
-
-  // 🆕 원격 참가자 비디오 트랙 연결
-  useEffect(() => {
-    if (subscribersRef.current && remoteParticipants.length > 0) {
-      const videoElements = subscribersRef.current.querySelectorAll('video')
-      remoteParticipants.forEach((participant, index) => {
-        const videoElement = videoElements[index] as HTMLVideoElement
-        if (videoElement && participant) {
-          participant.videoTrack?.addSink(videoElement)
-        }
-      })
-    }
-  }, [remoteParticipants])
-
-  // 🆕 LiveKit 방 연결 해제
+  // LiveKit 방 연결 해제
   const leaveSession = () => {
     if (room) {
       room.disconnect()
@@ -286,7 +210,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
     setIsVideoEnabled(true)
   }
 
-  // 🆕 LiveKit 오디오/비디오 토글
+  // LiveKit 오디오/비디오 토글
   const toggleAudio = async () => {
     if (localParticipant) {
       try {
@@ -359,10 +283,6 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
       screenShareVideoRef.current.srcObject = null
     }
   }
-
-  // 🆕 LiveKit 참가자 목록 (로컬 + 원격)
-  const allParticipants = localParticipant ? [localParticipant, ...remoteParticipants] : remoteParticipants
-  const { cols, rows } = getGridLayout(allParticipants.length)
 
   // 사이드바 렌더링
   const renderSidebar = () => {
@@ -573,8 +493,6 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
             </div>
           )}
 
-          {/* {isConnected && (allParticipants.length > 0) && ( */}
-          {/* TODO: 백엔드 API 연동 후 실제 연결 상태 확인 */}
           <div className="flex-1 flex items-center justify-center p-2 min-h-0 overflow-hidden">
             <div className="text-center text-white">
               <div className="text-6xl mb-4">📹</div>
@@ -584,11 +502,8 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
               </p>
             </div>
           </div>
-          {/* )} */}
         </div>
 
-        {/* {isConnected && ( */}
-        {/* TODO: 백엔드 API 연동 후 실제 연결 상태 확인 */}
         <div className="bg-gray-800 border-t border-gray-700 p-3 flex-shrink-0">
           <div className="flex justify-center items-center gap-3">
             <CircleButton
@@ -643,7 +558,6 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
             </CircleButton>
           </div>
         </div>
-        {/* )} */}
       </div>
 
       {/* 사이드바 */}
