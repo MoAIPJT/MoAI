@@ -304,5 +304,4 @@ public class StudySessionServiceImpl implements StudySessionService{
             .participants(dtos)
             .build();
     }
-
 }
