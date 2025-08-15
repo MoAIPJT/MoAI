@@ -1263,9 +1263,10 @@ return (
       onStudyUpdate={handleStudyUpdate}
       onContentEdit={handleContentEdit}
       onContentDelete={handleContentDelete}
-      onContentDownload={handleContentDownload}
-      studyId={studyDetail?.studyId}
-    />
+              onContentDownload={handleContentDownload}
+        studyId={studyDetail?.studyId}
+        hashId={hashId}
+      />
 
     {/* Category Add Modal */}
     <CategoryAddModal

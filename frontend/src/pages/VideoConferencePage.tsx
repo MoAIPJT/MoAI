@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { useParams, useLocation } from 'react-router-dom'
-import { Room, RoomEvent, RemoteParticipant, LocalParticipant } from 'livekit-client'
+import { useParams, useLocation, useNavigate } from 'react-router-dom'
+import { Room, RoomEvent, RemoteParticipant, LocalParticipant, Track } from 'livekit-client'
 import CircleButton from '../components/atoms/CircleButton'
 import AITestViewer from '../components/organisms/AITestViewer'
 import VideoConferenceHeader from '../components/organisms/VideoConferenceHeader'
 import VideoConferenceMainContent from '../components/organisms/VideoConferenceMainContent'
 import VideoConferenceSidebar from '../components/organisms/VideoConferenceSidebar'
+import videoConferenceService from '../services/videoConferenceService'
 
 
 interface VideoConferencePageProps {
@@ -33,6 +34,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
 }: VideoConferencePageProps) => {
   const { studyId: urlStudyId } = useParams<{ studyId: string }>()
   const location = useLocation()
+  const navigate = useNavigate()
   const studyId = propStudyId || (urlStudyId ? parseInt(urlStudyId) : undefined)
   
   // StudyDetailPage에서 전달된 세션 정보
@@ -147,8 +149,29 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
 
   // ===== 컴포넌트 마운트 시 초기화 =====
   useEffect(() => {
+    // URL 파라미터에서 세션 정보 추출
+    const urlParams = new URLSearchParams(window.location.search)
+    const wsUrl = urlParams.get('wsUrl')
+    const token = urlParams.get('token')
+    const roomName = urlParams.get('roomName')
+    const sessionId = urlParams.get('sessionId')
+
+    // URL 파라미터로 전달된 세션 정보가 있으면 LiveKit에 연결
+    if (wsUrl && token) {
+      console.log('URL 파라미터에서 세션 정보 수신:', { wsUrl, token, roomName, sessionId })
+      setIsLoading(true)
+      initializeLiveKitSession(wsUrl, token)
+        .then(() => {
+          setIsLoading(false)
+        })
+        .catch((error) => {
+          console.error('LiveKit 연결 실패:', error)
+          setError('화상회의에 연결할 수 없습니다.')
+          setIsLoading(false)
+        })
+    }
     // StudyDetailPage에서 전달된 세션 정보가 있으면 LiveKit에 연결
-    if (sessionInfo) {
+    else if (sessionInfo) {
       setIsLoading(true)
       initializeLiveKitSession(sessionInfo.wsUrl, sessionInfo.token)
         .then(() => {
@@ -193,6 +216,51 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
     // 오디오/비디오 상태 초기화
     setIsAudioEnabled(true)
     setIsVideoEnabled(true)
+  }
+
+  // ===== 세션 종료 (백엔드에 세션 종료 요청) =====
+  const closeSession = async () => {
+    // URL 파라미터에서 hashId 추출
+    const urlParams = new URLSearchParams(window.location.search)
+    let hashId: string | undefined = urlParams.get('sessionId') || undefined
+    
+    // URL 파라미터에 없으면 다른 방법으로 시도
+    if (!hashId) {
+      if (sessionInfo?.sessionId) {
+        hashId = sessionInfo.sessionId
+      } else if (location.state?.sessionId) {
+        hashId = location.state.sessionId
+      }
+    }
+
+    if (!hashId) {
+      console.error('세션 ID를 찾을 수 없습니다.')
+      return
+    }
+
+    if (!confirm('정말로 온라인 스터디를 종료하시겠습니까?')) {
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      
+      // 백엔드에 세션 종료 요청
+      await videoConferenceService.closeSession(hashId)
+      console.log('세션 종료 성공')
+      
+      // 성공 메시지
+      alert('온라인 스터디가 종료되었습니다.')
+      
+      // 화상회의 페이지 닫기
+      window.close()
+      
+    } catch (error) {
+      console.error('세션 종료 실패:', error)
+      alert('세션 종료에 실패했습니다. 다시 시도해주세요.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   // ===== LiveKit 오디오/비디오 토글 =====
@@ -364,7 +432,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
           screenShareStream={screenShareStream}
           demoParticipants={[]}
           remoteParticipants={remoteParticipants}
-          localVideoTrack={localParticipant?.getTrack('camera')}
+          localVideoTrack={localParticipant?.getTrackPublication(Track.Source.Camera)?.track || null}
           isVideoEnabled={isVideoEnabled}
           participantName="나"
           remoteParticipantStates={remoteParticipantStates}
@@ -431,6 +499,18 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+              </svg>
+            </CircleButton>
+
+            {/* 세션 종료 버튼 */}
+            <CircleButton
+              variant="red"
+              size="sm"
+              onClick={closeSession}
+              disabled={isLoading}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
               </svg>
             </CircleButton>
           </div>

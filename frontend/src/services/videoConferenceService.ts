@@ -1,53 +1,55 @@
 import api from './api'
 
-// API 응답 타입 정의
+// 백엔드 API 응답 타입 정의
 export interface SessionResponseDto {
-  sessionId: string
-  status: 'OPEN' | 'CLOSED'
-  createdAt: string
-  participants: ParticipantDto[]
+  id: number
+  studyGroupId: number
+  studyGroupHashId: string
+  roomName: string
+  created: boolean
 }
 
 export interface JoinSessionResponseDto {
-  token: string
-  wsUrl: string
   roomName: string
-  sessionId: string
+  wsUrl: string
+  displayName: string
+  token: string
 }
 
 export interface ParticipantDto {
-  id: string
   name: string
-  role: 'ADMIN' | 'DELEGATE' | 'MEMBER'
-  joinedAt: string
-}
-
-export interface CloseSessionResponseDto {
-  sessionId: string
-  closed: boolean
-  message: string
+  profileImageUrl: string
 }
 
 export interface ParticipantsResponseDto {
+  sessionOpen: boolean
+  count: number
   participants: ParticipantDto[]
-  totalCount: number
+}
+
+export interface CloseSessionResponseDto {
+  id: number
+  studyGroupHashId: string
+  roomName: string
+  closed: boolean
+  closedAt: string
 }
 
 class VideoConferenceService {
   private baseURL: string
 
   constructor() {
-    this.baseURL = '/api/study'
+    this.baseURL = '/study'
   }
 
   /**
    * 세션 열기 (ADMIN/DELEGATE만 가능)
-   * @param studyId 스터디 ID
+   * @param hashId 스터디 해시 ID
    * @returns 세션 정보
    */
-  async openSession(studyId: number): Promise<SessionResponseDto> {
+  async openSession(hashId: string): Promise<SessionResponseDto> {
     try {
-      const response = await api.post(`${this.baseURL}/${studyId}/session/open`)
+      const response = await api.post(`${this.baseURL}/${hashId}/session/open`)
       return response.data
     } catch (error) {
       console.error('세션 열기 실패:', error)
@@ -57,12 +59,12 @@ class VideoConferenceService {
 
   /**
    * 세션 참가 및 LiveKit 토큰 발급
-   * @param studyId 스터디 ID
+   * @param hashId 스터디 해시 ID
    * @returns 참가 정보 및 LiveKit 토큰
    */
-  async joinSession(studyId: number): Promise<JoinSessionResponseDto> {
+  async joinSession(hashId: string): Promise<JoinSessionResponseDto> {
     try {
-      const response = await api.post(`${this.baseURL}/${studyId}/session/join`)
+      const response = await api.post(`${this.baseURL}/${hashId}/session/join`)
       return response.data
     } catch (error) {
       console.error('세션 참가 실패:', error)
@@ -71,28 +73,13 @@ class VideoConferenceService {
   }
 
   /**
-   * 세션 상태 조회
-   * @param studyId 스터디 ID
-   * @returns 세션 상태 정보
-   */
-  async getSessionStatus(studyId: number): Promise<SessionResponseDto> {
-    try {
-      const response = await api.get(`${this.baseURL}/${studyId}/session/status`)
-      return response.data
-    } catch (error) {
-      console.error('세션 상태 조회 실패:', error)
-      throw new Error('세션 상태를 조회할 수 없습니다.')
-    }
-  }
-
-  /**
    * 세션 종료 (ADMIN/DELEGATE만 가능)
-   * @param studyId 스터디 ID
+   * @param hashId 스터디 해시 ID
    * @returns 세션 종료 결과
    */
-  async closeSession(studyId: number): Promise<CloseSessionResponseDto> {
+  async closeSession(hashId: string): Promise<CloseSessionResponseDto> {
     try {
-      const response = await api.post(`${this.baseURL}/${studyId}/session/close`)
+      const response = await api.post(`${this.baseURL}/${hashId}/session/close`)
       return response.data
     } catch (error) {
       console.error('세션 종료 실패:', error)
@@ -102,63 +89,16 @@ class VideoConferenceService {
 
   /**
    * 참가자 목록 조회
-   * @param studyId 스터디 ID
+   * @param hashId 스터디 해시 ID
    * @returns 참가자 목록
    */
-  async getParticipants(studyId: number): Promise<ParticipantsResponseDto> {
+  async getParticipants(hashId: string): Promise<ParticipantsResponseDto> {
     try {
-      const response = await api.get(`${this.baseURL}/${studyId}/session/participants`)
+      const response = await api.get(`${this.baseURL}/${hashId}/session/participants`)
       return response.data
     } catch (error) {
       console.error('참가자 목록 조회 실패:', error)
       throw new Error('참가자 목록을 조회할 수 없습니다.')
-    }
-  }
-
-  /**
-   * 화상회의 방 생성 (기존 API와의 호환성을 위해)
-   * @param studyId 스터디 ID
-   * @returns 방 생성 결과
-   */
-  async createRoom(studyId: number): Promise<any> {
-    try {
-      const response = await api.post(`/api/video-conference/create`, {
-        studyId
-      })
-      return response.data
-    } catch (error) {
-      console.error('방 생성 실패:', error)
-      throw new Error('화상회의 방을 생성할 수 없습니다.')
-    }
-  }
-
-  /**
-   * 화상회의 방 참가 (기존 API와의 호환성을 위해)
-   * @param studyId 스터디 ID
-   * @returns 방 참가 결과
-   */
-  async joinRoom(studyId: number): Promise<any> {
-    try {
-      const response = await api.post(`/api/video-conference/${studyId}/join`)
-      return response.data
-    } catch (error) {
-      console.error('방 참가 실패:', error)
-      throw new Error('화상회의 방에 참가할 수 없습니다.')
-    }
-  }
-
-  /**
-   * 화상회의 방 상태 조회 (기존 API와의 호환성을 위해)
-   * @param studyId 스터디 ID
-   * @returns 방 상태
-   */
-  async getRoomStatus(studyId: number): Promise<any> {
-    try {
-      const response = await api.get(`/api/video-conference/${studyId}/status`)
-      return response.data
-    } catch (error) {
-      console.error('방 상태 조회 실패:', error)
-      throw new Error('화상회의 방 상태를 조회할 수 없습니다.')
     }
   }
 }

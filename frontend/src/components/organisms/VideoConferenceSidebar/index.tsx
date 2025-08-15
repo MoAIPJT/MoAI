@@ -158,10 +158,10 @@ const VideoConferenceSidebar: React.FC<VideoConferenceSidebarProps> = ({
 
         {activeSidebarTab === 'chat' && (
           <ChatBox
-            messages={chatMessages}
-            newMessage={newChatMessage}
-            onNewMessageChange={onNewChatMessageChange}
-            onSendMessage={onSendChatMessage}
+            chatMessages={chatMessages}
+            newChatMessage={newChatMessage}
+            onNewChatMessageChange={onNewChatMessageChange}
+            onSendChatMessage={onSendChatMessage}
           />
         )}
 

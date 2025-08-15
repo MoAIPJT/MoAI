@@ -1,9 +1,7 @@
 import { useRef, useEffect, forwardRef } from 'react';
-import { Track } from 'livekit-client';
+import { Track, TrackPublication } from 'livekit-client';
 import type { VideoGridProps } from './types';
-import LocalVideo from '../../atoms/LocalVideo';
-import RemoteVideo from '../../atoms/RemoteVideo';
-import DemoParticipantVideo from '../../atoms/DemoParticipantVideo';
+import VideoParticipant from '../../atoms/VideoParticipant';
 
 const VideoGrid = forwardRef<HTMLDivElement, VideoGridProps>(({
   isDemoMode,
@@ -27,15 +25,13 @@ const VideoGrid = forwardRef<HTMLDivElement, VideoGridProps>(({
       const videoElements = subscribersRef.current.querySelectorAll('video');
       remoteParticipants.forEach((participant, participantId) => {
         const videoTracks = Array.from(participant.videoTrackPublications.values());
-        videoTracks.forEach(trackPublication => {
+        videoTracks.forEach((trackPublication: TrackPublication) => {
           const track = trackPublication.track;
           if (track) {
             // 화면 공유 트랙은 제외 (여러 방법으로 감지)
-            const isScreenShare = (trackPublication as any).source === 'screen-share' ||
-                                 (trackPublication as any).source === 'screen' ||
-                                 (trackPublication as any).source === Track.Source.ScreenShare ||
-                                 (trackPublication as any).name === 'screen' ||
-                                 (trackPublication as any).kind === 'screen-share';
+            const isScreenShare = trackPublication.source === Track.Source.ScreenShare ||
+                                 trackPublication.name === 'screen' ||
+                                 trackPublication.kind === 'screen-share';
             if (isScreenShare) {
               console.log('화면 공유 트랙 제외됨:', participantId);
               return;
@@ -78,51 +74,62 @@ const VideoGrid = forwardRef<HTMLDivElement, VideoGridProps>(({
     >
       {isDemoMode ? (
         <>
-          {/* 내 비디오 (데모) */}
-          <LocalVideo
-            ref={videoRef}
-            isVideoEnabled={isVideoEnabled}
-            participantName="나 (데모)"
-            isSpeaking={speakingParticipantId === 'local'}
-          />
+                     {/* 내 비디오 (데모) */}
+           <VideoParticipant
+             ref={videoRef}
+             participantId="local"
+             participantName="나 (데모)"
+             hasVideo={isVideoEnabled}
+             isVideoEnabled={isVideoEnabled}
+             isSpeaking={speakingParticipantId === 'local'}
+             isLocal={true}
+             isDemo={true}
+           />
           
-          {/* 데모 참가자들 */}
-          {demoParticipants.map((participant) => (
-            <DemoParticipantVideo
-              key={participant.id}
-              ref={(el: HTMLVideoElement | null) => { demoVideoRefs.current[participant.id] = el; }}
-              participantId={participant.id}
-              participantName={participant.name}
-              hasVideo={participant.hasVideo}
-              isSpeaking={speakingParticipantId === participant.id}
-            />
-          ))}
+                     {/* 데모 참가자들 */}
+           {demoParticipants.map((participant) => (
+             <VideoParticipant
+               key={participant.id}
+               ref={(el: HTMLVideoElement | null) => { demoVideoRefs.current[participant.id] = el; }}
+               participantId={participant.id}
+               participantName={participant.name}
+               hasVideo={participant.hasVideo}
+               isVideoEnabled={participant.hasVideo}
+               isSpeaking={speakingParticipantId === participant.id}
+               isDemo={true}
+             />
+           ))}
         </>
       ) : (
         <>
-          {/* 로컬 비디오 - 항상 첫 번째 위치에 표시 */}
-          <LocalVideo
-            ref={videoRef}
-            isVideoEnabled={isVideoEnabled}
-            participantName={participantName || '나'}
-            isSpeaking={speakingParticipantId === 'local'}
-          />
+                     {/* 로컬 비디오 - 항상 첫 번째 위치에 표시 */}
+           <VideoParticipant
+             ref={videoRef}
+             participantId="local"
+             participantName={participantName || '나'}
+             hasVideo={isVideoEnabled}
+             isVideoEnabled={isVideoEnabled}
+             isSpeaking={speakingParticipantId === 'local'}
+             isLocal={true}
+           />
           
-          {/* 원격 참가자들 */}
-          {Array.from(remoteParticipants.values()).map((participant, index) => {
-            const participantState = remoteParticipantStates.get(participant.sid);
-            const isVideoEnabled = participantState ? participantState.video : true;
-            
-            return (
-              <RemoteVideo
-                key={participant.sid}
-                participantId={participant.sid}
-                participantName={participant.identity || `참가자 ${index + 1}`}
-                isVideoEnabled={isVideoEnabled}
-                isSpeaking={speakingParticipantId === participant.sid}
-              />
-            );
-          })}
+                     {/* 원격 참가자들 */}
+           {Array.from(remoteParticipants.values()).map((participant, index) => {
+             const participantState = remoteParticipantStates.get(participant.sid);
+             const isVideoEnabled = participantState ? participantState.video : true;
+             
+             return (
+               <VideoParticipant
+                 key={participant.sid}
+                 participantId={participant.sid}
+                 participantName={participant.identity || `참가자 ${index + 1}`}
+                 hasVideo={isVideoEnabled}
+                 isVideoEnabled={isVideoEnabled}
+                 isSpeaking={speakingParticipantId === participant.sid}
+                 videoTrack={participant.getTrackPublication(Track.Source.Camera)?.track}
+               />
+             );
+           })}
         </>
       )}
     </div>

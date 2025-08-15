@@ -45,6 +45,7 @@ interface StudyDetailTemplateProps {
   isSchedulesLoading?: boolean
   // 스터디 ID
   studyId?: number
+  hashId?: string
   onItemClick: (itemId: string) => void
   onStudyClick: (studyId: string) => void
   onSearch: () => void
@@ -120,6 +121,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   isSchedulesLoading,
   // 스터디 ID
   studyId,
+  hashId,
   onItemClick,
   onStudyClick,
   onSearch,
@@ -223,6 +225,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
                   onCreateRoom={onCreateRoom}
                   participants={participants}
                   currentUserRole={currentUserRole}
+                  hashId={hashId}
                 />
               </div>
             </div>
