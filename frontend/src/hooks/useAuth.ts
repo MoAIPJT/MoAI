@@ -16,20 +16,22 @@ export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null)
   const navigate = useNavigate()
 
-  const clearAuth = useAppStore((state) => state.auth.clearAuth)
+  const { accessToken, setAuth, clearAuth } = useAppStore((state) => state.auth)
 
   const loginMutation = useLogin()
   const signupMutation = useSignup()
 
-  // 컴포넌트 마운트 시 인증 상태 확인
+  // 컴포넌트 마운트 시 및 accessToken 변경 시 인증 상태 확인
   useEffect(() => {
-    const token = localStorage.getItem('accessToken')
-    if (token) {
+    if (accessToken) {
       setIsAuthenticated(true)
       // 간단한 사용자 정보 설정 (토큰에서 추출하거나 기본값)
       setUser({ email: localStorage.getItem('rememberedEmail') || '사용자' })
+    } else {
+      setIsAuthenticated(false)
+      setUser(null)
     }
-  }, [])
+  }, [accessToken])
 
   const login = async (data: LoginFormData) => {
     setLoading(true)
@@ -144,8 +146,7 @@ export const useAuth = () => {
 
   // 간단한 인증 체크 함수
   const checkAuth = () => {
-    const token = localStorage.getItem('accessToken')
-    return !!token
+    return !!accessToken
   }
 
   return {
