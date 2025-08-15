@@ -17,6 +17,7 @@ const FloatingAISummary: React.FC<FloatingAISummaryProps> = ({
   onContentRemove,
   onSubmit,
   onClose,
+  onSuccess, // 새로운 prop 추가
 }) => {
   const [isDragging, setIsDragging] = useState(false)
   const [position, setPosition] = useState({ x: 0, y: 0 })
@@ -84,6 +85,11 @@ const FloatingAISummary: React.FC<FloatingAISummaryProps> = ({
       }
 
       await onSubmit(summaryData)
+
+      // 성공 시 onSuccess 콜백 호출
+      if (onSuccess) {
+        onSuccess()
+      }
     } finally {
       setIsLoading(false)
     }

@@ -93,6 +93,8 @@ interface StudyDetailTemplateProps {
   }>
   onAcceptJoinRequest?: (userId: number, role: 'ADMIN' | 'DELEGATE' | 'MEMBER') => void
   onRejectJoinRequest?: (userId: number) => void
+  // AI 요약본 생성 성공 핸들러
+  onAISummarySuccess?: () => void
 }
 
 const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
@@ -158,6 +160,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   joinRequests = [],
   onAcceptJoinRequest,
   onRejectJoinRequest,
+  onAISummarySuccess,
 }) => {
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false)
   const [isManagementModalOpen, setIsManagementModalOpen] = useState(false)
@@ -233,10 +236,6 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
             {/* 오른쪽: 일정 (4/10) */}
             <div className="col-span-4">
               <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm h-fit">
-                {/* <div className="flex items-center mb-6">
-                  <div className="w-2 h-8 rounded-full mr-3" style={{ backgroundColor: '#F8BB50' }}></div>
-                  <h2 className="text-2xl font-bold text-gray-900">일정</h2>
-                </div> */}
                 <StudyCalendar
                   schedules={studySchedules || []}
                   isLoading={isSchedulesLoading}
@@ -266,6 +265,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
             onContentDownload={onContentDownload}
             onUploadData={onUploadData}
             currentUserRole={currentUserRole}
+            onAISummarySuccess={onAISummarySuccess}
           />
         </div>
       </div>
@@ -286,7 +286,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
         studyName={currentStudy?.name || 'Study'}
         currentUserRole={currentUserRole}
         currentUserName={userName}
-        hashId={activeStudyId || undefined} // activeStudyId는 hashId입니다
+        hashId={activeStudyId || undefined}
         joinRequests={joinRequests}
         onAcceptJoinRequest={onAcceptJoinRequest}
         onRejectJoinRequest={onRejectJoinRequest}
