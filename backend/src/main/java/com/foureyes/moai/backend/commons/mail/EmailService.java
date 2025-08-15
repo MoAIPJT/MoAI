@@ -16,7 +16,7 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private final com.foureyes.moai.backend.commons.mail.EmailTemplateProvider templateProvider;
 
-    @Value("${app.base-url:http://localhost:8080}")
+    @Value("${app.base-url:http://localhost:5173}")
     private String baseUrl;
 
     /**
