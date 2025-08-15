@@ -1,7 +1,8 @@
 export interface ProfileData {
-  nickname: string
+  name: string
   email: string
-  profileImage?: string
+  profileImageUrl?: string
+  providerType?: string
 }
 
 export interface ProfileSettingsModalProps {

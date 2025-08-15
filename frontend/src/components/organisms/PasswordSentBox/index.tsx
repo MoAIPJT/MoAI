@@ -1,5 +1,6 @@
 import React from 'react'
-import sendEmailVideo from '@/assets/send_email.mp4'
+import Lottie from 'lottie-react'
+import emailSentAnimation from '@/assets/email-sent.json'
 import type { PasswordSentBoxProps } from './types'
 
 const PasswordSentBox: React.FC<PasswordSentBoxProps> = ({
@@ -8,19 +9,17 @@ const PasswordSentBox: React.FC<PasswordSentBoxProps> = ({
 }) => (
   <div className="bg-white rounded-2xl shadow-xl p-12 w-full max-w-md flex flex-col items-center">
     <h2 className="text-xl font-bold text-center mb-4 mt-2">
-      <span className="text-gray-900">환영합니다!<br/></span>
+      <span className="text-gray-900">환영합니다!<br /></span>
       <span className="text-purple-500 font-bold">MoAI</span> 비밀번호를 재설정하세요.
     </h2>
-    <video
-      className="my-8 w-64 h-auto rounded-xl"
-      autoPlay
-      muted
-      loop
-      playsInline
-    >
-      <source src={sendEmailVideo} type="video/mp4" />
-      브라우저가 video 태그를 지원하지 않습니다.
-    </video>
+    <div className="my-8 w-64 h-64">
+      <Lottie
+        animationData={emailSentAnimation}
+        loop={true}
+        autoplay={true}
+        style={{ width: '100%', height: '100%' }}
+      />
+    </div>
     <p className="text-center mb-6">
       <span className="text-purple-500 font-semibold">{message}</span>
     </p>

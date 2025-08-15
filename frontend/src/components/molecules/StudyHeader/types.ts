@@ -3,7 +3,6 @@ export interface StudyHeaderProps {
   studyDescription?: string
   studyImageUrl?: string
   loading?: boolean
-  userCount?: number
   currentUserRole?: string
   onSettingsClick?: () => void
   onUserCountClick?: () => void

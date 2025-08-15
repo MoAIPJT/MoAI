@@ -2,6 +2,7 @@ import React from 'react'
 import SidebarLogo from '../../molecules/SidebarLogo'
 import SidebarNavigation from '../../molecules/SidebarNavigation'
 import SidebarUserActions from '../../molecules/SidebarUserActions'
+import { HomeAddIcon, DocumentIcon, BarChartIcon, UserIcon, LogoutIcon } from '../../atoms/Icons'
 import type { DashboardSidebarProps } from './types'
 import type { NavigationItem } from '../../molecules/SidebarNavigation/types'
 import type { UserActionItem } from '../../molecules/SidebarUserActions/types'
@@ -15,22 +16,23 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   onStudyClick,
   onLogout,
   onSettingsClick,
+  onLogoClick,
 }) => {
   const navigationItems: NavigationItem[] = [
     {
       id: 'mypage',
       label: '마이페이지',
-      icon: '🏠',
+      icon: <HomeAddIcon className="w-5 h-5 text-current" />,
     },
     {
       id: 'ai-summary',
       label: 'AI 요약본',
-      icon: '📄',
+      icon: <DocumentIcon className="w-5 h-5 text-current" />,
     },
     {
       id: 'study',
       label: '스터디',
-      icon: '📚',
+      icon: <BarChartIcon className="w-5 h-5 text-current" />,
     },
   ]
 
@@ -38,12 +40,12 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
     {
       id: 'settings',
       label: '내 설정',
-      icon: '👤',
+      icon: <UserIcon className="w-5 h-5 text-current" />,
     },
     {
       id: 'logout',
       label: '로그아웃',
-      icon: '🚪',
+      icon: <LogoutIcon className="w-5 h-5 text-current" />,
     },
   ]
 
@@ -63,16 +65,18 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
   return (
     <div className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col fixed top-0 left-0 z-30">
-      <SidebarLogo useImage={true} />
-      <SidebarNavigation
-        items={navigationItems}
-        activeItem={activeItem}
-        onItemClick={handleItemClick}
-        expandedStudy={expandedStudy}
-        studies={studies}
-        activeStudyId={activeStudyId}
-        onStudyClick={handleStudyClick}
-      />
+      <SidebarLogo useImage={true} onClick={onLogoClick} />
+      <div className="flex-1 flex flex-col">
+        <SidebarNavigation
+          items={navigationItems}
+          activeItem={activeItem}
+          onItemClick={handleItemClick}
+          expandedStudy={expandedStudy}
+          studies={studies}
+          activeStudyId={activeStudyId}
+          onStudyClick={handleStudyClick}
+        />
+      </div>
 
       <SidebarUserActions
         items={userActions}

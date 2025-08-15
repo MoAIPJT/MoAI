@@ -10,6 +10,7 @@ export interface SummaryData {
   title: string
   sections: SummarySection[]
   originalPdfPath?: string
+  summaryDetail?: any // API에서 받아온 상세 정보
 }
 
 // 더미 요약본 데이터
@@ -106,4 +107,4 @@ export const dummySummaryData: Record<string, SummaryData> = {
     ],
     originalPdfPath: '/src/assets/pdfs/omori-kalguksu.pdf'
   }
-} 
+}

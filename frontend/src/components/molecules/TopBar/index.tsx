@@ -1,7 +1,7 @@
 import React from 'react'
 import type { TopBarProps } from './types'
 
-const TopBar: React.FC<TopBarProps> = ({ userName = '안덕현' }) => {
+const TopBar: React.FC<TopBarProps> = ({ userName }) => {
   return (
     <div className="flex items-center justify-between w-full h-28 px-6 bg-white border-b border-gray-200">
       
@@ -22,7 +22,7 @@ const TopBar: React.FC<TopBarProps> = ({ userName = '안덕현' }) => {
         
         {/* 인사말 텍스트 */}
         <span className="text-purple-800 font-medium">
-          안녕하세요. {userName}님!
+          {userName && userName.trim() ? `안녕하세요. ${userName}님!` : '안녕하세요!'}
         </span>
       </div>
     </div>

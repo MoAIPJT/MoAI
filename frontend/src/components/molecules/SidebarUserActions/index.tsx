@@ -7,7 +7,7 @@ const SidebarUserActions: React.FC<SidebarUserActionsProps> = ({
   onItemClick,
 }) => {
   return (
-    <div className="p-4 border-t border-gray-100 space-y-2">
+    <div className="p-4 border-t border-gray-200 space-y-1">
       {items.map((item) => (
         <SidebarItem
           key={item.id}

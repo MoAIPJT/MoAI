@@ -34,25 +34,43 @@ const SidebarNavigation: React.FC<ExtendedSidebarNavigationProps> = ({
           />
           {/* 스터디 아이템 바로 아래에 스터디 목록 표시 */}
           {item.id === 'study' && expandedStudy && Array.isArray(studies) && studies.length > 0 && (
-            <div className="mt-1 ml-4 space-y-1">
+            <div className="mt-1 ml-6 space-y-1">
               {studies.map((study: StudyItem) => (
                 <div
                   key={study.id}
                   onClick={() => onStudyClick?.(study.id)}
                   className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
                     activeStudyId === study.id
-                      ? 'bg-purple-50 text-purple-700'
-                      : 'hover:bg-gray-100'
+                      ? 'bg-purple-200 text-purple-800'
+                      : 'hover:bg-purple-100 text-gray-700'
                   }`}
                 >
-                  <div className="flex items-center justify-center w-6 h-6">
-                    <span className="text-sm">{study.icon || '📚'}</span>
+                  <div className="flex items-center justify-center w-6 h-6 rounded overflow-hidden">
+                    {study.image || study.image_url ? (
+                      <img 
+                        src={study.image || study.image_url} 
+                        alt={study.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-purple-300 flex items-center justify-center">
+                        <span className="text-xs text-purple-700 font-medium">
+                          {study.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <span className={`text-sm truncate ${
+                  <span className={`text-sm truncate flex-1 ${
                     activeStudyId === study.id ? 'font-medium' : 'text-gray-700'
                   }`}>
                     {study.name}
                   </span>
+                  {/* 승인대기중 상태 표시 */}
+                  {study.status === 'PENDING' && (
+                    <span className="text-xs text-gray-500 ml-auto">
+                      승인대기중
+                    </span>
+                  )}
                 </div>
               ))}
             </div>

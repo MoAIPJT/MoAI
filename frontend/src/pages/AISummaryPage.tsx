@@ -1,102 +1,166 @@
 import React, { useState, useEffect } from 'react'
 import AISummaryTemplate from '../components/templates/AISummaryTemplate'
-import SummaryViewer from '../components/atoms/SummaryViewer'
-import PDFViewer from '../components/atoms/PDFViewer'
-import SplitResizer from '../components/atoms/SplitResizer'
+import AITestViewer from '../components/organisms/AITestViewer'
 import ProfileSettingsModal from '../components/organisms/ProfileSettingsModal'
 import ChangePasswordModal from '../components/organisms/ChangePasswordModal'
-import { fetchSummaryList, type StudyWithSummaries } from '../services/summaryService'
-import { dummySummaryData } from '../types/summary'
+import { fetchSummaryList, fetchSummaryDetail, type StudyWithSummaries } from '../services/summaryService'
+import { editAiSummary, deleteAiSummary } from '../services/aiSummaryService'
 import type { ProfileData } from '../components/organisms/ProfileSettingsModal/types'
-// import type { ChangePasswordData } from '../components/organisms/ChangePasswordModal/types'
 import { useAppStore } from '../store/appStore'
 import { useNavigate } from 'react-router-dom'
 
+// 타입 정의 (AITestViewer에서 사용)
+interface PDFItem {
+  id: string
+  url: string
+  title?: string
+}
+
+interface SummaryItem {
+  docsId: number
+  pageNumber: number
+  originalQuote: string
+  summarySentence: string
+}
+
+
+
 const AISummaryPage: React.FC = () => {
+  // 사이드바 관련 state들
   const [activeItem, setActiveItem] = useState<string>('')
   const [expandedStudies, setExpandedStudies] = useState<string[]>([])
-  const [showOriginal, setShowOriginal] = useState(false)
-  const [leftPanelWidth, setLeftPanelWidth] = useState(500)
   const [studiesWithSummaries, setStudiesWithSummaries] = useState<StudyWithSummaries[]>([])
   const [isLoading, setIsLoading] = useState(true)
+
+  // 모달 관련 state들
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false)
+  const [isEditSummaryModalOpen, setIsEditSummaryModalOpen] = useState(false)
+  const [editingSummary, setEditingSummary] = useState<{
+    id: string;
+    title: string;
+    description: string;
+  } | null>(null)
   const [profileData, setProfileData] = useState<ProfileData>({
-    nickname: '안덕현',
-    email: 'dksejrqus2@gmail.com',
-    profileImage: ''
+    name: 'null',
+    email: 'null',
+    profileImageUrl: ''
   })
+
+  // AITestViewer 관련 state들
+  const [pdfList, setPdfList] = useState<PDFItem[]>([])
+  const [selectedPdf, setSelectedPdf] = useState<PDFItem | null>(null)
+  const [summaryList, setSummaryList] = useState<SummaryItem[]>([])
 
   const clearAuth = useAppStore((state) => state.auth.clearAuth)
   const navigate = useNavigate()
-  // const [error, setError] = useState<string | null>(null)
 
   // AI 요약본 목록 조회
   const fetchSummaries = async () => {
     try {
       setIsLoading(true)
-      // setError(null)
-
-
-      // 실제 API 호출
-      const userId = localStorage.getItem('userId') || '1' // 실제로는 로그인된 유저 ID를 사용
+      const userId = localStorage.getItem('userId') || '1'
       const response = await fetchSummaryList(userId)
-      setStudiesWithSummaries(response.studies || [])
-    } catch {
-      // setError('AI 요약본 목록을 불러오는데 실패했습니다.')
+      console.log('API 응답:', response)
 
+      const studies = response.studies || []
+      console.log('Studies 데이터:', studies)
 
-      // 에러 시 더미 데이터 사용 (개발용)
-      const dummyStudiesWithSummaries: StudyWithSummaries[] = [
-        {
-          study_id: 'ssafy-algorithm',
-          study_name: '싸피 알고리즘',
-          study_image_url: '/src/assets/MoAI/thinking.png',
-          summaries: [
-            {
-              summaryId: 'cats-dogs',
-              title: 'Cats and Dogs',
-              description: 'Fine-grained categorization of pet breeds (37 breeds of cats and dogs).',
-              model_type: 'Gemini',
-              prompt_type: '요약'
-            },
-            {
-              summaryId: 'i-love-duck',
-              title: 'I Love Duck',
-              description: 'Duck Duck Duck',
-              model_type: 'Gemini',
-              prompt_type: '요약'
-            }
-          ]
-        },
-        {
-          study_id: 'daejeon-restaurants',
-          study_name: '대전 맛집 탐방',
-          study_image_url: '/src/assets/MoAI/traveling.png',
-          summaries: [
-            {
-              summaryId: 'hamburger',
-              title: '햄버거 맛있겠다',
-              description: '햄버거에 대한 상세한 분석과 레시피',
-              model_type: 'Gemini',
-              prompt_type: '요약'
-            }
-          ]
+      if (studies.length > 0) {
+        setStudiesWithSummaries(studies)
+        // 첫 번째 study를 자동으로 확장
+        setExpandedStudies([studies[0].studyId])
+        // 첫 번째 요약본을 자동으로 선택
+        if (studies[0].summaries.length > 0) {
+          setActiveItem(studies[0].summaries[0].summaryId)
         }
-      ]
-      setStudiesWithSummaries(dummyStudiesWithSummaries)
+      } else {
+        // API 응답이 없으면 빈 배열로 설정
+        setStudiesWithSummaries([])
+        setExpandedStudies([])
+        setActiveItem('')
+      }
+    } catch (error) {
+      console.error('AI 요약본 목록을 불러오는데 실패했습니다:', error)
+      // 에러 시에도 빈 상태로 설정
+      setStudiesWithSummaries([])
+      setExpandedStudies([])
+      setActiveItem('')
     } finally {
       setIsLoading(false)
     }
   }
 
   useEffect(() => {
+    // 기존 요약본 목록 조회
     fetchSummaries()
+
+    // 초기 상태 설정 - 빈 배열로 시작
+    setPdfList([])
+    setSelectedPdf(null)
+    setSummaryList([])
   }, [])
 
-  const handleItemClick = (itemId: string) => {
+  // 요약본 상세 정보 가져오기 (사이드바 클릭 시)
+  const fetchSummaryDetailData = async (summaryId: string) => {
+    console.log('요약본 선택:', summaryId)
+
+    try {
+      const detailResponse = await fetchSummaryDetail(summaryId)
+      console.log('요약본 상세 응답:', detailResponse)
+
+      // summaryJson 데이터 처리 (이미 파싱된 객체)
+      if (detailResponse?.summaryJson) {
+        console.log('받은 요약 데이터:', detailResponse.summaryJson)
+
+        // summaryJson이 배열인 경우 직접 사용
+        if (Array.isArray(detailResponse.summaryJson)) {
+          const convertedData: SummaryItem[] = detailResponse.summaryJson.map((item: {
+            docsId: number;
+            pageNumber: number;
+            originalQuote: string;
+            summarySentence: string;
+          }) => ({
+            docsId: item.docsId,
+            pageNumber: item.pageNumber,
+            originalQuote: item.originalQuote,
+            summarySentence: item.summarySentence
+          }))
+          setSummaryList(convertedData)
+          console.log('변환된 요약 데이터:', convertedData)
+        }
+      }
+
+      // 연결된 문서들을 PDF 목록에 업데이트
+      if (detailResponse?.docses && detailResponse.docses.length > 0) {
+        const newPdfs: PDFItem[] = detailResponse.docses.map((doc: {
+          docsId: number;
+          url: string;
+        }) => ({
+          id: `doc${doc.docsId}`,
+          url: doc.url,
+          title: `문서 ${doc.docsId}`
+        }))
+
+        setPdfList(newPdfs)
+        if (newPdfs.length > 0) {
+          setSelectedPdf(newPdfs[0])
+        }
+      }
+    } catch (error) {
+      console.error('요약본 상세 정보를 가져오는데 실패했습니다:', error)
+      // 에러 발생 시 기본 데이터 유지
+      console.log('기본 데이터를 유지합니다.')
+    }
+  }
+
+  // 사이드바 아이템 클릭 핸들러
+  const handleItemClick = async (itemId: string) => {
+    console.log('요약본 클릭:', itemId)
     setActiveItem(itemId)
-    setShowOriginal(false) // 새로운 요약본 선택 시 원본 숨김
+
+    // 요약본 상세 정보 가져오기
+    await fetchSummaryDetailData(itemId)
   }
 
   const handleStudyToggle = (studyId: string) => {
@@ -107,12 +171,13 @@ const AISummaryPage: React.FC = () => {
     )
   }
 
-  const handleViewOriginal = () => {
-    setShowOriginal(true)
+  // AITestViewer 핸들러들
+  const handlePdfChange = (pdf: PDFItem) => {
+    setSelectedPdf(pdf)
   }
 
-  const handleResize = (width: number) => {
-    setLeftPanelWidth(width)
+  const handleSummaryClick = (item: SummaryItem) => {
+    console.log('요약 클릭:', item)
   }
 
   const handleSettingsClick = () => {
@@ -133,8 +198,6 @@ const AISummaryPage: React.FC = () => {
   }
 
   const handleChangePasswordSubmit = () => {
-    // TODO: API 호출로 비밀번호 변경
-    // data.currentPassword, data.newPassword, data.confirmPassword 사용
     alert('비밀번호가 성공적으로 변경되었습니다.')
   }
 
@@ -144,79 +207,105 @@ const AISummaryPage: React.FC = () => {
     }
   }
 
-  // 선택된 요약본 데이터
-  const selectedSummary = activeItem ? dummySummaryData[activeItem] : null
+  // 요약본 수정 관련 함수들
+  const handleEditSummary = (summary: { summaryId: string; title: string; description: string }) => {
+    console.log('수정할 요약본 데이터:', summary)
+    setEditingSummary({
+      id: summary.summaryId,
+      title: summary.title,
+      description: summary.description || ''
+    })
+    setIsEditSummaryModalOpen(true)
+  }
 
-  // 요약본이 선택되지 않았을 때 표시할 UI
-  const renderEmptyState = () => (
-    <div className="flex items-center justify-center h-full">
-      <div className="text-center">
-        <div className="mb-6">
-          <img
-            src="/src/assets/MoAI/file.png"
-            alt="File Icon"
-            className="w-72 h-72 mx-auto mb-4"
-          />
-          <p className="text-gray-600 text-xl">파일을 선택해주세요...</p>
-        </div>
-      </div>
-    </div>
-  )
+  const handleEditSummaryChange = (field: 'title' | 'description', value: string) => {
+    if (editingSummary) {
+      setEditingSummary({
+        ...editingSummary,
+        [field]: value
+      })
+    }
+  }
 
-  // 요약본이 선택되었을 때 표시할 UI
-  const renderSummaryContent = () => {
-    if (!selectedSummary) {
+  const handleEditSummarySubmit = async (data: { title: string; description: string }) => {
+    if (!editingSummary) return
+
+    try {
+      console.log('수정 요청 데이터:', {
+        title: data.title,
+        description: data.description
+      })
+
+      await editAiSummary(parseInt(editingSummary.id), {
+        title: data.title,
+        description: data.description
+      })
+
+      alert('요약본이 성공적으로 수정되었습니다.')
+      setIsEditSummaryModalOpen(false)
+      setEditingSummary(null)
+
+      // 요약본 목록 새로고침
+      fetchSummaries()
+    } catch (error) {
+      console.error('요약본 수정 실패:', error)
+      alert('요약본 수정에 실패했습니다.')
+    }
+  }
+
+  const handleEditSummaryCancel = () => {
+    setIsEditSummaryModalOpen(false)
+    setEditingSummary(null)
+  }
+
+  // 요약본 삭제 관련 함수들
+  const handleDeleteSummary = async (summaryId: string) => {
+    if (confirm('정말로 이 요약본을 삭제하시겠습니까?')) {
+      try {
+        await deleteAiSummary(parseInt(summaryId))
+        alert('요약본이 성공적으로 삭제되었습니다.')
+
+        // 요약본 목록 새로고침
+        fetchSummaries()
+
+        // 삭제된 요약본이 현재 선택된 요약본이었다면 선택 해제
+        if (activeItem === summaryId) {
+          setActiveItem('')
+        }
+      } catch (error) {
+        console.error('요약본 삭제 실패:', error)
+        alert('요약본 삭제에 실패했습니다.')
+      }
+    }
+  }
+
+  // 메인 컨텐츠 렌더링
+  const renderMainContent = () => {
+    if (!activeItem) {
       return (
-        <div className="p-8">
-          <h2 className="text-2xl font-bold mb-4">선택된 요약본: {activeItem}</h2>
-          <p className="text-gray-600">요약본을 찾을 수 없습니다.</p>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <div className="mb-6">
+              <img
+                src="/src/assets/MoAI/file.png"
+                alt="File Icon"
+                className="w-72 h-72 mx-auto mb-4"
+              />
+              <p className="text-gray-600 text-xl">요약본을 선택해주세요...</p>
+            </div>
+          </div>
         </div>
       )
     }
 
-    // 원본 PDF가 표시되는 경우 분할 레이아웃
-    if (showOriginal && selectedSummary.originalPdfPath) {
-      return (
-        <div className="flex h-full">
-          {/* 왼쪽 패널 - 요약본 */}
-          <div
-            className="bg-white border-r border-gray-200"
-            style={{ width: `${leftPanelWidth}px` }}
-          >
-            <SummaryViewer
-              summaryData={selectedSummary}
-              onViewOriginal={handleViewOriginal}
-            />
-          </div>
-
-          {/* 리사이저 */}
-          <SplitResizer
-            onResize={handleResize}
-            minLeftWidth={300}
-            maxLeftWidth={800}
-          />
-
-          {/* 오른쪽 패널 - 원본 PDF */}
-          <div className="flex-1">
-            <PDFViewer
-              pdfUrl={selectedSummary.originalPdfPath}
-              title={selectedSummary.title}
-              onLoad={() => { }}
-              onError={() => { }}
-            />
-          </div>
-        </div>
-      )
-    }
-
-    // 요약본만 표시되는 경우
     return (
-      <div className="h-full">
-        <SummaryViewer
-          summaryData={selectedSummary}
-          onViewOriginal={handleViewOriginal}
-        />
-      </div>
+      <AITestViewer
+        pdfList={pdfList}
+        summaryList={summaryList}
+        selectedPdf={selectedPdf}
+        onPdfChange={handlePdfChange}
+        onSummaryClick={handleSummaryClick}
+      />
     )
   }
 
@@ -230,8 +319,10 @@ const AISummaryPage: React.FC = () => {
       onStudyToggle={handleStudyToggle}
       onSettingsClick={handleSettingsClick}
       onLogout={handleLogout}
+      onEditSummary={handleEditSummary}
+      onDeleteSummary={handleDeleteSummary}
     >
-      {activeItem ? renderSummaryContent() : renderEmptyState()}
+      {renderMainContent()}
 
       {/* 프로필 설정 모달 */}
       <ProfileSettingsModal
@@ -250,6 +341,66 @@ const AISummaryPage: React.FC = () => {
         onClose={() => setIsChangePasswordModalOpen(false)}
         onSubmit={handleChangePasswordSubmit}
       />
+
+      {/* 요약본 수정 모달 */}
+      {isEditSummaryModalOpen && editingSummary && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-md">
+            <h2 className="text-xl font-bold mb-4">요약본 수정</h2>
+            <form onSubmit={(e) => {
+              e.preventDefault()
+              const formData = new FormData(e.currentTarget)
+              handleEditSummarySubmit({
+                title: formData.get('title') as string,
+                description: formData.get('description') as string
+              })
+            }}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  제목
+                </label>
+                <input
+                  type="text"
+                  name="title"
+                  value={editingSummary.title}
+                  onChange={(e) => handleEditSummaryChange('title', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  설명
+                </label>
+                <textarea
+                  name="description"
+                  value={editingSummary.description}
+                  onChange={(e) => handleEditSummaryChange('description', e.target.value)}
+                  placeholder="설명이 없습니다. 여기에 설명을 입력하세요."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={handleEditSummaryCancel}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  수정
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </AISummaryTemplate>
   )
 }

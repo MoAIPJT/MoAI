@@ -31,8 +31,8 @@ export interface AiSummarySidebarListRes {
 
 export interface AiSummaryEditReq {
   title?: string
-  content?: string
-  modelType?: ModelType
+  description?: string
+
 }
 
 export interface AiSummaryEditRes {

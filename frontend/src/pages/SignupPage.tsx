@@ -22,13 +22,26 @@ const SignupPage: React.FC = () => {
       // 회원가입 성공 후 이메일 인증 페이지로 이동
       navigate('/email-sent', {
         state: {
-          message: '회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료해주세요.',
+          message: '회원가입이 완료되었습니다.',
           email: data.email
         }
       })
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message)
+        // 백엔드에서 오는 에러 메시지를 사용자 친화적으로 변환
+        let userFriendlyMessage = err.message
+
+        if (err.message.includes('이미 존재하는 이메일')) {
+          userFriendlyMessage = '이미 가입된 이메일입니다.'
+        } else if (err.message.includes('비밀번호는 최소 8자')) {
+          userFriendlyMessage = '비밀번호는 8자 이상이어야 합니다.'
+        } else if (err.message.includes('올바른 이메일 형식')) {
+          userFriendlyMessage = '올바른 이메일 형식이 아닙니다.'
+        } else if (err.message.includes('이름은 2자 이상 20자 이하')) {
+          userFriendlyMessage = '이름은 2자 이상 20자 이하여야 합니다.'
+        }
+
+        setError(userFriendlyMessage)
       } else {
         setError('회원가입에 실패했습니다.')
       }
@@ -52,6 +65,7 @@ const SignupPage: React.FC = () => {
       onGoogleSignup={handleGoogleSignup}
       loading={signupMutation.isPending}
       error={error}
+      socialButtonsDisabled={true}
     />
   )
 }
