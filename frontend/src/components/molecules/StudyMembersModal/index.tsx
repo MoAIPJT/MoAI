@@ -1,6 +1,25 @@
 import React, { useState } from 'react'
 import type { StudyMembersModalProps } from './types'
 
+// 이미지 URL이 유효한지 확인하는 함수
+const isValidImageUrl = (url: string): boolean => {
+  if (!url || typeof url !== 'string') return false
+
+  // URL이 실제 이미지 파일 확장자를 가지고 있는지 확인
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg']
+  const hasImageExtension = imageExtensions.some(ext =>
+    url.toLowerCase().includes(ext)
+  )
+
+  // URL이 http:// 또는 https://로 시작하는지 확인
+  const hasValidProtocol = url.startsWith('http://') || url.startsWith('https://')
+
+  // URL이 실제 도메인을 가지고 있는지 확인 (간단한 검증)
+  const hasValidDomain = url.includes('.') && url.length > 10
+
+  return hasImageExtension && hasValidProtocol && hasValidDomain
+}
+
 const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
   isOpen,
   onClose,
@@ -27,14 +46,14 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
       // hashId를 사용하여 올바른 초대 링크 생성 (DashboardPage와 동일한 형식)
       const inviteLink = `${window.location.origin}/study/${hashId}`
       await navigator.clipboard.writeText(inviteLink)
-      
+
       // 복사 상태 업데이트
       setCopied(true)
-      
+
       // 토스트 메시지 표시
       setShowToast(true)
       setTimeout(() => setShowToast(false), 3000)
-      
+
       // 복사 상태 초기화
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
@@ -99,8 +118,23 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
               return (
                 <div key={index} className="flex items-center justify-between p-2 border-b border-gray-200 last:border-b-0">
                   <div className="flex items-center">
-                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-xl mr-3">
-                      {member.imageUrl || '👤'}
+                    <div className="w-10 h-10 rounded-full bg-gray-200 mr-3 overflow-hidden">
+                      {member.imageUrl && isValidImageUrl(member.imageUrl) ? (
+                        <img
+                          src={member.imageUrl}
+                          alt={`${member.member}의 프로필`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // 이미지 로드 실패 시 기본 아이콘 표시
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <div className={`w-full h-full flex items-center justify-center text-xl ${member.imageUrl && isValidImageUrl(member.imageUrl) ? 'hidden' : ''}`}>
+                        👤
+                      </div>
                     </div>
                     <div>
                       <p className="font-semibold text-gray-800">
@@ -112,15 +146,15 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
                   </div>
 
                   <div className="flex items-center gap-3">
-                    
+
                     {/* Role 표시 (ADMIN 제외)*/}
                     {currentUserRole !== 'ADMIN' && (
                       <span className="text-gray-600 font-medium">
-                        {member.role === 'ADMIN' ? '운영자' : 
+                        {member.role === 'ADMIN' ? '운영자' :
                         member.role === 'DELEGATE' ? '대리인' : '회원'}
                       </span>
                     )}
-                    
+
                     {/* 권한 변경 드롭다운 (ADMIN만 가능) */}
                     {canChangeRole && (
                       <div className="relative">
@@ -145,7 +179,7 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
                         </div>
                       </div>
                     )}
-                    
+
                     {/* 내 카드 오른쪽에 "탈퇴하기" 버튼 */}
                     {isMe && (
                       <button
@@ -216,7 +250,7 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
 
           {/* 초대하기 버튼을 모달의 오른쪽 아래에 위치 */}
           <div className="flex justify-end mt-6">
-            <button 
+            <button
               onClick={handleInviteClick}
               className="bg-purple-500 text-white px-4 py-2 rounded-xl hover:bg-purple-600 transition-colors"
             >

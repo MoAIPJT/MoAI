@@ -169,7 +169,8 @@ export const getStudyMembers = async (studyId: string): Promise<Member[]> => {
         id: member.userId,
         name: member.member,
         role: member.role,
-        email: member.email
+        email: member.email,
+        imageUrl: member.imageUrl
       })
     })
     return response.data

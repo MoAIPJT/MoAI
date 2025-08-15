@@ -42,4 +42,6 @@ export interface StudyCalendarProps {
   studyId?: number
   // 캘린더에 표시할 이벤트들
   events?: CalendarEvent[]
+  // 현재 사용자 권한
+  currentUserRole?: 'ADMIN' | 'DELEGATE' | 'MEMBER'
 }

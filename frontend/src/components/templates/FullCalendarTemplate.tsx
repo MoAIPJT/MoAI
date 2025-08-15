@@ -46,6 +46,7 @@ export interface FullCalendarTemplateProps {
   onEditEvent?: (event: CalendarEvent) => void
   onDeleteEvent?: (event: CalendarEvent) => void
   studyId?: number // 현재 스터디 ID
+  currentUserRole?: 'ADMIN' | 'DELEGATE' | 'MEMBER' // 현재 사용자 권한
 }
 
 const FullCalendarTemplate: React.FC<FullCalendarTemplateProps> = ({
@@ -74,6 +75,7 @@ const FullCalendarTemplate: React.FC<FullCalendarTemplateProps> = ({
   onEditEvent,
   onDeleteEvent,
   studyId,
+  currentUserRole,
 }) => {
   // 현재 날짜와 선택된 날짜를 Date 객체로 변환
   const currentDateObj = currentDate ? new Date(currentDate) : new Date()
@@ -104,6 +106,7 @@ const FullCalendarTemplate: React.FC<FullCalendarTemplateProps> = ({
           onCreateSchedule={onCreateSchedule}
           onEditSchedule={onEditSchedule}
           studyId={studyId}
+          currentUserRole={currentUserRole}
         />
 
         {/* Calendar View */}

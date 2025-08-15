@@ -196,6 +196,9 @@ export const useDeleteStudyMember = (studyId: number) => {
       // 멤버 목록과 스터디 상세 정보 갱신
       queryClient.invalidateQueries({ queryKey: studyKeys.members(String(studyId)) })
       queryClient.invalidateQueries({ queryKey: studyKeys.detail(studyId.toString()) })
+
+      // 추방 완료 알림
+      alert('추방이 완료되었습니다.')
     }
   })
 }

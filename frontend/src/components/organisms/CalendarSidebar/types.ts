@@ -25,4 +25,5 @@ export interface CalendarSidebarProps {
     memo?: string
   }) => Promise<void>
   studyId?: number
+  currentUserRole?: 'ADMIN' | 'DELEGATE' | 'MEMBER'
 }
