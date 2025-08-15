@@ -10,8 +10,8 @@ import ChangePasswordModal from '../components/organisms/ChangePasswordModal'
 import type { StudyItem } from '../components/organisms/DashboardSidebar/types'
 import type { ContentItem } from '../types/content'
 import type { StudyListItem } from '../types/study'
-import { getSidebarStudies, updateStudyNotice, joinStudy, leaveStudy, deleteStudyMember, getStudyNotice } from '../services/studyService'
-import { useStudyDetail, useStudyMembers, useJoinRequests, useAcceptJoinRequest, useRejectJoinRequest, useChangeMemberRole, useUpdateStudy } from "../hooks/useStudies";
+import { getSidebarStudies, updateStudyNotice, joinStudy, leaveStudy, getStudyNotice } from '../services/studyService'
+import { useStudyDetail, useStudyMembers, useJoinRequests, useAcceptJoinRequest, useRejectJoinRequest, useChangeMemberRole, useUpdateStudy, useDeleteStudyMember } from "../hooks/useStudies";
 import { studyKeys } from "../hooks/queryKeys";
 import { useQueryClient } from '@tanstack/react-query'
 import type { Member } from '../types/study'
@@ -104,6 +104,7 @@ const StudyDetailPage: React.FC = () => {
   const acceptJoinRequestMutation = useAcceptJoinRequest(studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0)
   const rejectJoinRequestMutation = useRejectJoinRequest(studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0)
   const changeMemberRoleMutation = useChangeMemberRole(studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0)
+  const deleteStudyMemberMutation = useDeleteStudyMember(studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0)
 
   // 프로필 관련 mutation 훅들
   const patchProfileMutation = usePatchProfile()
@@ -766,8 +767,8 @@ const StudyDetailPage: React.FC = () => {
     if (!studyDetail?.studyId || studyDetail.studyId <= 0) return
 
     try {
-      // 멤버 삭제 API 호출
-      await deleteStudyMember({
+      // 멤버 삭제 API 호출 - useDeleteStudyMember 훅 사용
+      await deleteStudyMemberMutation.mutateAsync({
         studyId: studyDetail.studyId,
         userId: userId
       })
