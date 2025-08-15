@@ -1,6 +1,25 @@
 import React, { useState } from 'react'
 import type { StudyManagementModalProps } from './types'
 
+// 이미지 URL이 유효한지 확인하는 함수
+const isValidImageUrl = (url: string): boolean => {
+  if (!url || typeof url !== 'string') return false
+
+  // URL이 실제 이미지 파일 확장자를 가지고 있는지 확인
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg']
+  const hasImageExtension = imageExtensions.some(ext =>
+    url.toLowerCase().includes(ext)
+  )
+
+  // URL이 http:// 또는 https://로 시작하는지 확인
+  const hasValidProtocol = url.startsWith('http://') || url.startsWith('https://')
+
+  // URL이 실제 도메인을 가지고 있는지 확인 (간단한 검증)
+  const hasValidDomain = url.includes('.') && url.length > 10
+
+  return hasImageExtension && hasValidProtocol && hasValidDomain
+}
+
 const StudyManagementModal: React.FC<StudyManagementModalProps> = ({
   isOpen,
   onClose,
@@ -162,7 +181,7 @@ const StudyManagementModal: React.FC<StudyManagementModalProps> = ({
                     ) : (
                       <label className="w-20 h-20 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50">
                         <div className="text-gray-400 text-2xl mb-1">☁️</div>
-                        <div className="text-gray-400 text-xs text-center">이미지 업로드</div>
+                        <div className="text-gray-400 text-sm text-center whitespace-nowrap">이미지 업로드</div>
                         <input
                           type="file"
                           accept="image/*"
@@ -223,7 +242,7 @@ const StudyManagementModal: React.FC<StudyManagementModalProps> = ({
                 </div>
               </div>
             </div>
-            
+
             {/* 완료 버튼을 스터디 정보 관리 섹션 밑으로 이동 */}
             <div className="mt-6 pt-4 border-t border-gray-200">
               <button
@@ -254,7 +273,7 @@ const StudyManagementModal: React.FC<StudyManagementModalProps> = ({
                       </button>
                     </div>
                   ))}
-                  
+
                   {/* 새 카테고리 추가 버튼 */}
                   {!isAddingCategory ? (
                     <button
@@ -285,7 +304,7 @@ const StudyManagementModal: React.FC<StudyManagementModalProps> = ({
                       </button>
                     </div>
                   )}
-                  
+
                   {(!categories || categories.length === 0) && !isAddingCategory && (
                     <p className="text-gray-500 text-sm">등록된 카테고리가 없습니다.</p>
                   )}
@@ -301,8 +320,23 @@ const StudyManagementModal: React.FC<StudyManagementModalProps> = ({
               {members.map((member, index) => (
                 <div key={index} className="flex items-center justify-between p-3 border-b border-gray-100 last:border-b-0 bg-white rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm">
-                      {member.imageUrl || '👤'}
+                    <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
+                      {member.imageUrl && isValidImageUrl(member.imageUrl) ? (
+                        <img
+                          src={member.imageUrl}
+                          alt={`${member.member}의 프로필`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // 이미지 로드 실패 시 기본 아이콘 표시
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <div className={`w-full h-full flex items-center justify-center text-sm ${member.imageUrl && isValidImageUrl(member.imageUrl) ? 'hidden' : ''}`}>
+                        👤
+                      </div>
                     </div>
                     <div>
                       <p className="font-medium text-gray-800 text-sm">
