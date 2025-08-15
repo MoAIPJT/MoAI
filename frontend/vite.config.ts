@@ -19,5 +19,9 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['pdfjs-dist', 'react-pdf']
+  },
+  // 개발 환경에서 WebRTC를 위한 설정
+  define: {
+    global: 'globalThis',
   }
 })
