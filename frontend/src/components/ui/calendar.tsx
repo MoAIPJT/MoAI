@@ -11,6 +11,10 @@ export interface CalendarEvent {
   title?: string;
   startTime?: string;
   endTime?: string;
+  studyId?: number;
+  studyName?: string;
+  studyDescription?: string;
+  studyImage?: string;
 }
 
 export interface CustomCalendarProps {

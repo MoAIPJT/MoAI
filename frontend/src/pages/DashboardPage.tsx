@@ -72,7 +72,12 @@ const DashboardPage: React.FC = () => {
           color: getEventColor(),
           title: schedule.title,
           startTime: startDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-          endTime: endDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+          endTime: endDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+          // 스터디 정보 추가
+          studyId: schedule.studyId,
+          studyName: schedule.name,
+          studyDescription: schedule.description,
+          studyImage: schedule.image
         }
       })
 
@@ -108,7 +113,7 @@ const DashboardPage: React.FC = () => {
     }
   }
 
-  // 다가오는 일정을 달력 이벤트에서 동적으로 생성
+    // 다가오는 일정을 달력 이벤트에서 동적으로 생성
   const upcomingEvents: Array<{
     id: number;
     title: string;
@@ -117,7 +122,79 @@ const DashboardPage: React.FC = () => {
     studyName: string;
     studyImage: string;
     color: string;
-  }> = []
+  }> = calendarEvents
+    .filter(event => {
+      const eventDate = new Date(event.date)
+      const now = new Date()
+      // 오늘 이후의 일정만 필터링
+      return eventDate >= new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    })
+    .sort((a, b) => {
+      // 날짜순으로 정렬 (가장 가까운 일정이 먼저)
+      return new Date(a.date).getTime() - new Date(b.date).getTime()
+    })
+    .slice(0, 5) // 최대 5개까지만 표시
+    .map((event, index) => {
+      // 실제 스터디 정보가 있으면 사용, 없으면 제목에서 추출
+      let studyName = event.studyName || '스터디'
+      let studyImage = event.studyImage || 'S'
+
+      // 실제 스터디 정보가 없는 경우에만 제목에서 추출
+      if (!event.studyName) {
+        const title = event.title || ''
+        if (title.includes('알고리즘') || title.includes('코딩') || title.includes('코테')) {
+          studyName = '알고리즘 스터디'
+          studyImage = '알고리즘'
+        } else if (title.includes('CS') || title.includes('컴퓨터') || title.includes('시스템')) {
+          studyName = 'CS 면접 준비'
+          studyImage = 'CS'
+        } else if (title.includes('프로젝트') || title.includes('회의') || title.includes('미팅')) {
+          studyName = '프로젝트 회의'
+          studyImage = '프로젝트'
+        } else if (title.includes('면접') || title.includes('인터뷰')) {
+          studyName = '면접 준비'
+          studyImage = '면접'
+        } else if (title.includes('맛도리') || title.includes('맛집') || title.includes('식사')) {
+          studyName = '대전맛집탐방'
+          studyImage = '맛집'
+        } else if (title.includes('스터디') || title.includes('학습')) {
+          studyName = '일반 스터디'
+          studyImage = '스터디'
+        } else {
+          // 제목의 첫 번째 단어를 사용하되, 더 의미있는 이름 생성
+          const titleWords = title.split(' ')
+          const firstWord = titleWords[0] || '일정'
+
+          // 한 글자인 경우 더 긴 이름으로 확장
+          if (firstWord.length === 1) {
+            studyName = `${firstWord} 스터디`
+          } else if (firstWord.length <= 3) {
+            studyName = `${firstWord} 모임`
+          } else {
+            studyName = firstWord
+          }
+          studyImage = firstWord
+        }
+      }
+
+      // 날짜 포맷팅
+      const eventDate = new Date(event.date)
+      const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][eventDate.getDay()]
+      const formattedDate = `${eventDate.getFullYear()}.${String(eventDate.getMonth() + 1).padStart(2, '0')}.${String(eventDate.getDate()).padStart(2, '0')}(${dayOfWeek})`
+
+      // 시간 포맷팅
+      const time = `${event.startTime || ''} - ${event.endTime || ''}`
+
+      return {
+        id: index + 1,
+        title: event.title || '제목 없음',
+        date: formattedDate,
+        time: time,
+        studyName: studyName,
+        studyImage: studyImage,
+        color: event.color || '#AA64FF'
+      }
+    })
 
   // 사용자 프로필 데이터를 ProfileData 형식으로 변환
   const profileData: ProfileData = {
@@ -532,13 +609,15 @@ const DashboardPage: React.FC = () => {
                     className="w-full"
                   />
 
-                  {upcomingEvents.length > 0 && (
-                    <div className="mt-6">
+                  {/* 다가오는 일정 섹션 */}
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">다가오는 일정</h3>
+                    {upcomingEvents.length > 0 ? (
                       <div className="space-y-3">
                         {upcomingEvents.map((event) => (
-                          <div key={event.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                          <div key={event.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                             <div
-                              className="w-3 h-3 rounded-full flex-shrink-0"
+                              className="w-2 h-2 rounded-full flex-shrink-0"
                               style={{ backgroundColor: event.color }}
                             />
                             <div className="flex-1 min-w-0">
@@ -550,32 +629,71 @@ const DashboardPage: React.FC = () => {
                               </div>
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0">
-                              <div className="w-6 h-6 flex items-center justify-center text-xs font-medium">
-                                {event.studyImage === 'SSAFY' ? (
-                                  <div className="w-6 h-6 bg-blue-500 text-white rounded flex items-center justify-center text-xs font-bold">
-                                    S
-                                  </div>
-                                ) : event.studyImage === '면' ? (
-                                  <div className="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
-                                    면
-                                  </div>
-                                ) : event.studyImage === 'CS' ? (
-                                  <div className="w-6 h-6 bg-green-500 text-white rounded flex items-center justify-center text-xs font-bold">
-                                    CS
-                                  </div>
-                                ) : (
-                                  <span className="text-lg">{event.studyImage}</span>
-                                )}
-                              </div>
-                              <div className="text-xs text-gray-600 truncate max-w-16">
-                                {event.studyName}
+                              <div className="px-3 py-1 bg-gray-200 rounded-full flex items-center gap-2">
+                                <div className="w-5 h-5 flex items-center justify-center text-xs font-medium">
+                                  {event.studyImage.startsWith('http') ? (
+                                    // URL인 경우 이미지 표시
+                                    <img
+                                      src={event.studyImage}
+                                      alt={event.studyName}
+                                      className="w-5 h-5 rounded object-cover"
+                                      onError={(e) => {
+                                        // 이미지 로드 실패 시 기본 아이콘 표시
+                                        const target = e.target as HTMLImageElement
+                                        target.style.display = 'none'
+                                        target.nextElementSibling?.classList.remove('hidden')
+                                      }}
+                                    />
+                                  ) : event.studyImage === '알고리즘' ? (
+                                    <div className="w-5 h-5 bg-blue-500 text-white rounded flex items-center justify-center text-xs font-bold">
+                                      A
+                                    </div>
+                                  ) : event.studyImage === 'CS' ? (
+                                    <div className="w-5 h-5 bg-green-500 text-white rounded flex items-center justify-center text-xs font-bold">
+                                      CS
+                                    </div>
+                                  ) : event.studyImage === '프로젝트' ? (
+                                    <div className="w-5 h-5 bg-purple-500 text-white rounded flex items-center justify-center text-xs font-bold">
+                                      P
+                                    </div>
+                                  ) : event.studyImage === '면접' ? (
+                                    <div className="w-5 h-5 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                                      면
+                                    </div>
+                                  ) : event.studyImage === '맛집' ? (
+                                    <div className="w-5 h-5 bg-red-500 text-white rounded flex items-center justify-center text-xs font-bold">
+                                      🍖
+                                    </div>
+                                  ) : event.studyImage === '스터디' ? (
+                                    <div className="w-5 h-5 bg-indigo-500 text-white rounded flex items-center justify-center text-xs font-bold">
+                                      📚
+                                    </div>
+                                  ) : (
+                                    <div className="w-5 h-5 bg-gray-500 text-white rounded flex items-center justify-center text-xs font-bold">
+                                      {event.studyImage.charAt(0)}
+                                    </div>
+                                  )}
+                                  {/* 이미지 로드 실패 시 표시할 기본 아이콘 */}
+                                  {event.studyImage.startsWith('http') && (
+                                    <div className="w-5 h-5 bg-gray-500 text-white rounded flex items-center justify-center text-xs font-bold hidden">
+                                      {event.studyName.charAt(0)}
+                                    </div>
+                                  )}
+                                </div>
+                                <span className="text-xs text-gray-700 font-medium">
+                                  {event.studyName}
+                                </span>
                               </div>
                             </div>
                           </div>
                         ))}
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <div className="text-center py-6 text-gray-500">
+                        <div className="text-sm">다가오는 일정이 없어요</div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
