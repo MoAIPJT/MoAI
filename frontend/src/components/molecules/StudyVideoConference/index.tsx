@@ -36,12 +36,16 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
 
   // 세션 시작 및 바로 참여 (ADMIN/DELEGATE만 가능)
   const handleStartSession = async () => {
-    if (!hashId) return
+    console.log('클릭성공')
+    if (!hashId){
+          console.log('id 없음:', hashId)
+      return
+    } 
 
     try {
       setIsLoading(true)
       setError(null)
-
+      console.log('세션 시작 시도:', hashId)
       // 1. 세션 열기
       const openResponse = await videoConferenceService.openSession(hashId)
       console.log('세션 시작 성공:', openResponse)
@@ -86,7 +90,11 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
 
   // 세션 참여
   const handleJoinSession = async () => {
-    if (!hashId) return
+    console.log('일단 클릭:', hashId)
+    if (!hashId) {
+      console.log('id 없음:', hashId)
+      return
+    } 
 
     try {
       setIsLoading(true)
