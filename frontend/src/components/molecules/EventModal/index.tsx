@@ -217,14 +217,15 @@ const EventModal: React.FC<EventModalProps> = ({
       onClose()
     } else if (onCreateSchedule && studyId) {
       // onCreateSchedule을 위한 데이터 생성
-      const [startHour, startMinute] = formData.startTime.split(':').map(Number)
-      const [endHour, endMinute] = formData.endTime.split(':').map(Number)
+      console.log('🎯 EventModal에서 onCreateSchedule 호출됨:', { studyId, formData })
 
       // 선택한 날짜와 시작/종료 시간을 조합해서 datetime 생성
       const startDateTime = new Date(currentSelectedDate)
+      const [startHour, startMinute] = formData.startTime.split(':').map(Number)
       startDateTime.setHours(startHour, startMinute, 0, 0)
 
       const endDateTime = new Date(currentSelectedDate)
+      const [endHour, endMinute] = formData.endTime.split(':').map(Number)
       endDateTime.setHours(endHour, endMinute, 0, 0)
 
       // 로컬 시간 형식으로 변환 (YYYY-MM-DDTHH:mm:ss)
@@ -244,9 +245,10 @@ const EventModal: React.FC<EventModalProps> = ({
         title: formData.title,
         startDatetime: formatLocalDateTime(startDateTime),
         endDatetime: formatLocalDateTime(endDateTime),
-        memo: formData.description || ''
+        memo: formData.description || '' // description을 memo로 변환
       }
 
+      console.log('📝 전송할 스케줄 데이터:', scheduleData)
       onCreateSchedule(scheduleData)
       onClose()
     } else {

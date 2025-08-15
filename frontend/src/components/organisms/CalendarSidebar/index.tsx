@@ -45,12 +45,12 @@ const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   }
 
   const handleCreateEvent = () => {
-    if (onCreateSchedule && studyId) {
-      // 일정 생성 모달 열기
-      setIsCreateModalOpen(true)
-    } else if (onCreateEvent) {
+    if (onCreateEvent) {
       // FullCalendar 내에서 일정 생성 버튼을 눌렀을 때
       onCreateEvent()
+    } else if (onCreateSchedule && studyId) {
+      // 일정 생성 모달 열기 (fallback)
+      setIsCreateModalOpen(true)
     }
   }
 

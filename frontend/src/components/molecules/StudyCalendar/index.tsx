@@ -16,6 +16,8 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
 }) => {
   const [date, setDate] = useState<Date | undefined>(new Date())
   const [showEventModal, setShowEventModal] = useState(false)
+  const [showFullCalendarModal, setShowFullCalendarModal] = useState(false)
+  const [selectedEvent, setSelectedEvent] = useState<StudyEvent | null>(null)
 
   // Modal specific states
   const [modalCurrentView, setModalCurrentView] = useState("week")
@@ -25,8 +27,6 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
     const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     return currentDate
   })
-  const [selectedEvent, setSelectedEvent] = useState<StudyEvent | null>(null)
-
   // CalendarSidebar 모달 제어를 위한 상태
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -304,7 +304,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
 
   const handleAddEvent = () => {
     // Full Calendar 모달 열기
-    setShowEventModal(true)
+    setShowFullCalendarModal(true)
   }
 
   const handleCreateEventInFullCalendar = () => {
@@ -313,7 +313,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
   }
 
   const handleCloseModal = () => {
-    setShowEventModal(false)
+    setShowFullCalendarModal(false)
   }
 
   const handleCloseCreateModal = () => {
@@ -329,20 +329,22 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
     title: string
     memo?: string
   }) => {
+    console.log('🎯 handleCreateSchedule 호출됨:', data)
     try {
-      const eventData = {
-        studyId: studyId,
+      // 백엔드 API 형식에 맞게 데이터 변환
+      const scheduleData = {
+        studyId: data.studyId,
+        startDatetime: data.startDatetime,
+        endDatetime: data.endDatetime,
         title: data.title,
-        description: data.memo || '',
-        startDate: data.startDatetime,
-        endDate: data.endDatetime,
-        startTime: data.startDatetime.slice(11, 16), // HH:mm 형식으로 변환
-        endTime: data.endDatetime.slice(11, 16) // HH:mm 형식으로 변환
+        memo: data.memo || ''
       }
+
+      console.log('📝 백엔드로 전송할 스케줄 데이터:', scheduleData)
 
       // scheduleService를 사용하여 API 호출
       const { scheduleService } = await import('../../../services/scheduleService')
-      await scheduleService.createSchedule(eventData)
+      await scheduleService.createSchedule(scheduleData)
 
       // 성공 메시지
       alert('일정이 성공적으로 생성되었습니다.')
@@ -350,6 +352,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
       // 페이지 새로고침하여 최신 데이터 반영
       window.location.reload()
     } catch (error) {
+      console.error('❌ 일정 생성 실패:', error)
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { data?: unknown; status?: number } }
         const status = axiosError.response?.status
@@ -456,7 +459,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
       </div>
 
       {/* Full Calendar Modal */}
-      {showEventModal && (
+      {showFullCalendarModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {/* Modal Header */}
@@ -511,7 +514,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
         </div>
       )}
 
-      {/* Event Modal */}
+      {/* Event Modal - FullCalendar 내에서 일정 생성 시에만 사용 */}
       {showEventModal && (
         <EventModal
           isOpen={showEventModal}
@@ -530,6 +533,8 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
             attendees: selectedEvent.attendees,
             organizer: selectedEvent.organizer
           } as Event : undefined}
+          onCreateSchedule={handleCreateSchedule}
+          studyId={studyId}
         />
       )}
 
