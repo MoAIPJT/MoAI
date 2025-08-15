@@ -111,28 +111,30 @@ export const getAllStudies = async (): Promise<StudyAllItem[]> => {
 
 export const getStudyDetail = async (hashId: string): Promise<StudyDetail> => {
   try {
-    const response = await api.get<any>(`/study/detail?hashId=${hashId}`)
+    const response = await api.get<{
+      id: number
+      name: string
+      imageUrl: string
+      status: string | null
+      role?: string
+      description?: string
+      userCount?: number
+    }>(`/study/detail?hashId=${hashId}`)
     const data = response.data
 
     console.log('🔍 Study detail API response:', data)
     console.log('🔍 Response data keys:', Object.keys(data))
     console.log('🔍 Response data values:', Object.values(data))
 
-    // ✅ 다양한 필드명으로 studyId 찾기 시도
-    let studyId = data.id || data.studyId || data.study_id || data.studyGroupId || data.study_group_id
+    // ✅ 백엔드 응답 구조에 맞게 studyId 매핑
+    // StudyResponseDto의 id 필드를 studyId로 사용
+    const studyId = data.id
 
-    // 만약 여전히 studyId가 없다면, hashId를 디코딩해서 사용
+    // id가 0인 경우는 백엔드에서 해당 스터디를 찾지 못한 것
     if (!studyId || studyId === 0) {
-      console.log('⚠️ studyId를 찾을 수 없음. hashId 디코딩 시도:', hashId)
-      // hashId가 이미 숫자인 경우 그대로 사용
-      if (!isNaN(Number(hashId))) {
-        studyId = Number(hashId)
-        console.log('✅ hashId를 숫자로 변환하여 studyId로 사용:', studyId)
-      } else {
-        // hashId가 문자열인 경우 기본값 설정
-        studyId = 1 // 임시 기본값
-        console.log('⚠️ studyId를 찾을 수 없어 기본값 사용:', studyId)
-      }
+      console.error('❌ 백엔드에서 스터디를 찾을 수 없음. id가 0입니다:', data)
+      console.error('❌ hashId:', hashId)
+      throw new Error('해당 스터디를 찾을 수 없습니다. 스터디가 존재하지 않거나 삭제되었을 수 있습니다.')
     }
 
     console.log('🎯 최종 studyId:', studyId)
@@ -140,11 +142,11 @@ export const getStudyDetail = async (hashId: string): Promise<StudyDetail> => {
     const result: StudyDetail = {
       studyId: studyId,
       name: data.name || '',
-      imageUrl: data.imageUrl || data.image_url || '',
-      status: data.status,
-      role: data.role,
+      imageUrl: data.imageUrl || '',
+      status: data.status as 'PENDING' | 'APPROVED' | 'LEFT' | 'REJECTED' | null,
+      role: data.role as 'ADMIN' | 'DELEGATE' | 'MEMBER' | undefined,
       description: data.description,
-      userCount: data.userCount || data.user_count
+      userCount: data.userCount
     }
 
     console.log('✅ Converted StudyDetail:', result)

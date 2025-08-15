@@ -45,9 +45,9 @@ export const useStudyDetail = (hashId: string) => {
 }
 
 // ✅ 수정: studyId가 숫자인지 확인하고 문자열로 변환하여 전달
-export const useStudyMembers = (studyId: number | undefined | null) => {
+export const useStudyMembers = (studyId: number) => {
   return useQuery({
-    queryKey: studyKeys.members(studyId ? String(studyId) : ''),
+    queryKey: studyKeys.members(String(studyId)),
     queryFn: () => {
       if (!studyId || studyId <= 0) {
         console.warn('유효하지 않은 studyId:', studyId)
@@ -57,7 +57,7 @@ export const useStudyMembers = (studyId: number | undefined | null) => {
     },
     staleTime: 60 * 1000,
     gcTime: 5 * 60 * 1000,
-    enabled: !!studyId && studyId > 0, // 숫자 유효성 검사
+    enabled: studyId > 0, // 숫자 유효성 검사
   })
 }
 
