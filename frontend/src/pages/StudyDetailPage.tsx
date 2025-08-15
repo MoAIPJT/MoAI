@@ -57,14 +57,14 @@ const StudyDetailPage: React.FC = () => {
   const {
     data: participants = [],
     error: membersError
-  } = useStudyMembers(shouldLoadStudyDetail && studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0)
+  } = useStudyMembers(studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0)
 
   // ✅ 스터디별 일정 조회
   const {
     data: studySchedules = [],
     isLoading: isSchedulesLoading
   } = useStudySchedules(
-    shouldLoadStudyDetail && studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0,
+    studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0,
     currentMonth.year,
     currentMonth.month
   )
@@ -77,14 +77,14 @@ const StudyDetailPage: React.FC = () => {
     data: categories = [],
     isLoading: isCategoriesLoading,
     error: categoriesError
-  } = useCategories(shouldLoadStudyDetail && studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0)
+  } = useCategories(studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0)
 
   // ✅ 공부 자료 목록 조회 - /ref/list 엔드포인트 사용
   const {
     data: refFiles = [],
     isLoading: isRefFilesLoading,
     error: refFilesError
-  } = useRefList(shouldLoadStudyDetail && studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0)
+  } = useRefList(studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0)
 
   // 카테고리 생성/삭제 mutation
   const createCategoryMutation = useCreateCategory(studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0)
@@ -202,7 +202,7 @@ const StudyDetailPage: React.FC = () => {
   // 백엔드에서 공지사항 가져오기
   useEffect(() => {
     const fetchStudyNotice = async () => {
-      if (studyDetail?.studyId && isLoggedIn) {
+      if (studyDetail?.studyId && studyDetail.studyId > 0 && isLoggedIn) {
         try {
           const response = await getStudyNotice(studyDetail.studyId)
           if (response.notice && response.notice.trim()) {
@@ -269,6 +269,9 @@ const StudyDetailPage: React.FC = () => {
   const currentStudy = useMemo(() => {
     // 비로그인 상태에서는 null 반환
     if (!isLoggedIn || !studyDetail || !activeStudyId) return null
+
+    // studyId가 유효하지 않은 경우 null 반환
+    if (!studyDetail.studyId || studyDetail.studyId <= 0) return null
 
     return {
       id: activeStudyId,
@@ -395,7 +398,7 @@ const StudyDetailPage: React.FC = () => {
   }
 
   const handleNoticeSubmit = async () => {
-    if (!currentStudy || !noticeContent.trim() || !studyDetail?.studyId) return
+    if (!currentStudy || !noticeContent.trim() || !studyDetail?.studyId || studyDetail.studyId <= 0) return
 
     try {
       // 공지사항 업데이트 API 호출
@@ -583,25 +586,14 @@ const StudyDetailPage: React.FC = () => {
       return
     }
 
-    // studyId가 0이거나 없는 경우 hashId를 사용
-    let targetStudyId = studyDetail?.studyId
-    if (!targetStudyId || targetStudyId === 0) {
-      console.log('⚠️ studyId가 0이거나 없음. hashId 사용 시도:', hashId)
-      if (!isNaN(Number(hashId))) {
-        targetStudyId = Number(hashId)
-        console.log('✅ hashId를 studyId로 사용:', targetStudyId)
-      } else {
-        console.log('❌ hashId도 숫자가 아님:', hashId)
-        alert('스터디 ID를 찾을 수 없습니다. 페이지를 새로고침해주세요.')
-        return
-      }
-    }
-
-    if (!targetStudyId || !hashId) {
-      console.log('❌ 필수 데이터 누락:', { studyId: targetStudyId, hashId })
+    // studyDetail이 없거나 studyId가 없는 경우 에러 처리
+    if (!studyDetail?.studyId || studyDetail.studyId <= 0) {
+      console.log('❌ studyDetail 또는 studyId가 없음:', studyDetail)
+      alert('스터디 정보를 찾을 수 없습니다. 페이지를 새로고침해주세요.')
       return
     }
 
+    const targetStudyId = studyDetail.studyId
     console.log('🚀 가입 요청 시작 - studyId:', targetStudyId)
 
     try {
@@ -691,7 +683,7 @@ const StudyDetailPage: React.FC = () => {
   }
 
   const handleAcceptJoinRequest = async (userId: number, role: 'ADMIN' | 'DELEGATE' | 'MEMBER' = 'MEMBER') => {
-    if (!studyDetail?.studyId) return
+    if (!studyDetail?.studyId || studyDetail.studyId <= 0) return
     try {
       await acceptJoinRequestMutation.mutateAsync({
         studyId: studyDetail.studyId,
@@ -704,7 +696,7 @@ const StudyDetailPage: React.FC = () => {
   }
 
   const handleRejectJoinRequest = async (userId: number) => {
-    if (!studyDetail?.studyId) return
+    if (!studyDetail?.studyId || studyDetail.studyId <= 0) return
     try {
       await rejectJoinRequestMutation.mutateAsync({
         studyId: studyDetail.studyId,
@@ -724,7 +716,7 @@ const StudyDetailPage: React.FC = () => {
   }
 
   // 스터디 수정 훅
-  const updateStudyMutation = useUpdateStudy(studyDetail?.studyId || 0)
+  const updateStudyMutation = useUpdateStudy(studyDetail?.studyId && studyDetail.studyId > 0 ? studyDetail.studyId : 0)
 
   // 스터디 수정 핸들러
   const handleStudyUpdate = async (data: {
@@ -733,7 +725,7 @@ const StudyDetailPage: React.FC = () => {
     image?: File
     maxCapacity: number
   }) => {
-    if (!studyDetail?.studyId) return
+    if (!studyDetail?.studyId || studyDetail.studyId <= 0) return
 
     try {
       // useUpdateStudy 훅을 사용하여 스터디 수정
@@ -748,7 +740,7 @@ const StudyDetailPage: React.FC = () => {
   }
 
   const handleCategoryRemove = async (categoryId: number) => {
-    if (!studyDetail?.studyId) return
+    if (!studyDetail?.studyId || studyDetail.studyId <= 0) return
 
     try {
       // 카테고리 삭제 API 호출
@@ -759,7 +751,7 @@ const StudyDetailPage: React.FC = () => {
   }
 
   const handleCategoryAdd = async (categoryName: string) => {
-    if (!studyDetail?.studyId) return
+    if (!studyDetail?.studyId || studyDetail.studyId <= 0) return
 
     try {
       // 카테고리 생성 API 호출
@@ -771,7 +763,7 @@ const StudyDetailPage: React.FC = () => {
 
   // 멤버 삭제(강제탈퇴) 핸들러
   const handleMemberRemove = async (userId: number) => {
-    if (!studyDetail?.studyId) return
+    if (!studyDetail?.studyId || studyDetail.studyId <= 0) return
 
     try {
       // 멤버 삭제 API 호출
@@ -790,7 +782,7 @@ const StudyDetailPage: React.FC = () => {
   }
 
       const handleMemberRoleChange = async (userId: number, newRole: 'ADMIN' | 'DELEGATE' | 'MEMBER') => {
-    if (!studyDetail?.studyId) return
+    if (!studyDetail?.studyId || studyDetail.studyId <= 0) return
 
     const payload = {
       studyId: studyDetail.studyId,
@@ -827,7 +819,7 @@ const StudyDetailPage: React.FC = () => {
 
   // 스터디 탈퇴 핸들러
   const handleLeaveStudy = async () => {
-    if (!studyDetail?.studyId) return
+    if (!studyDetail?.studyId || studyDetail.studyId <= 0) return
 
     // 확인 창 표시
     const isConfirmed = window.confirm(
@@ -871,7 +863,7 @@ const StudyDetailPage: React.FC = () => {
   }
 
   const handleAddNewCategory = async (categoryName: string) => {
-    if (!studyDetail?.studyId) return
+    if (!studyDetail?.studyId || studyDetail.studyId <= 0) return
 
     try {
       // 카테고리 생성 API 호출
@@ -921,7 +913,7 @@ const StudyDetailPage: React.FC = () => {
 
   // ✅ 공부 자료 수정 제출 핸들러
   const handleFileEditSubmit = async (data: { id: string; title: string; description: string; categoryId: number[] }) => {
-    if (!studyDetail?.studyId) return
+    if (!studyDetail?.studyId || studyDetail.studyId <= 0) return
 
     try {
       // 파일 수정 API 호출 - JSON 형태로 데이터 전송
@@ -946,7 +938,7 @@ const StudyDetailPage: React.FC = () => {
 
   // ✅ 공부 자료 삭제 핸들러
   const handleContentDelete = async (contentId: string) => {
-    if (!studyDetail?.studyId) return
+    if (!studyDetail?.studyId || studyDetail.studyId <= 0) return
 
     // 확인 창 표시
     const isConfirmed = window.confirm(
@@ -998,7 +990,7 @@ const StudyDetailPage: React.FC = () => {
   }
 
   const handleUploadSubmit = async (data: UploadData) => {
-    if (!studyDetail?.studyId) return
+    if (!studyDetail?.studyId || studyDetail.studyId <= 0) return
 
     try {
       // FormData 생성 - API 요청 구조에 맞춤

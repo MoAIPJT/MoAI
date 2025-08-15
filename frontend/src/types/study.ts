@@ -82,10 +82,10 @@ export interface StudyAllItem {
 
 // 스터디 상세 정보 (StudyDetailResponseDto 기반)
 export interface StudyDetail {
-  studyId?: number
+  studyId: number // 필수 필드로 변경
   name: string
   imageUrl: string
-  status: 'PENDING' | 'APPROVED' | 'LEFT' | 'REJECTED'
+  status: 'PENDING' | 'APPROVED' | 'LEFT' | 'REJECTED' | null
   role?: 'ADMIN' | 'DELEGATE' | 'MEMBER'
   description?: string
   userCount?: number
