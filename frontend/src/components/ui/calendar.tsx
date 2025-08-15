@@ -180,24 +180,13 @@ function CustomCalendar({
             >
               <span>{day.getDate()}</span>
               {hasEvents && (
-                <div className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 flex gap-0.1">
-                  {dayEvents.slice(0, 3).map((event, eventIndex) => (
-                    <div
-                      key={eventIndex}
-                      className="w-2 h-2 rounded-full"
-                      style={{
-                        backgroundColor: isSelected ? '#ffffff' : event.color
-                      }}
-                    />
-                  ))}
-                  {dayEvents.length > 3 && (
-                    <div
-                      className="w-2 h-2 rounded-full"
-                      style={{
-                        backgroundColor: isSelected ? '#ffffff' : '#9ca3af'
-                      }}
-                    />
-                  )}
+                <div className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2">
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{
+                      backgroundColor: isSelected ? '#ffffff' : '#AA64FF'
+                    }}
+                  />
                 </div>
               )}
             </button>
