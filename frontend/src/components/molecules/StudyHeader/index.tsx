@@ -30,7 +30,7 @@ const StudyHeader: React.FC<StudyHeaderProps> = ({
                 />
               </div>
             )}
-            
+
             {/* 스터디 이름과 설명을 같은 시작 위치에 배치 */}
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-gray-800 mb-2">
@@ -42,7 +42,7 @@ const StudyHeader: React.FC<StudyHeaderProps> = ({
             </div>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-4">
           <button
             onClick={onUserCountClick}

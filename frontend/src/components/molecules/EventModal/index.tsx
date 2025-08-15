@@ -321,12 +321,12 @@ const EventModal: React.FC<EventModalProps> = ({
                   <div className="absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-50 min-w-[120px]">
                   <div className="flex flex-col gap-1">
                   {[
-                    { name: "내 일정", color: "bg-blue-500" },
-                    { name: "업무", color: "bg-green-500" },
+                    { name: "내 일정", color: "bg-purple-500" },
+                    { name: "업무", color: "bg-purple-500" },
                     { name: "개인", color: "bg-purple-500" },
-                    // { name: "가족", color: "bg-orange-500" },
-                    { name: "스터디", color: "bg-red-500" },
-                    { name: "회의", color: "bg-yellow-500" },
+                    // { name: "가족", color: "bg-purple-500" },
+                    { name: "스터디", color: "bg-purple-500" },
+                    { name: "회의", color: "bg-purple-500" },
                   ].map((colorOption) => (
                     <button
                       key={colorOption.color}

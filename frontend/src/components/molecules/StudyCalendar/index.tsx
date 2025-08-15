@@ -45,7 +45,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
       date: startDate,
       startTime: startDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
       endTime: endDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-      color: "bg-blue-500", // 기본 색상
+      color: "#AA64FF", // 모든 이벤트를 보라색으로 통일
       day: startDate.getDate(),
       description: schedule.memo || '',
       location: '스터디룸',
@@ -63,7 +63,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
       date: new Date(new Date().getFullYear(), new Date().getMonth(), 9), // 현재 월 9일
       startTime: "14:00",
       endTime: "15:00",
-      color: "bg-blue-500",
+      color: "#AA64FF", // 보라색으로 통일
       day: 9,
       description: "주간 팀 미팅",
       location: "회의실 A",
@@ -76,7 +76,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
       date: new Date(new Date().getFullYear(), new Date().getMonth(), 16), // 현재 월 16일
       startTime: "10:00",
       endTime: "12:00",
-      color: "bg-green-500",
+      color: "#AA64FF", // 보라색으로 통일
       day: 16,
       description: "최종 프로젝트 발표",
       location: "발표실",
@@ -89,7 +89,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
       date: new Date(new Date().getFullYear(), new Date().getMonth(), 25), // 현재 월 25일
       startTime: "19:00",
       endTime: "21:00",
-      color: "bg-purple-500",
+      color: "#AA64FF", // 보라색으로 통일
       day: 25,
       description: "알고리즘 스터디",
       location: "온라인",
@@ -266,26 +266,18 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
 
   // Sample my calendars
   const calendars: CalendarType[] = [
-    // { name: "내 일정", color: "bg-blue-500" },
-    { name: "업무", color: "bg-green-500" },
+    // { name: "내 일정", color: "bg-purple-500" },
+    { name: "업무", color: "bg-purple-500" },
     { name: "개인", color: "bg-purple-500" },
-    // { name: "가족", color: "bg-orange-500" },
-    { name: "스터디", color: "bg-red-500" },
-    { name: "회의", color: "bg-yellow-500" },
+    // { name: "가족", color: "bg-purple-500" },
+    { name: "스터디", color: "bg-purple-500" },
+    { name: "회의", color: "bg-purple-500" },
   ]
 
   // Calendar 컴포넌트용 이벤트 데이터 변환 (dot 표시용)
   const getColorValue = (colorClass: string) => {
-    switch (colorClass) {
-      case 'bg-blue-500': return '#3b82f6';
-      case 'bg-green-500': return '#10b981';
-      case 'bg-purple-500': return '#8b5cf6';
-      case 'bg-red-500': return '#ef4444';
-      case 'bg-yellow-500': return '#eab308';
-      case 'bg-pink-500': return '#ec4899';
-      case 'bg-orange-500': return '#f97316';
-      default: return '#8b5cf6';
-    }
+    // 모든 색상을 보라색으로 통일
+    return '#AA64FF';
   };
 
   // 일정이 있는 날짜만 필터링하여 동그라미 표시
@@ -555,7 +547,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
             title: eventToEdit.title,
             startTime: eventToEdit.startTime,
             endTime: eventToEdit.endTime,
-            color: eventToEdit.color || 'bg-blue-500',
+            color: eventToEdit.color || 'bg-purple-500', // 보라색으로 통일
             description: eventToEdit.description,
             location: eventToEdit.location,
             attendees: eventToEdit.attendees

@@ -41,15 +41,15 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
     try {
       setIsLoading(true)
       setError(null)
-      
+
       // 1. 세션 열기
       const openResponse = await videoConferenceService.openSession(hashId)
       console.log('세션 시작 성공:', openResponse)
-      
+
       // 2. 바로 세션 참여
       const joinResponse = await videoConferenceService.joinSession(hashId)
       console.log('세션 참여 성공:', joinResponse)
-      
+
       // 3. 화상회의 페이지를 새 탭에서 열기
       const params = new URLSearchParams({
         wsUrl: joinResponse.wsUrl,
@@ -57,13 +57,13 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
         roomName: joinResponse.roomName,
         sessionId: hashId
       })
-      
+
       const videoConferenceUrl = `/video-conference?${params.toString()}`
       console.log('화상회의 URL:', videoConferenceUrl)
-      
+
       // 새 탭에서 열기
       window.open(videoConferenceUrl, '_blank')
-      
+
       // 4. 세션 상태 업데이트
       setSessionStatus(prev => ({
         ...prev,
@@ -71,10 +71,10 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
         count: 1,
         participants: []
       }))
-      
+
       // 성공 메시지
       alert('온라인 스터디가 시작되었고 화상회의에 참여했습니다!')
-      
+
     } catch (error) {
       console.error('세션 시작/참여 실패:', error)
       setError('온라인 스터디를 시작할 수 없습니다.')
@@ -91,10 +91,10 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
     try {
       setIsLoading(true)
       setError(null)
-      
+
       const response = await videoConferenceService.joinSession(hashId)
       console.log('세션 참여 성공:', response)
-      
+
       // URL 파라미터로 세션 정보를 전달하여 새 탭에서 열기
       const params = new URLSearchParams({
         wsUrl: response.wsUrl,
@@ -102,13 +102,13 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
         roomName: response.roomName,
         sessionId: hashId
       })
-      
+
       const videoConferenceUrl = `/video-conference?${params.toString()}`
       console.log('화상회의 URL:', videoConferenceUrl)
-      
+
       // 새 탭에서 열기
       window.open(videoConferenceUrl, '_blank')
-      
+
     } catch (error) {
       console.error('세션 참여 실패:', error)
       setError('세션에 참여할 수 없습니다.')
@@ -124,7 +124,7 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
   const isAdminOrDelegate = currentUserRole === 'ADMIN' || currentUserRole === 'DELEGATE'
   const isSessionOpen = sessionStatus?.sessionOpen || false
   const currentParticipants = sessionStatus?.participants || []
-  
+
   // 디버깅용 로그
   console.log('StudyVideoConference 상태:', {
     hashId,
@@ -151,7 +151,7 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
               {isSessionOpen ? '진행 중' : '대기 중'}
             </span>
           </div>
-          
+
           {isSessionOpen && (
             <span className="text-sm text-gray-600">
               참가자: {sessionStatus?.count || 0}명
@@ -212,8 +212,8 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
             >
               {isLoading ? '참여 중...' : '온라인 스터디 참여'}
             </Button>
-            
-            
+
+
           </>
         )}
       </div>

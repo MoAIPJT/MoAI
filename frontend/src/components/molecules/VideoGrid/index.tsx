@@ -36,8 +36,8 @@ const VideoGrid = forwardRef<HTMLDivElement, VideoGridProps>(({
               console.log('화면 공유 트랙 제외됨:', participantId);
               return;
             }
-            
-            const videoElement = Array.from(videoElements).find(el => 
+
+            const videoElement = Array.from(videoElements).find(el =>
               el.id === participantId || el.dataset.participantId === participantId
             );
             if (videoElement) {
@@ -67,7 +67,7 @@ const VideoGrid = forwardRef<HTMLDivElement, VideoGridProps>(({
   });
 
   return (
-    <div 
+    <div
       ref={ref || subscribersRef}
       className="w-full h-full max-w-6xl"
       style={getGridStyle()}
@@ -85,7 +85,7 @@ const VideoGrid = forwardRef<HTMLDivElement, VideoGridProps>(({
              isLocal={true}
              isDemo={true}
            />
-          
+
                      {/* 데모 참가자들 */}
            {demoParticipants.map((participant) => (
              <VideoParticipant
@@ -112,12 +112,12 @@ const VideoGrid = forwardRef<HTMLDivElement, VideoGridProps>(({
              isSpeaking={speakingParticipantId === 'local'}
              isLocal={true}
            />
-          
+
                      {/* 원격 참가자들 */}
            {Array.from(remoteParticipants.values()).map((participant, index) => {
              const participantState = remoteParticipantStates.get(participant.sid);
              const isVideoEnabled = participantState ? participantState.video : true;
-             
+
              return (
                <VideoParticipant
                  key={participant.sid}
