@@ -78,6 +78,8 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
       onMemberRoleChange?.(pendingRoleChange.userId, pendingRoleChange.newRole as 'ADMIN' | 'DELEGATE' | 'MEMBER')
       setPendingRoleChange(null)
       setShowConfirmModal(false)
+      // 권한 변경 후 새로고침
+      window.location.reload()
     }
   }
 
@@ -278,7 +280,7 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
 
       {/* 권한 변경 확인 모달 */}
       {showConfirmModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-60">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-[60]">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold mb-4 text-gray-900">
               관리자 권한 변경
