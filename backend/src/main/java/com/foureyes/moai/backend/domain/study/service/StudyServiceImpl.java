@@ -487,6 +487,7 @@ public class StudyServiceImpl implements StudyService {
         // 1) 멤버십 없음 → 이름, 이미지
         if (membershipOpt.isEmpty()) {
             return StudyDetailResponseDto.builder()
+                .id(group.getId())
                 .name(group.getName())
                 .imageUrl(group.getImageUrl())
                 .build();
@@ -495,6 +496,7 @@ public class StudyServiceImpl implements StudyService {
         // 2) PENDING → 이름, 이미지, 상태 만
         if (membership.getStatus() == StudyMembership.Status.PENDING) {
             return StudyDetailResponseDto.builder()
+                .id(group.getId())
                 .name(group.getName())
                 .imageUrl(group.getImageUrl())
                 .status(StudyMembership.Status.PENDING.name())
