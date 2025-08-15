@@ -86,12 +86,23 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
     setShowConfirmModal(false)
   }
 
-  // 멤버 목록을 정렬: 내가 항상 가장 위에 위치
+  // 멤버 목록을 정렬: 내가 항상 가장 위에 위치, 그 다음 역할별 정렬
   const sortedMembers = [...members].sort((a, b) => {
-    // 내가 항상 첫 번째 (실제 사용자 이름으로 비교)
+    // 1. 내가 항상 첫 번째 (실제 사용자 이름으로 비교)
     if (currentUserName && a.member === currentUserName) return -1
     if (currentUserName && b.member === currentUserName) return 1
-    return 0
+
+    // 2. 역할별 정렬: ADMIN > DELEGATE > MEMBER
+    const roleOrder = { 'ADMIN': 3, 'DELEGATE': 2, 'MEMBER': 1 }
+    const aRoleOrder = roleOrder[a.role as keyof typeof roleOrder] || 0
+    const bRoleOrder = roleOrder[b.role as keyof typeof roleOrder] || 0
+
+    if (aRoleOrder !== bRoleOrder) {
+      return bRoleOrder - aRoleOrder // 내림차순 정렬
+    }
+
+    // 3. 같은 역할인 경우 이름순 정렬
+    return a.member.localeCompare(b.member)
   })
 
   return (
@@ -147,13 +158,11 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
 
                   <div className="flex items-center gap-3">
 
-                    {/* Role 표시 (ADMIN 제외)*/}
-                    {currentUserRole !== 'ADMIN' && (
-                      <span className="text-gray-600 font-medium">
-                        {member.role === 'ADMIN' ? '운영자' :
-                        member.role === 'DELEGATE' ? '대리인' : '회원'}
-                      </span>
-                    )}
+                    {/* Role 표시 */}
+                    <span className="text-gray-600 font-medium">
+                      {member.role === 'ADMIN' ? '운영자' :
+                      member.role === 'DELEGATE' ? '대리인' : '회원'}
+                    </span>
 
                     {/* 권한 변경 드롭다운 (ADMIN만 가능) */}
                     {canChangeRole && (

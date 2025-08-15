@@ -1214,15 +1214,7 @@ return (
       loading={loading}
       currentStudy={currentStudy}
       currentUserRole={studyDetail?.role} // 현재 사용자 역할 전달
-      userName={(() => {
-        // admin 사용자 찾기
-        if (studyDetail?.role === 'ADMIN') {
-          return userProfile?.name || '관리자'
-        }
-        // admin이 아닌 경우 admin 멤버 찾기
-        const adminMember = participants.find(member => member.role === 'ADMIN')
-        return adminMember?.member || '관리자'
-      })()}
+      userName={userProfile?.name || '사용자'}
       onItemClick={handleItemClick}
       onStudyClick={handleStudyClick}
       onSearch={handleSearch}
