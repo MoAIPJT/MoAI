@@ -16,12 +16,12 @@ import type { ProfileData } from '../components/organisms/ProfileSettingsModal/t
 import type { CalendarEvent } from '../components/ui/calendar'
 import InviteLinkModal from '../components/organisms/InviteLinkModal'
 import CreateStudyModal from '../components/organisms/CreateStudyModal'
-import { fetchSummaryList } from '../services/summaryService'
 import { useLogout, useMe, usePatchProfile, useChangePassword, useDeleteAccount } from '@/hooks/useUsers'
 import { useAuth } from '@/hooks/useAuth'
 import { useAppStore } from '@/store/appStore'
 import { createStudy, getAllStudies } from '@/services/studyService'
 import { scheduleService } from '@/services/scheduleService'
+import { useAiDashboardList } from '@/hooks/useAisummaries'
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate()
@@ -33,10 +33,11 @@ const DashboardPage: React.FC = () => {
   const changePasswordMutation = useChangePassword()
   const deleteAccountMutation = useDeleteAccount()
 
+  // AI 요약본 목록 조회 훅 사용
+  const { data: dashboardSummaries, isLoading: isSummaryLoading } = useAiDashboardList()
+
   const [studies, setStudies] = useState<StudyItem[]>([])
-  const [summaries, setSummaries] = useState<AISummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isSummaryLoading, setIsSummaryLoading] = useState(true)
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
   const [currentInviteUrl, setCurrentInviteUrl] = useState('')
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
@@ -235,40 +236,35 @@ const DashboardPage: React.FC = () => {
       }))
 
       setStudies(convertedStudies)
-    } catch (error) {
+    } catch {
       setStudies([])
     } finally {
       setIsLoading(false)
     }
   }
 
-  // AI 요약본 목록을 가져오는 함수
-  const fetchSummaries = async () => {
-    try {
-      setIsSummaryLoading(true)
+  // dashboardSummaries를 AISummary 타입으로 변환
+  const convertedSummaries: AISummary[] = React.useMemo(() => {
+    if (!dashboardSummaries?.summaries) return []
 
-      const userId = localStorage.getItem('userId') || '1'
-      const response = await fetchSummaryList(userId)
-
-      const convertedSummaries: AISummary[] = response.summaries.map(summary => ({
-        id: parseInt(summary.summaryId) || Date.now(),
+    return dashboardSummaries.summaries
+      .slice(0, 4) // 최대 4개까지만 표시
+      .map(summary => ({
+        id: summary.summaryId,
         title: summary.title,
         description: summary.description,
-        createdAt: new Date().toISOString().split('T')[0],
+        createdAt: summary.createdAt,
         pdfUrl: `/pdfs/${summary.summaryId}.pdf`
       }))
+  }, [dashboardSummaries])
 
-      setSummaries(convertedSummaries)
-    } catch (error) {
-      setSummaries([])
-    } finally {
-      setIsSummaryLoading(false)
-    }
+  // AI 요약본 클릭 핸들러 추가
+  const handleSummaryClick = () => {
+    window.open('/ai-summary', '_blank')
   }
 
   useEffect(() => {
     fetchStudies()
-    fetchSummaries()
     fetchSchedules()
   }, [])
 
@@ -306,17 +302,13 @@ const DashboardPage: React.FC = () => {
 
       await patchProfileMutation.mutateAsync(updateData)
       alert('프로필이 성공적으로 업데이트되었습니다.')
-    } catch (error) {
+    } catch {
       alert('프로필 업데이트에 실패했습니다.')
     }
   }
 
   const handleChangePassword = () => {
     // TODO: 비밀번호 변경 페이지로 이동 또는 모달 열기
-  }
-
-  const handleOpenChangePasswordModal = () => {
-    setIsChangePasswordModalOpen(true)
   }
 
   const handleChangePasswordSubmit = async (data: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
@@ -332,8 +324,8 @@ const DashboardPage: React.FC = () => {
       let errorMessage = '비밀번호 변경에 실패했습니다.'
 
       if (error && typeof error === 'object' && 'code' in error) {
-        const errorCode = (error as any).code
-        const errorMsg = (error as any).message
+        const errorCode = (error as { code: string; message?: string }).code
+        const errorMsg = (error as { code: string; message?: string }).message
 
         switch (errorCode) {
           case 'INVALID_PASSWORD':
@@ -383,8 +375,8 @@ const DashboardPage: React.FC = () => {
       let errorMessage = '회원탈퇴에 실패했습니다.'
 
       if (error && typeof error === 'object' && 'code' in error) {
-        const errorCode = (error as any).code
-        const errorMsg = (error as any).message
+        const errorCode = (error as { code: string; message?: string }).code
+        const errorMsg = (error as { code: string; message?: string }).message
 
         switch (errorCode) {
           case 'UNAUTHORIZED':
@@ -463,10 +455,10 @@ const DashboardPage: React.FC = () => {
 
       let errorMessage = '스터디 생성에 실패했습니다.'
       if (error && typeof error === 'object' && 'message' in error) {
-        errorMessage += `\n에러: ${error.message}`
+        errorMessage += `\n에러: ${(error as { message: string }).message}`
       }
       if (error && typeof error === 'object' && 'code' in error) {
-        errorMessage += `\n코드: ${error.code}`
+        errorMessage += `\n코드: ${(error as { code: string }).code}`
       }
 
       alert(errorMessage)
@@ -511,8 +503,8 @@ const DashboardPage: React.FC = () => {
       })
 
       setCalendarEvents(events)
-    } catch (error) {
-      console.error('월별 일정 데이터 로드 실패:', error)
+    } catch {
+      console.error('월별 일정 데이터 로드 실패')
     }
   }
 
@@ -588,9 +580,9 @@ const DashboardPage: React.FC = () => {
                     <h2 className="text-2xl font-bold text-gray-900">AI 요약 자료</h2>
                   </div>
                   <AISummaryList
-                    summaries={summaries}
+                    summaries={convertedSummaries}
                     isLoading={isSummaryLoading}
-                    onSummaryClick={() => {}}
+                    onSummaryClick={handleSummaryClick}
                   />
                 </div>
               </div>
@@ -714,7 +706,6 @@ const DashboardPage: React.FC = () => {
         onUpdateProfile={handleUpdateProfile}
         onChangePassword={handleChangePassword}
         onWithdrawMembership={handleWithdrawMembership}
-        onOpenChangePasswordModal={handleOpenChangePasswordModal}
         isLoading={isProfileLoading}
       />
 

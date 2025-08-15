@@ -4,6 +4,7 @@ import type {
   AiSummaryCreateRes,
   AiSummaryListRes,
   AiSummarySidebarListRes,
+  AiSummaryDashboardRes,
   AiSummaryEditReq,
   AiSummaryEditRes,
   AiSummaryDeleteRes
@@ -75,6 +76,20 @@ export const deleteAiSummary = async (id: number): Promise<AiSummaryDeleteRes> =
     const response = await api.delete(`/ai/delete/${id}`)
     return toCamelCase(response.data)
   } catch (error) {
+    throw error
+  }
+}
+
+// 대시보드용 AI 요약 목록 조회
+export const getDashboardSummaries = async (): Promise<AiSummaryDashboardRes> => {
+  try {
+    const response = await api.get('/ai/dashboard')
+    return toCamelCase(response.data)
+  } catch (error: any) {
+    // 404 에러 시 빈 배열 반환
+    if (error.response?.status === 404) {
+      return { summaries: [] }
+    }
     throw error
   }
 }

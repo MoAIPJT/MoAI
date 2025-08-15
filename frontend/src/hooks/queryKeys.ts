@@ -27,7 +27,8 @@ export const aiKeys = {
   all: ['ai'] as const,
   list: (userId: number) => ['ai', 'list', userId] as const,
   sidebar: (userId: number) => ['ai', 'sidebar', userId] as const,
-  detail: (id: number) => ['ai', 'detail', id] as const
+  detail: (id: number) => ['ai', 'detail', id] as const,
+  dashboard: () => ['ai', 'dashboard'] as const
 }
 
 export const scheduleKeys = {
