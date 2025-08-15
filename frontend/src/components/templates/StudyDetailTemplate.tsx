@@ -230,14 +230,15 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
             {/* 오른쪽: 일정 (4/10) */}
             <div className="col-span-4">
               <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm h-fit">
-                <div className="flex items-center mb-6">
+                {/* <div className="flex items-center mb-6">
                   <div className="w-2 h-8 rounded-full mr-3" style={{ backgroundColor: '#F8BB50' }}></div>
                   <h2 className="text-2xl font-bold text-gray-900">일정</h2>
-                </div>
+                </div> */}
                 <StudyCalendar
                   schedules={studySchedules || []}
                   isLoading={isSchedulesLoading}
                   studyId={studyId}
+                  currentUserRole={currentUserRole}
                 />
               </div>
             </div>

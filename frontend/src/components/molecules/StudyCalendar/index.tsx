@@ -12,7 +12,8 @@ import { useEditSchedule, useDeleteSchedule } from '../../../hooks/useSchedules'
 const StudyCalendar: React.FC<StudyCalendarProps> = ({
   schedules = [],
   isLoading = false,
-  studyId
+  studyId,
+  currentUserRole
 }) => {
   const [date, setDate] = useState<Date | undefined>(new Date())
   const [showEventModal, setShowEventModal] = useState(false)
@@ -452,7 +453,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
             events={calendarEventsForDot as UICalendarEvent[]}
             selectedDate={date}
             onDateSelect={handleDateSelect}
-            onAddEvent={handleAddEvent}
+            onAddEvent={currentUserRole === 'ADMIN' || currentUserRole === 'DELEGATE' ? handleAddEvent : undefined}
             className="w-fit"
           />
         )}
@@ -508,6 +509,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
                 onEditEvent={handleEditEvent}
                 onDeleteEvent={handleDeleteEvent}
                 studyId={studyId}
+                currentUserRole={currentUserRole}
               />
             </div>
           </div>

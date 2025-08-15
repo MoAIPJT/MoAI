@@ -29,6 +29,7 @@ const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   onCreateSchedule,
   onEditSchedule,
   studyId,
+  currentUserRole,
 }) => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -87,13 +88,15 @@ const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
     <>
       <div className="w-64 h-full bg-white/10 backdrop-blur-lg p-4 shadow-xl border-r border-white/20 rounded-tr-3xl flex flex-col justify-between">
         <div>
-          <button
-            onClick={handleCreateEvent}
-            className="mb-6 flex items-center justify-center gap-2 rounded-full bg-[#795AA1] px-4 py-3 text-white w-full hover:bg-[#795AA1]/80 transition-colors"
-          >
-            <Plus className="h-5 w-5" />
-            <span>일정 생성</span>
-          </button>
+          {(currentUserRole === 'ADMIN' || currentUserRole === 'DELEGATE') && (
+            <button
+              onClick={handleCreateEvent}
+              className="mb-6 flex items-center justify-center gap-2 rounded-full bg-[#795AA1] px-4 py-3 text-white w-full hover:bg-[#795AA1]/80 transition-colors"
+            >
+              <Plus className="h-5 w-5" />
+              <span>일정 생성</span>
+            </button>
+          )}
 
           <MiniCalendar
             currentMonth={currentMonth}
