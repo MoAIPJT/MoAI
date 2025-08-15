@@ -1,5 +1,5 @@
 import React from 'react'
-import { StudyMembersIcon, SettingsIcon } from '../../atoms/Icons'
+import { StudyMembersIcon, SettingsIcon } from '../../atoms/icons'
 import type { StudyHeaderProps } from './types'
 
 const StudyHeader: React.FC<StudyHeaderProps> = ({
@@ -10,7 +10,7 @@ const StudyHeader: React.FC<StudyHeaderProps> = ({
   currentUserRole,
   onSettingsClick,
   onUserCountClick,
-  onLeaveStudy,
+  // onLeaveStudy
 }) => {
   return (
     <div className="bg-white border-b border-gray-200 p-6">
