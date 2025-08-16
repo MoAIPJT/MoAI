@@ -40,7 +40,7 @@ const VideoConferenceMainContent: React.FC<VideoConferenceMainContentProps> = ({
   currentPdfName,
   cols,
   rows,
-  pdfViewerRef,
+  pdfViewerRef: _pdfViewerRef,
   speakingParticipantId,
 }) => {
   const allParticipants = isDemoMode ? demoParticipants : Array.from(remoteParticipants.values());

@@ -240,7 +240,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
                   schedules={studySchedules || []}
                   isLoading={isSchedulesLoading}
                   studyId={studyId}
-                  currentUserRole={currentUserRole}
+                  currentUserRole={currentUserRole as 'ADMIN' | 'DELEGATE' | 'MEMBER' | undefined}
                 />
               </div>
             </div>

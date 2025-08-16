@@ -16,7 +16,7 @@ export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null)
   const navigate = useNavigate()
 
-  const { accessToken, setAuth, clearAuth } = useAppStore((state) => state.auth)
+  const { accessToken, clearAuth } = useAppStore((state) => state.auth)
 
   const loginMutation = useLogin()
   const signupMutation = useSignup()

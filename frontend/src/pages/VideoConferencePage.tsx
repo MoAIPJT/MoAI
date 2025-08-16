@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { useParams, useLocation, useNavigate } from 'react-router-dom'
+import { useParams, useLocation } from 'react-router-dom'
 import { Room, RoomEvent, RemoteParticipant, LocalParticipant, Track } from 'livekit-client'
 import CircleButton from '../components/atoms/CircleButton'
 import VideoConferenceHeader from '../components/organisms/VideoConferenceHeader'
@@ -33,7 +33,6 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
 }: VideoConferencePageProps) => {
   const { studyId: urlStudyId } = useParams<{ studyId: string }>()
   const location = useLocation()
-  const navigate = useNavigate()
   const studyId = propStudyId || (urlStudyId ? parseInt(urlStudyId) : undefined)
   
   // StudyDetailPage에서 전달된 세션 정보
@@ -69,8 +68,8 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
   const [activeSidebarTab, setActiveSidebarTab] = useState<'participants' | 'chat' | 'materials' | null>(null)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [newChatMessage, setNewChatMessage] = useState('')
-  const [studyMaterials, setStudyMaterials] = useState<StudyMaterial[]>([])
-  const [hasUnreadChatMessages, setHasUnreadChatMessages] = useState(false)
+  const [studyMaterials] = useState<StudyMaterial[]>([])
+  const [hasUnreadChatMessages] = useState(false)
 
   // ===== PDF 뷰어 모드 상태 =====
   const [isPdfViewerMode, setIsPdfViewerMode] = useState(false)

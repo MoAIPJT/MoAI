@@ -28,10 +28,8 @@ const VideoGrid = forwardRef<HTMLDivElement, VideoGridProps>(({
         videoTracks.forEach((trackPublication: TrackPublication) => {
           const track = trackPublication.track;
           if (track) {
-            // 화면 공유 트랙은 제외 (여러 방법으로 감지)
-            const isScreenShare = trackPublication.source === Track.Source.ScreenShare ||
-                                 trackPublication.name === 'screen' ||
-                                 trackPublication.kind === 'screen-share';
+            // 화면 공유 트랙은 제외 (source로만 확인)
+            const isScreenShare = trackPublication.source === Track.Source.ScreenShare;
             if (isScreenShare) {
               console.log('화면 공유 트랙 제외됨:', participantId);
               return;

@@ -11,9 +11,7 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
   isVideoEnabled,
   onToggleAudio,
   onToggleVideo,
-  onToggleDemoParticipantAudio,
-  onToggleDemoParticipantVideo
-}) => {
+}: ParticipantListProps) => {
   const allParticipants = isDemoMode ? demoParticipants : Array.from(remoteParticipants.values())
 
   return (
@@ -62,10 +60,11 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
         <h5 className="text-gray-300 text-sm font-medium mb-3">다른 참가자 ({allParticipants.length}명)</h5>
 
         {allParticipants.map((participant) => {
-          const participantId = isDemoMode ? participant.id : participant.sid
-          const participantName = isDemoMode ? participant.name : participant.identity
-          const hasAudio = isDemoMode ? participant.hasAudio : (remoteParticipantStates.get(participantId)?.audio ?? true)
-          const hasVideo = isDemoMode ? participant.hasVideo : (remoteParticipantStates.get(participantId)?.video ?? true)
+          const isDemoParticipant = 'id' in participant
+          const participantId = isDemoParticipant ? participant.id : participant.sid
+          const participantName = isDemoParticipant ? participant.name : participant.identity
+          const hasAudio = isDemoParticipant ? participant.hasAudio : (remoteParticipantStates.get(participantId)?.audio ?? true)
+          const hasVideo = isDemoParticipant ? participant.hasVideo : (remoteParticipantStates.get(participantId)?.video ?? true)
 
           return (
             <div key={participantId} className="p-3 bg-gray-700 rounded-lg">

@@ -1,6 +1,5 @@
-import React, { forwardRef, useEffect } from 'react'
+import { forwardRef, useEffect } from 'react'
 import type { VideoParticipantProps } from './types'
-import { Track } from 'livekit-client'
 
 const VideoParticipant = forwardRef<HTMLVideoElement, VideoParticipantProps>(({
   participantId,

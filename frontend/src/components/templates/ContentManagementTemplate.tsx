@@ -67,7 +67,10 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
         id: content.id,
         title: content.title,
         description: content.description,
-        tags: content.tags
+        tags: content.tags,
+        author: content.author,
+        date: content.date,
+        isSelected: content.isSelected
       })), [contents]
   )
 

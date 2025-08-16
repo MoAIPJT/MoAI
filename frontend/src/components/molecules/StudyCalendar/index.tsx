@@ -275,7 +275,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
   ]
 
   // Calendar 컴포넌트용 이벤트 데이터 변환 (dot 표시용)
-  const getColorValue = (colorClass: string) => {
+  const getColorValue = (_colorClass: string) => {
     // 모든 색상을 보라색으로 통일
     return '#AA64FF';
   };

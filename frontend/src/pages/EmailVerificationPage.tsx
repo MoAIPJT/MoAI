@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import EmailVerificationTemplate from '@/components/templates/EmailVerificationTemplate'
-import { verifyEmail } from '@/services/usersService'
+import { verifyEmail as verifyEmailService } from '@/services/usersService'
 
 const EmailVerificationPage: React.FC = () => {
   const [searchParams] = useSearchParams()
@@ -21,7 +21,7 @@ const EmailVerificationPage: React.FC = () => {
       }
 
       try {
-        await verifyEmail({ email, code })
+        await verifyEmailService({ email, code })
         setVerificationStatus('success')
         // 3초 후 로그인 페이지로 리다이렉트
         setTimeout(() => {

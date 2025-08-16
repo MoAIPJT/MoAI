@@ -17,7 +17,11 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   const navigate = useNavigate()
   const [name, setName] = useState(profileData.name)
   const [isEditing, setIsEditing] = useState(false)
-  const [previewUrl, setPreviewUrl] = useState<string>(profileData.profileImageUrl || '/src/assets/MoAI/smiling.png')
+  const [previewUrl, setPreviewUrl] = useState<string>(
+    typeof profileData.profileImageUrl === 'string' 
+      ? profileData.profileImageUrl || '/src/assets/MoAI/smiling.png'
+      : '/src/assets/MoAI/smiling.png'
+  )
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [hasChanges, setHasChanges] = useState(false)
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false)
@@ -26,7 +30,11 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   // profileData가 변경될 때마다 상태 초기화
   useEffect(() => {
     setName(profileData.name)
-    setPreviewUrl(profileData.profileImageUrl || '/src/assets/MoAI/smiling.png')
+    setPreviewUrl(
+      typeof profileData.profileImageUrl === 'string' 
+        ? profileData.profileImageUrl || '/src/assets/MoAI/smiling.png'
+        : '/src/assets/MoAI/smiling.png'
+    )
     setHasChanges(false)
     setIsEditing(false)
   }, [profileData.name, profileData.profileImageUrl, profileData.providerType])
@@ -82,7 +90,11 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
 
   const handleCancel = () => {
     setName(profileData.name)
-    setPreviewUrl(profileData.profileImageUrl || '/src/assets/MoAI/smiling.png')
+    setPreviewUrl(
+      typeof profileData.profileImageUrl === 'string' 
+        ? profileData.profileImageUrl || '/src/assets/MoAI/smiling.png'
+        : '/src/assets/MoAI/smiling.png'
+    )
     setIsEditing(false)
     setHasChanges(false)
   }

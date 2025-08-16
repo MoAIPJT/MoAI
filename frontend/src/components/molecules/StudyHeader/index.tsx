@@ -1,5 +1,5 @@
 import React from 'react'
-import { StudyMembersIcon, SettingsIcon } from '../../atoms/Icons'
+import { StudyMembersIcon, SettingsIcon } from '../../atoms/icons'
 import type { StudyHeaderProps } from './types'
 
 const StudyHeader: React.FC<StudyHeaderProps> = ({

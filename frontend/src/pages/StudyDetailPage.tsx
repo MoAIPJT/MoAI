@@ -711,11 +711,11 @@ const StudyDetailPage: React.FC = () => {
     }
   }
   // 스터디 관리 모달 관련 핸들러들
-  const handleStudyNameChange = (name: string) => {
+  const handleStudyNameChange = (_name: string) => {
     // currentStudy는 이제 useMemo로 계산되므로 직접 수정 불가
   }
 
-  const handleStudyDescriptionChange = (description: string) => {
+  const handleStudyDescriptionChange = (_description: string) => {
     // currentStudy는 이제 useMemo로 계산되므로 직접 수정 불가
   }
 
@@ -817,7 +817,7 @@ const StudyDetailPage: React.FC = () => {
     }
   }
 
-  const handleMaxMembersChange = (maxMembers: number) => {
+  const handleMaxMembersChange = (_maxMembers: number) => {
     // 최대 멤버 수 변경 API 호출 (실제 구현 필요)
   }
 

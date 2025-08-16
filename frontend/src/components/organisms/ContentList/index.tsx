@@ -1,5 +1,4 @@
 import React from 'react'
-import type { ContentItem } from '../../types/content'
 import type { ContentListProps } from './types'
 import checkboxChecked from '@/assets/icons/checkbox.svg'
 import checkboxUnchecked from '@/assets/icons/none-checkbox.svg'
@@ -11,10 +10,7 @@ const ContentList: React.FC<ContentListProps> = ({
   onContentEdit,
   onContentDelete,
   onContentDownload,
-  currentUserRole
 }) => {
-  // ADMIN 또는 DELEGATE 권한이 있는지 확인
-  const canManageContent = currentUserRole === 'ADMIN' || currentUserRole === 'DELEGATE'
 
   if (contents.length === 0) {
     return (

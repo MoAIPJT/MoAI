@@ -4,8 +4,6 @@ import type { StudyVideoConferenceProps } from './types'
 import videoConferenceService, { type ParticipantsResponseDto } from '../../../services/videoConferenceService'
 
 const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
-  onCreateRoom,
-  participants = [],
   currentUserRole,
   hashId
 }) => {
