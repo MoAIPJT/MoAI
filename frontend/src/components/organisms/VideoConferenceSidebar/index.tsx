@@ -10,16 +10,9 @@ interface ChatMessage {
   timestamp: Date;
 }
 
-interface StudyMaterial {
-  id: string;
-  name: string;
-  type: string;
-  url: string;
-}
-
 interface VideoConferenceSidebarProps {
   sidebarOpen: boolean;
-  activeSidebarTab: 'participants' | 'chat' | 'materials' | null;
+  activeSidebarTab: 'participants' | 'chat' | null;
   isDemoMode: boolean;
   demoParticipants: Array<{id: string, name: string, hasAudio: boolean, hasVideo: boolean}>;
   remoteParticipants: Map<string, RemoteParticipant>;
@@ -29,17 +22,14 @@ interface VideoConferenceSidebarProps {
   isVideoEnabled: boolean;
   chatMessages: ChatMessage[];
   newChatMessage: string;
-  studyMaterials: StudyMaterial[];
-  hasUnreadChatMessages: boolean;
   onCloseSidebar: () => void;
-  onTabChange: (tab: 'participants' | 'chat' | 'materials') => void;
+  onTabChange: (tab: 'participants' | 'chat') => void;
   onToggleAudio: () => void;
   onToggleVideo: () => void;
   onToggleDemoParticipantAudio: (participantId: string) => void;
   onToggleDemoParticipantVideo: (participantId: string) => void;
   onNewChatMessageChange: (message: string) => void;
   onSendChatMessage: () => void;
-  onMaterialClick: (material: StudyMaterial) => void;
 }
 
 const VideoConferenceSidebar: React.FC<VideoConferenceSidebarProps> = ({
@@ -54,8 +44,6 @@ const VideoConferenceSidebar: React.FC<VideoConferenceSidebarProps> = ({
   isVideoEnabled,
   chatMessages,
   newChatMessage,
-  studyMaterials,
-  hasUnreadChatMessages,
   onCloseSidebar,
   onTabChange,
   onToggleAudio,
@@ -63,8 +51,7 @@ const VideoConferenceSidebar: React.FC<VideoConferenceSidebarProps> = ({
   onToggleDemoParticipantAudio,
   onToggleDemoParticipantVideo,
   onNewChatMessageChange,
-  onSendChatMessage,
-  onMaterialClick
+  onSendChatMessage
 }) => {
   if (!sidebarOpen || !activeSidebarTab) return null;
 
@@ -75,7 +62,6 @@ const VideoConferenceSidebar: React.FC<VideoConferenceSidebarProps> = ({
         <h3 className="text-white font-semibold">
           {activeSidebarTab === 'participants' && '참가자 목록'}
           {activeSidebarTab === 'chat' && '채팅'}
-          {activeSidebarTab === 'materials' && '공부자료'}
         </h3>
         <button
           onClick={onCloseSidebar}
@@ -116,24 +102,6 @@ const VideoConferenceSidebar: React.FC<VideoConferenceSidebarProps> = ({
               <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
             </svg>
             채팅
-            {hasUnreadChatMessages && activeSidebarTab !== 'chat' && (
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
-            )}
-          </div>
-        </button>
-        <button
-          onClick={() => onTabChange('materials')}
-          className={`flex-1 py-3 px-3 text-sm font-medium transition-all duration-200 ${
-            activeSidebarTab === 'materials'
-              ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-700 shadow-inner'
-              : 'text-gray-400 hover:text-white hover:bg-gray-700'
-          }`}
-        >
-          <div className="flex items-center justify-center gap-2">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/>
-            </svg>
-            자료
           </div>
         </button>
       </div>
@@ -163,37 +131,6 @@ const VideoConferenceSidebar: React.FC<VideoConferenceSidebarProps> = ({
             onNewChatMessageChange={onNewChatMessageChange}
             onSendChatMessage={onSendChatMessage}
           />
-        )}
-
-        {activeSidebarTab === 'materials' && (
-          <div className="p-3">
-            <div className="space-y-2">
-              {studyMaterials.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className="text-gray-400 text-6xl mb-4">📄</div>
-                  <p className="text-gray-400 text-sm">
-                    {isDemoMode ? '데모 모드에서는 기본 자료가 표시됩니다.' : '이 스터디에 등록된 자료가 없습니다.'}
-                  </p>
-                </div>
-              ) : (
-                studyMaterials.map((material) => (
-                  <div 
-                    key={material.id} 
-                    className="flex items-center space-x-2 p-2 bg-gray-700 rounded hover:bg-gray-600 cursor-pointer transition-colors"
-                    onClick={() => onMaterialClick(material)}
-                  >
-                    <span className="text-blue-400">
-                      {material.type === 'pdf' && '📄'}
-                    </span>
-                    <span className="text-white text-sm flex-1">{material.name}</span>
-                    {material.type === 'pdf' && (
-                      <span className="text-xs text-gray-400">PDF</span>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
         )}
       </div>
     </div>

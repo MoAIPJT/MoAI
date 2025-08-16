@@ -1,11 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import VideoGrid from '../../molecules/VideoGrid';
-import PDFViewer from '../../atoms/PDFViewer';
 
 interface VideoConferenceMainContentProps {
   isConnected: boolean;
   isDemoMode: boolean;
-  isPdfViewerMode: boolean;
   isScreenSharing: boolean;
   screenShareParticipant: string;
   screenShareStream: MediaStream | null;
@@ -15,18 +13,14 @@ interface VideoConferenceMainContentProps {
   isVideoEnabled: boolean;
   participantName: string;
   remoteParticipantStates: Map<string, {audio: boolean, video: boolean}>;
-  currentPdfUrl: string;
-  currentPdfName: string;
   cols: number;
   rows: number;
-  pdfViewerRef: React.RefObject<HTMLIFrameElement | null>;
   speakingParticipantId?: string;
 }
 
 const VideoConferenceMainContent: React.FC<VideoConferenceMainContentProps> = ({
   isConnected,
   isDemoMode,
-  isPdfViewerMode,
   isScreenSharing,
   screenShareParticipant,
   screenShareStream,
@@ -36,11 +30,8 @@ const VideoConferenceMainContent: React.FC<VideoConferenceMainContentProps> = ({
   isVideoEnabled,
   participantName,
   remoteParticipantStates,
-  currentPdfUrl,
-  currentPdfName,
   cols,
   rows,
-  pdfViewerRef,
   speakingParticipantId,
 }) => {
   const allParticipants = isDemoMode ? demoParticipants : Array.from(remoteParticipants.values());
@@ -68,81 +59,6 @@ const VideoConferenceMainContent: React.FC<VideoConferenceMainContentProps> = ({
     return (
       <div className="flex-1 flex items-center justify-center p-2 min-h-0 overflow-hidden">
         <div className="flex w-full h-full gap-4">
-          {/* 좌측: 참가자 화면들 */}
-          <div className="w-1/4 flex flex-col gap-2">
-            <div className="text-center text-white text-xs mb-2">
-              <span className="bg-gray-700 px-2 py-1 rounded">
-                참가자 화면
-                <span className="ml-1 text-blue-400">(화면 공유 모드)</span>
-              </span>
-            </div>
-            <VideoGrid
-              isDemoMode={isDemoMode}
-              demoParticipants={demoParticipants}
-              remoteParticipants={remoteParticipants}
-              localVideoTrack={localVideoTrack}
-              isVideoEnabled={isVideoEnabled}
-              participantName={participantName}
-              remoteParticipantStates={remoteParticipantStates}
-              cols={1}
-              rows={4}
-              speakingParticipantId={speakingParticipantId}
-            />
-          </div>
-
-          {/* 중앙: 화면 공유 영역 */}
-          <div className="flex-1">
-            <div className="bg-gray-800 rounded-lg h-full flex items-center justify-center relative overflow-hidden">
-              {/* LiveKit 화면 공유 트랙을 렌더링할 div */}
-              <div 
-                id="screen-share-container"
-                className="w-full h-full flex items-center justify-center bg-gray-900"
-                style={{ minHeight: '400px' }}
-              >
-                <div className="text-gray-400 text-center">
-                  <div className="text-2xl mb-2">🖥️</div>
-                  <div className="text-sm">화면 공유 중...</div>
-                  <div className="text-xs mt-1">{screenShareParticipant}의 화면</div>
-                  <div className="text-xs mt-2 text-gray-500">
-                    화면 공유 트랙이 연결되면 여기에 표시됩니다
-                  </div>
-                </div>
-              </div>
-              
-              {/* 화면 공유 정보 오버레이 */}
-              <div className="absolute top-4 left-4 bg-black bg-opacity-70 text-white px-3 py-2 rounded">
-                <div className="text-sm font-semibold">
-                  {screenShareParticipant}의 화면 공유
-                </div>
-              </div>
-              
-              {/* 화면 공유 중지 버튼 (자신이 공유 중일 때만) */}
-              {screenShareParticipant === participantName && (
-                <div className="absolute top-4 right-4">
-                  <button
-                    onClick={() => {
-                      // 화면 공유 중지 이벤트 발생
-                      const event = new CustomEvent('stop-screen-share');
-                      window.dispatchEvent(event);
-                    }}
-                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors"
-                  >
-                    공유 중지
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // PDF 뷰어 모드일 때
-  if (isPdfViewerMode) {
-    return (
-      <div className="flex-1 flex items-center justify-center p-2 min-h-0 overflow-hidden">
-        <div className="flex w-full h-full gap-4">
           {/* 좌측: 사용자 화면들 */}
           <div className="w-1/4 flex flex-col gap-2">
             <div className="text-center text-white text-xs mb-2">
@@ -164,14 +80,23 @@ const VideoConferenceMainContent: React.FC<VideoConferenceMainContentProps> = ({
             />
           </div>
 
-          {/* 중앙: PDF 뷰어 */}
+          {/* 중앙: 화면 공유 */}
           <div className="flex-1">
-            <PDFViewer
-              pdfUrl={currentPdfUrl}
-              title={currentPdfName}
-              onLoad={() => {}}
-              onError={() => {}}
-            />
+            <div className="bg-gray-800 rounded-lg p-4 h-full flex flex-col">
+              <div className="text-center text-white text-sm mb-2">
+                <span className="bg-green-600 px-2 py-1 rounded">
+                  {screenShareParticipant}의 화면 공유
+                </span>
+              </div>
+              <div className="flex-1 bg-black rounded overflow-hidden">
+                <video
+                  ref={screenShareVideoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>

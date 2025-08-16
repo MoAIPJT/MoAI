@@ -1,8 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { Room, RoomEvent, RemoteParticipant, LocalParticipant, Track } from 'livekit-client'
 import CircleButton from '../components/atoms/CircleButton'
-import AITestViewer from '../components/organisms/AITestViewer'
 import VideoConferenceHeader from '../components/organisms/VideoConferenceHeader'
 import VideoConferenceMainContent from '../components/organisms/VideoConferenceMainContent'
 import VideoConferenceSidebar from '../components/organisms/VideoConferenceSidebar'
@@ -12,13 +11,6 @@ import videoConferenceService from '../services/videoConferenceService'
 interface VideoConferencePageProps {
   studyId?: number
   studyName?: string
-}
-
-interface StudyMaterial {
-  id: string
-  name: string
-  type: string
-  url: string
 }
 
 interface ChatMessage {
@@ -67,21 +59,15 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
 
   // ===== 사이드바 상태 관리 =====
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [activeSidebarTab, setActiveSidebarTab] = useState<'participants' | 'chat' | 'materials' | null>(null)
+  const [activeSidebarTab, setActiveSidebarTab] = useState<'participants' | 'chat' | null>(null)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [newChatMessage, setNewChatMessage] = useState('')
-  const [studyMaterials, setStudyMaterials] = useState<StudyMaterial[]>([])
-  const [hasUnreadChatMessages, setHasUnreadChatMessages] = useState(false)
-
-  // ===== PDF 뷰어 모드 상태 =====
-  const [isPdfViewerMode, setIsPdfViewerMode] = useState(false)
-  const [currentPdfName, setCurrentPdfName] = useState<string>('')
-  const [currentPdfUrl, setCurrentPdfUrl] = useState<string>('')
 
 
 
-  // ===== refs =====
-  const pdfViewerRef = useRef<HTMLIFrameElement>(null)
+
+
+
 
   const studyNameDisplay = studyName !== '스터디' ? studyName : studyId ? `스터디 ${studyId}` : '스터디'
 
@@ -335,7 +321,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
   }
 
   // ===== 사이드바 관련 함수들 =====
-  const toggleSidebar = (tab: 'participants' | 'chat' | 'materials') => {
+  const toggleSidebar = (tab: 'participants' | 'chat') => {
     if (sidebarOpen && activeSidebarTab === tab) {
       setSidebarOpen(false)
       setActiveSidebarTab(null)
@@ -350,7 +336,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
     setActiveSidebarTab(null)
   }
 
-  const handleTabChange = (tab: 'participants' | 'chat' | 'materials') => {
+  const handleTabChange = (tab: 'participants' | 'chat') => {
     setActiveSidebarTab(tab)
   }
 
@@ -372,24 +358,9 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
     setNewChatMessage(message)
   }
 
-  // ===== 공부자료 관련 함수들 =====
-  const handleMaterialClick = (material: StudyMaterial) => {
-    if (material.type === 'pdf') {
-      setIsPdfViewerMode(true)
-      setCurrentPdfName(material.name)
-      setCurrentPdfUrl(material.url)
-      setSidebarOpen(false)
-      setActiveSidebarTab(null)
-    } else {
-      alert(`${material.name}은 PDF 파일이 아닙니다.`)
-    }
-  }
 
-  const exitPdfViewerMode = () => {
-    setIsPdfViewerMode(false)
-    setCurrentPdfName('')
-    setCurrentPdfUrl('')
-  }
+
+
 
 
 
@@ -413,20 +384,16 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
         <VideoConferenceHeader
           studyNameDisplay={studyNameDisplay}
           isDemoMode={false}
-          isPdfViewerMode={isPdfViewerMode}
           isScreenSharing={isScreenSharing}
           screenShareParticipant={screenShareParticipant}
-          currentPdfName={currentPdfName}
           isConnected={isConnected}
           onInitializeDemoMode={() => {}}
-          onExitPdfViewerMode={exitPdfViewerMode}
         />
 
         {/* 메인 콘텐츠 영역 */}
         <VideoConferenceMainContent
           isConnected={isConnected}
           isDemoMode={false}
-          isPdfViewerMode={isPdfViewerMode}
           isScreenSharing={isScreenSharing}
           screenShareParticipant={screenShareParticipant}
           screenShareStream={screenShareStream}
@@ -436,11 +403,8 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
           isVideoEnabled={isVideoEnabled}
           participantName="나"
           remoteParticipantStates={remoteParticipantStates}
-          currentPdfUrl={currentPdfUrl}
-          currentPdfName={currentPdfName}
           cols={cols}
           rows={rows}
-          pdfViewerRef={pdfViewerRef}
         />
 
         {/* 컨트롤 바 영역 */}
@@ -484,7 +448,7 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
             <CircleButton
               variant="gray"
               size="sm"
-              onClick={() => toggleSidebar('participants')}
+              onClick={() => toggleSidebar('chat')}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
@@ -530,8 +494,6 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
         isVideoEnabled={isVideoEnabled}
         chatMessages={chatMessages}
         newChatMessage={newChatMessage}
-        studyMaterials={studyMaterials}
-        hasUnreadChatMessages={hasUnreadChatMessages}
         onCloseSidebar={closeSidebar}
         onTabChange={handleTabChange}
         onToggleAudio={toggleAudio}
@@ -540,7 +502,6 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
         onToggleDemoParticipantVideo={() => {}}
         onNewChatMessageChange={handleNewChatMessageChange}
         onSendChatMessage={sendChatMessage}
-        onMaterialClick={handleMaterialClick}
       />
 
       {/* 에러 메시지 표시 */}
