@@ -58,4 +58,4 @@ const AISummaryList: React.FC<AISummaryListProps> = ({
   )
 }
 
-export default AISummaryList 
+export default AISummaryList

@@ -26,6 +26,16 @@ export const useAiSidebarList = (userId: number) => {
   })
 }
 
+// 대시보드용 AI 요약본 목록 조회 훅 추가
+export const useAiDashboardList = () => {
+  return useQuery({
+    queryKey: aiKeys.dashboard(),
+    queryFn: aiSummaryService.getDashboardSummaries,
+    staleTime: 60 * 1000, // 60 seconds
+    gcTime: 5 * 60 * 1000, // 5 minutes
+  })
+}
+
 // Mutation hooks
 export const useCreateAiSummary = (userId: number) => {
   const queryClient = useQueryClient()

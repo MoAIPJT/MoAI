@@ -332,7 +332,6 @@ const AISummaryPage: React.FC = () => {
         onUpdateProfile={handleUpdateProfile}
         onChangePassword={handleOpenChangePasswordModal}
         onWithdrawMembership={handleWithdrawMembership}
-        onOpenChangePasswordModal={handleOpenChangePasswordModal}
       />
 
       {/* 비밀번호 변경 모달 */}

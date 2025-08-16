@@ -1,1 +1,1 @@
-export { default } from './types';
+// VideoConferenceSidebar 타입 정의

@@ -1,7 +1,7 @@
 import React from 'react';
-import ParticipantNameSetup from '../ParticipantNameSetup';
-import ParticipantInfo from '../ParticipantInfo';
-import SessionJoinForm from '../SessionJoinForm';
+// import ParticipantNameSetup from '../ParticipantNameSetup';
+// import ParticipantInfo from '../ParticipantInfo';
+// import SessionJoinForm from '../SessionJoinForm';
 
 interface SessionJoinSectionProps {
   studyId?: number;
@@ -15,21 +15,21 @@ interface SessionJoinSectionProps {
 }
 
 const SessionJoinSection: React.FC<SessionJoinSectionProps> = ({
-  studyId,
-  studyNameDisplay,
-  sessionId,
-  livekitUrl,
-  participantName,
-  isLoading,
-  onParticipantNameChange,
-  onJoinSession,
+  studyId: _studyId,
+  studyNameDisplay: _studyNameDisplay,
+  sessionId: _sessionId,
+  livekitUrl: _livekitUrl,
+  participantName: _participantName,
+  isLoading: _isLoading,
+  onParticipantNameChange: _onParticipantNameChange,
+  onJoinSession: _onJoinSession,
 }) => {
   return (
     <div className="bg-gray-800 m-4 rounded-lg p-4 flex-shrink-0">
       <h3 className="text-base font-semibold mb-3 text-white">화상회의 참가</h3>
-      
+      <p className="text-gray-300">세션 참가 컴포넌트 개발 중...</p>
       {/* 참가자 이름 설정 */}
-      {!participantName && (
+      {/* {!participantName && (
         <ParticipantNameSetup
           participantName={participantName}
           onParticipantNameChange={onParticipantNameChange}
@@ -37,7 +37,7 @@ const SessionJoinSection: React.FC<SessionJoinSectionProps> = ({
       )}
 
       {/* 참가자 정보 표시 */}
-      {participantName && (
+      {/* {participantName && (
         <ParticipantInfo
           participantName={participantName}
           onParticipantNameChange={onParticipantNameChange}
@@ -45,7 +45,7 @@ const SessionJoinSection: React.FC<SessionJoinSectionProps> = ({
       )}
 
       {/* 세션 정보 */}
-      <SessionJoinForm
+      {/* <SessionJoinForm
         studyId={studyId}
         studyNameDisplay={studyNameDisplay}
         sessionId={sessionId}
@@ -53,7 +53,7 @@ const SessionJoinSection: React.FC<SessionJoinSectionProps> = ({
         participantName={participantName}
         isLoading={isLoading}
         onJoinSession={onJoinSession}
-      />
+      /> */}
     </div>
   );
 };

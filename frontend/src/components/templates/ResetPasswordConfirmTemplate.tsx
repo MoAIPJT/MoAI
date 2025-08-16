@@ -28,7 +28,7 @@ const ResetPasswordConfirmTemplate: React.FC = () => {
       }
 
       try {
-        await verifyTokenMutation.mutateAsync({ email, code: token })
+        await verifyTokenMutation.mutateAsync({ email, code })
         setIsTokenValid(true)
       } catch {
         setIsTokenValid(false)
@@ -48,7 +48,7 @@ const ResetPasswordConfirmTemplate: React.FC = () => {
     try {
       await resetPasswordMutation.mutateAsync({
         email: email,
-        code: code,
+        token: code,
         newPassword: data.password
       })
 

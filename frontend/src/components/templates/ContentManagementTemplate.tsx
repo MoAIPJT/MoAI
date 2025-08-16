@@ -24,6 +24,7 @@ interface ContentManagementTemplateProps {
   onContentDownload: (contentId: string) => void
   onUploadData: () => void
   currentUserRole?: string
+  onAISummarySuccess?: () => void
 }
 
 const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
@@ -44,6 +45,7 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
   onContentDownload,
   onUploadData,
   currentUserRole,
+  onAISummarySuccess,
 }) => {
   // AI Summary Modal 상태 관리
   const [isModalVisible, setIsModalVisible] = useState(false)
@@ -65,7 +67,10 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
         id: content.id,
         title: content.title,
         description: content.description,
-        tags: content.tags
+        tags: content.tags,
+        author: content.author,
+        date: content.date,
+        isSelected: content.isSelected
       })), [contents]
   )
 
@@ -170,6 +175,11 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
       // API 호출
       await createAISummaryMutation.mutateAsync(summaryData)
 
+      // 성공 후 onAISummarySuccess 콜백 호출
+      if (onAISummarySuccess) {
+        onAISummarySuccess()
+      }
+
       // 성공 후 모달 닫기
       handleModalClose()
     } catch (error) {
@@ -255,6 +265,7 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
         onContentRemove={handleContentRemove}
         onSubmit={handleModalSubmit}
         onClose={handleModalClose}
+        onSuccess={onAISummarySuccess}
       />
     </div>
   )

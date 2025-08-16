@@ -1,5 +1,5 @@
 import { useRef, useEffect, forwardRef } from 'react';
-import { Track, TrackPublication } from 'livekit-client';
+import { Track } from 'livekit-client';
 import type { VideoGridProps } from './types';
 import VideoParticipant from '../../atoms/VideoParticipant';
 
@@ -19,42 +19,22 @@ const VideoGrid = forwardRef<HTMLDivElement, VideoGridProps>(({
   const videoRef = useRef<HTMLVideoElement>(null);
   const demoVideoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
 
-  // 비디오 트랙 연결을 위한 useEffect
-  useEffect(() => {
-    if (subscribersRef.current && remoteParticipants.size > 0) {
-      const videoElements = subscribersRef.current.querySelectorAll('video');
-      remoteParticipants.forEach((participant, participantId) => {
-        const videoTracks = Array.from(participant.videoTrackPublications.values());
-        videoTracks.forEach((trackPublication: TrackPublication) => {
-          const track = trackPublication.track;
-          if (track) {
-            // 화면 공유 트랙은 제외 (여러 방법으로 감지)
-            const isScreenShare = trackPublication.source === Track.Source.ScreenShare ||
-                                 trackPublication.name === 'screen' ||
-                                 trackPublication.kind === 'screen-share';
-            if (isScreenShare) {
-              console.log('화면 공유 트랙 제외됨:', participantId);
-              return;
-            }
-            
-            const videoElement = Array.from(videoElements).find(el => 
-              el.id === participantId || el.dataset.participantId === participantId
-            );
-            if (videoElement) {
-              track.detach();
-              track.attach(videoElement);
-            }
-          }
-        });
-      });
-    }
-  }, [remoteParticipants]);
+  // 비디오 트랙 연결을 위한 useEffect - 제거됨 (VideoParticipant에서 직접 처리)
 
   // 로컬 비디오 트랙 연결
   useEffect(() => {
-    if (localVideoTrack && videoRef.current) {
-      localVideoTrack.attach(videoRef.current);
+    const videoElement = videoRef.current;
+    if (localVideoTrack && videoElement) {
+      console.log('로컬 비디오 트랙 연결:', localVideoTrack);
+      localVideoTrack.attach(videoElement);
     }
+    
+    return () => {
+      if (localVideoTrack && videoElement) {
+        console.log('로컬 비디오 트랙 해제');
+        localVideoTrack.detach(videoElement);
+      }
+    };
   }, [localVideoTrack]);
 
   const getGridStyle = () => ({
@@ -67,7 +47,7 @@ const VideoGrid = forwardRef<HTMLDivElement, VideoGridProps>(({
   });
 
   return (
-    <div 
+    <div
       ref={ref || subscribersRef}
       className="w-full h-full max-w-6xl"
       style={getGridStyle()}
@@ -85,7 +65,7 @@ const VideoGrid = forwardRef<HTMLDivElement, VideoGridProps>(({
              isLocal={true}
              isDemo={true}
            />
-          
+
                      {/* 데모 참가자들 */}
            {demoParticipants.map((participant) => (
              <VideoParticipant
@@ -112,24 +92,44 @@ const VideoGrid = forwardRef<HTMLDivElement, VideoGridProps>(({
              isSpeaking={speakingParticipantId === 'local'}
              isLocal={true}
            />
-          
+
                      {/* 원격 참가자들 */}
-           {Array.from(remoteParticipants.values()).map((participant, index) => {
-             const participantState = remoteParticipantStates.get(participant.sid);
-             const isVideoEnabled = participantState ? participantState.video : true;
+           {(() => {
+             const participants = Array.from(remoteParticipants.values());
+             console.log('VideoGrid 렌더링:', {
+               remoteParticipantsCount: remoteParticipants.size,
+               participantIds: Array.from(remoteParticipants.keys()),
+               participants: participants.map(p => ({ sid: p.sid, identity: p.identity }))
+             });
              
-             return (
-               <VideoParticipant
-                 key={participant.sid}
-                 participantId={participant.sid}
-                 participantName={participant.identity || `참가자 ${index + 1}`}
-                 hasVideo={isVideoEnabled}
-                 isVideoEnabled={isVideoEnabled}
-                 isSpeaking={speakingParticipantId === participant.sid}
-                 videoTrack={participant.getTrackPublication(Track.Source.Camera)?.track}
-               />
-             );
-           })}
+             return participants.map((participant, index) => {
+               const participantState = remoteParticipantStates.get(participant.sid);
+               const isVideoEnabled = participantState ? participantState.video : true;
+               
+               // 카메라 트랙 가져오기 (화면 공유 트랙 제외)
+               const videoTrack = participant.getTrackPublication(Track.Source.Camera)?.track;
+
+               console.log('렌더링 중인 원격 참가자:', {
+                 participantId: participant.sid,
+                 participantName: participant.identity,
+                 hasVideoTrack: !!videoTrack,
+                 isVideoEnabled,
+                 participantState
+               });
+
+               return (
+                 <VideoParticipant
+                   key={participant.sid}
+                   participantId={participant.sid}
+                   participantName={participant.identity || `참가자 ${index + 1}`}
+                   hasVideo={isVideoEnabled && !!videoTrack}
+                   isVideoEnabled={isVideoEnabled && !!videoTrack}
+                   isSpeaking={speakingParticipantId === participant.sid}
+                   videoTrack={videoTrack}
+                 />
+               );
+             });
+           })()}
         </>
       )}
     </div>

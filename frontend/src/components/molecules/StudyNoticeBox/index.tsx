@@ -1,6 +1,6 @@
 import React from 'react'
 import type { StudyNoticeBoxProps } from './types'
-import { EditIcon } from '../../atoms/Icons'
+import { EditIcon } from '../../atoms/icons'
 
 const StudyNoticeBox: React.FC<StudyNoticeBoxProps> = ({
   title = '공지 제목1',

@@ -40,6 +40,9 @@ const StudyDetailPage: React.FC = () => {
     return { year: now.getFullYear(), month: now.getMonth() + 1 }
   })
 
+  // AI 요약본 생성 성공 토스트 관련 상태
+  const [showSuccessToast, setShowSuccessToast] = useState(false)
+
   // ✅ 로그인 상태 확인 - userProfile이 있고 로딩이 아니어야 함
   const isLoggedIn = !!userProfile && !isUserLoading
 
@@ -708,11 +711,11 @@ const StudyDetailPage: React.FC = () => {
     }
   }
   // 스터디 관리 모달 관련 핸들러들
-  const handleStudyNameChange = (name: string) => {
+  const handleStudyNameChange = (_name: string) => {
     // currentStudy는 이제 useMemo로 계산되므로 직접 수정 불가
   }
 
-  const handleStudyDescriptionChange = (description: string) => {
+  const handleStudyDescriptionChange = (_description: string) => {
     // currentStudy는 이제 useMemo로 계산되므로 직접 수정 불가
   }
 
@@ -814,7 +817,7 @@ const StudyDetailPage: React.FC = () => {
     }
   }
 
-  const handleMaxMembersChange = (maxMembers: number) => {
+  const handleMaxMembersChange = (_maxMembers: number) => {
     // 최대 멤버 수 변경 API 호출 (실제 구현 필요)
   }
 
@@ -1020,6 +1023,21 @@ const StudyDetailPage: React.FC = () => {
     }
   }
 
+  // AI 요약본 생성 성공 핸들러
+  const handleAISummarySuccess = () => {
+    setShowSuccessToast(true)
+    // 3초 후 자동으로 토스트 숨기기
+    setTimeout(() => {
+      setShowSuccessToast(false)
+    }, 3000)
+  }
+
+  // 토스트 클릭 시 AI 요약 페이지로 이동
+  const handleToastClick = () => {
+    setShowSuccessToast(false)
+    navigate('/ai-summary')
+  }
+
   // 로그인되지 않은 사용자를 위한 UI를 먼저 렌더링
   if (!isLoggedIn) {
     return (
@@ -1191,20 +1209,13 @@ return (
   <>
     <StudyDetailTemplate
       studies={Array.isArray(studies) ? studies : []}
+      hashId={activeStudyId ?? undefined}
       activeStudyId={activeStudyId}
       expandedStudy={expandedStudy}
       loading={loading}
       currentStudy={currentStudy}
       currentUserRole={studyDetail?.role} // 현재 사용자 역할 전달
-      userName={(() => {
-        // admin 사용자 찾기
-        if (studyDetail?.role === 'ADMIN') {
-          return userProfile?.name || '관리자'
-        }
-        // admin이 아닌 경우 admin 멤버 찾기
-        const adminMember = participants.find(member => member.role === 'ADMIN')
-        return adminMember?.member || '관리자'
-      })()}
+      userName={userProfile?.name || '사용자'}
       onItemClick={handleItemClick}
       onStudyClick={handleStudyClick}
       onSearch={handleSearch}
@@ -1264,10 +1275,28 @@ return (
       onStudyUpdate={handleStudyUpdate}
       onContentEdit={handleContentEdit}
       onContentDelete={handleContentDelete}
-              onContentDownload={handleContentDownload}
-        studyId={studyDetail?.studyId}
-        hashId={hashId}
-      />
+      onContentDownload={handleContentDownload}
+      studyId={studyDetail?.studyId}
+      onAISummarySuccess={handleAISummarySuccess} // AI 요약본 생성 성공 핸들러 추가
+    />
+
+    {/* AI 요약본 생성 성공 토스트 */}
+    {showSuccessToast && (
+      <div
+        onClick={handleToastClick}
+        className="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg cursor-pointer hover:bg-green-600 transition-colors z-50 flex items-center space-x-3"
+      >
+        <div className="flex-shrink-0">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div>
+          <div className="font-semibold">AI 요약본 생성 완료!</div>
+          <div className="text-sm opacity-90">클릭하여 AI 요약 페이지로 이동</div>
+        </div>
+      </div>
+    )}
 
     {/* Category Add Modal */}
     <CategoryAddModal

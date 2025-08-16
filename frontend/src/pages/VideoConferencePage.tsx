@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useParams, useLocation, useNavigate } from 'react-router-dom'
+import { useParams, useLocation } from 'react-router-dom'
 import { Room, RoomEvent, RemoteParticipant, LocalParticipant, Track } from 'livekit-client'
 import CircleButton from '../components/atoms/CircleButton'
 import VideoConferenceHeader from '../components/organisms/VideoConferenceHeader'
@@ -26,7 +26,6 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
 }: VideoConferencePageProps) => {
   const { studyId: urlStudyId } = useParams<{ studyId: string }>()
   const location = useLocation()
-  const navigate = useNavigate()
   const studyId = propStudyId || (urlStudyId ? parseInt(urlStudyId) : undefined)
   
   // StudyDetailPage에서 전달된 세션 정보
@@ -62,6 +61,16 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
   const [activeSidebarTab, setActiveSidebarTab] = useState<'participants' | 'chat' | null>(null)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [newChatMessage, setNewChatMessage] = useState('')
+<<<<<<< HEAD
+=======
+  const [studyMaterials] = useState<StudyMaterial[]>([])
+  const [hasUnreadChatMessages] = useState(false)
+
+  // ===== PDF 뷰어 모드 상태 =====
+  const [isPdfViewerMode, setIsPdfViewerMode] = useState(false)
+  const [currentPdfName, setCurrentPdfName] = useState<string>('')
+  const [currentPdfUrl, setCurrentPdfUrl] = useState<string>('')
+>>>>>>> 3a556c39ca138d861f31567486d7496ea57c9eb3
 
 
 
@@ -76,18 +85,52 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
   // ===== LiveKit 세션 초기화 =====
   const initializeLiveKitSession = async (wsUrl: string, token: string) => {
     try {
-      const newRoom = new Room({
-        adaptiveStream: true,
-        dynacast: true,
+      setIsLoading(true)
+      setError(null)
+
+      console.log('🔗 LiveKit 연결 시도:')
+      console.log('  - wsUrl:', wsUrl)
+      console.log('  - token:', token.substring(0, 20) + '...')
+
+      // LiveKit 서버 상태 확인
+      await testLiveKitServer(wsUrl)
+
+      const newRoom = new Room()
+
+      // 연결 상태 이벤트 추가
+      newRoom.on(RoomEvent.Connected, () => {
+        console.log('✅ LiveKit 방에 성공적으로 연결됨')
+        setIsConnected(true)
+        setIsLoading(false)
+      })
+
+      newRoom.on(RoomEvent.Disconnected, (reason?: any) => {
+        console.log('❌ LiveKit 방에서 연결 해제됨:', reason)
+        setIsConnected(false)
+        setRoom(null)
+        setLocalParticipant(null)
+        setRemoteParticipants(new Map())
+      })
+
+      newRoom.on(RoomEvent.Reconnecting, () => {
+        console.log('🔄 LiveKit 재연결 중...')
+        setIsLoading(true)
+      })
+
+      newRoom.on(RoomEvent.Reconnected, () => {
+        console.log('✅ LiveKit 재연결 성공')
+        setIsLoading(false)
       })
 
       // 방 이벤트 리스너 설정
       newRoom.on(RoomEvent.ParticipantConnected, (participant: RemoteParticipant) => {
+        console.log('👤 참가자 연결됨:', participant.identity)
         setRemoteParticipants((prev: Map<string, RemoteParticipant>) => new Map(prev.set(participant.identity, participant)))
         setRemoteParticipantStates((prev: Map<string, {audio: boolean, video: boolean}>) => new Map(prev.set(participant.identity, {audio: true, video: true})))
       })
 
       newRoom.on(RoomEvent.ParticipantDisconnected, (participant: RemoteParticipant) => {
+        console.log('👤 참가자 연결 해제됨:', participant.identity)
         setRemoteParticipants((prev: Map<string, RemoteParticipant>) => {
           const newMap = new Map(prev)
           newMap.delete(participant.identity)
@@ -100,7 +143,8 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
         })
       })
 
-      newRoom.on(RoomEvent.TrackSubscribed, (track: any, publication: any, participant: any) => {
+      newRoom.on(RoomEvent.TrackSubscribed, (track: any, _publication: any, participant: any) => {
+        console.log('📹 트랙 구독됨:', track.kind, participant.identity)
         // 원격 참가자의 트랙 구독
         if (track.kind === 'video') {
           // 비디오 트랙 처리
@@ -109,25 +153,134 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
         }
       })
 
-      newRoom.on(RoomEvent.TrackUnsubscribed, (track: any, publication: any, participant: any) => {
+      newRoom.on(RoomEvent.TrackUnsubscribed, (track: any, _publication: any, participant: any) => {
+        console.log('📹 트랙 구독 해제됨:', track.kind, participant.identity)
         // 트랙 구독 해제 처리
       })
 
-      // 방에 연결
-      await newRoom.connect(wsUrl, token, {
+      // 연결 에러 핸들링
+      newRoom.on(RoomEvent.ConnectionQualityChanged, (quality: any, participant?: any) => {
+        console.log('📊 연결 품질 변경:', quality, participant?.identity)
+      })
+
+      // WebSocket URL 검증 및 변환
+      let validatedWsUrl = wsUrl
+      if (!wsUrl.startsWith('ws://') && !wsUrl.startsWith('wss://')) {
+        // HTTP/HTTPS URL을 WebSocket URL로 변환
+        if (wsUrl.startsWith('https://')) {
+          validatedWsUrl = wsUrl.replace('https://', 'wss://')
+        } else if (wsUrl.startsWith('http://')) {
+          validatedWsUrl = wsUrl.replace('http://', 'ws://')
+        } else {
+          // 프로토콜이 없으면 기본값으로 wss 사용
+          validatedWsUrl = `wss://${wsUrl}`
+        }
+      }
+
+      console.log('🔗 최종 WebSocket URL:', validatedWsUrl)
+
+      // 방에 연결 (타임아웃 설정 추가)
+      const connectPromise = newRoom.connect(validatedWsUrl, token, {
         autoSubscribe: true,
       })
 
+      // 타임아웃 설정 (30초)
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Connection timeout')), 30000)
+      })
+
+      await Promise.race([connectPromise, timeoutPromise])
+
       setRoom(newRoom)
       setLocalParticipant(newRoom.localParticipant)
-      setIsConnected(true)
 
-      // 로컬 비디오/오디오 활성화
-      await newRoom.localParticipant.enableCameraAndMicrophone()
+      // 로컬 비디오/오디오 활성화 (에러 처리 추가)
+      try {
+        // 단계별로 미디어 활성화
+        console.log('🎥 미디어 장치 활성화 시작...')
+        
+        // 먼저 오디오만 활성화
+        await newRoom.localParticipant.setMicrophoneEnabled(true)
+        console.log('✅ 마이크 활성화 성공')
+        
+        // 그 다음 비디오 활성화
+        await newRoom.localParticipant.setCameraEnabled(true)
+        console.log('✅ 카메라 활성화 성공')
+        
+        console.log('✅ 모든 미디어 장치가 성공적으로 활성화됨')
+      } catch (mediaError) {
+        console.warn('⚠️ 미디어 장치 활성화 실패:', mediaError)
+        
+        // 개별 장치별로 재시도
+        try {
+          await newRoom.localParticipant.setMicrophoneEnabled(true)
+          console.log('✅ 마이크만 활성화 성공')
+        } catch (micError) {
+          console.warn('⚠️ 마이크 활성화 실패:', micError)
+        }
+        
+        try {
+          await newRoom.localParticipant.setCameraEnabled(true)
+          console.log('✅ 카메라만 활성화 성공')
+        } catch (camError) {
+          console.warn('⚠️ 카메라 활성화 실패:', camError)
+        }
+        
+        // 미디어 권한이 없어도 화상회의 참여는 가능하도록 함
+      }
 
     } catch (error) {
-      console.error('LiveKit 세션 연결 실패:', error)
-      setError('화상회의에 연결할 수 없습니다.')
+      console.error('❌ LiveKit 세션 연결 실패:', error)
+      setIsLoading(false)
+      
+      // 구체적인 에러 메시지 제공
+      let errorMessage = '화상회의에 연결할 수 없습니다.'
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Connection timeout')) {
+          errorMessage = '연결 시간이 초과되었습니다. LiveKit 서버 상태를 확인해주세요.'
+        } else if (error.message.includes('could not establish pc connection')) {
+          errorMessage = 'LiveKit 서버에 연결할 수 없습니다.\n\n가능한 원인:\n• LiveKit 서버가 실행되지 않음\n• 네트워크 방화벽 차단\n• 잘못된 서버 URL\n• TURN 서버 설정 필요'
+        } else if (error.message.includes('Unauthorized')) {
+          errorMessage = '인증에 실패했습니다. 토큰을 확인해주세요.'
+        } else if (error.message.includes('Room not found')) {
+          errorMessage = '화상회의 방을 찾을 수 없습니다.'
+        } else if (error.message.includes('Server unreachable')) {
+          errorMessage = 'LiveKit 서버에 접근할 수 없습니다. 서버 주소와 포트를 확인해주세요.'
+        } else {
+          errorMessage = `연결 실패: ${error.message}`
+        }
+      }
+      
+      setError(errorMessage)
+    }
+  }
+
+  // ===== LiveKit 서버 연결 테스트 =====
+  const testLiveKitServer = async (wsUrl: string) => {
+    console.log('🔍 LiveKit 서버 연결 테스트 시작...')
+    
+    // HTTP URL로 변환하여 서버 상태 확인
+    let httpUrl = wsUrl
+    if (wsUrl.startsWith('wss://')) {
+      httpUrl = wsUrl.replace('wss://', 'https://')
+    } else if (wsUrl.startsWith('ws://')) {
+      httpUrl = wsUrl.replace('ws://', 'http://')
+    }
+    
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+      
+      const response = await fetch(httpUrl, { 
+        method: 'GET',
+        signal: controller.signal
+      })
+      
+      clearTimeout(timeoutId)
+      console.log('🔗 LiveKit 서버 응답:', response.status)
+    } catch (fetchError) {
+      console.warn('⚠️ LiveKit 서버 연결 테스트 실패:', fetchError)
     }
   }
 
@@ -135,6 +288,11 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
 
   // ===== 컴포넌트 마운트 시 초기화 =====
   useEffect(() => {
+    // 개발 환경에서 연결 진단 실행
+    if (import.meta.env.DEV) {
+      diagnoseConnection()
+    }
+
     // URL 파라미터에서 세션 정보 추출
     const urlParams = new URLSearchParams(window.location.search)
     const wsUrl = urlParams.get('wsUrl')
@@ -144,35 +302,115 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
 
     // URL 파라미터로 전달된 세션 정보가 있으면 LiveKit에 연결
     if (wsUrl && token) {
-      console.log('URL 파라미터에서 세션 정보 수신:', { wsUrl, token, roomName, sessionId })
-      setIsLoading(true)
+      console.log('🔗 URL 파라미터에서 세션 정보 수신:')
+      console.log('  - wsUrl:', wsUrl)
+      console.log('  - token:', token.substring(0, 20) + '...')
+      console.log('  - roomName:', roomName)
+      console.log('  - sessionId:', sessionId)
       initializeLiveKitSession(wsUrl, token)
-        .then(() => {
-          setIsLoading(false)
-        })
-        .catch((error) => {
-          console.error('LiveKit 연결 실패:', error)
-          setError('화상회의에 연결할 수 없습니다.')
-          setIsLoading(false)
-        })
     }
     // StudyDetailPage에서 전달된 세션 정보가 있으면 LiveKit에 연결
     else if (sessionInfo) {
-      setIsLoading(true)
+      console.log('🔗 state에서 세션 정보 수신:')
+      console.log('  - wsUrl:', sessionInfo.wsUrl)
+      console.log('  - token:', sessionInfo.token.substring(0, 20) + '...')
+      console.log('  - roomName:', sessionInfo.roomName)
+      console.log('  - sessionId:', sessionInfo.sessionId)
       initializeLiveKitSession(sessionInfo.wsUrl, sessionInfo.token)
-        .then(() => {
-          setIsLoading(false)
-        })
-        .catch((error) => {
-          console.error('LiveKit 연결 실패:', error)
-          setError('화상회의에 연결할 수 없습니다.')
-          setIsLoading(false)
-        })
     } else {
       // 세션 정보가 없으면 에러 메시지 표시
       setError('화상회의 세션 정보가 없습니다. 스터디 상세 페이지에서 화상회의를 시작해주세요.')
     }
   }, [sessionInfo])
+
+  // ===== 네트워크 진단 함수 =====
+  const diagnoseConnection = async () => {
+    console.log('=== 연결 진단 시작 ===')
+    
+    // 1. 브라우저 WebRTC 지원 확인
+    if (!window.RTCPeerConnection) {
+      console.error('❌ WebRTC가 지원되지 않습니다.')
+      return
+    }
+    console.log('✅ WebRTC 지원됨')
+
+    // 2. 미디어 장치 권한 확인
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      console.log('📹 미디어 장치:', devices.length, '개')
+      
+      // getUserMedia 테스트
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      console.log('✅ 카메라/마이크 접근 가능')
+      stream.getTracks().forEach(track => track.stop())
+    } catch (mediaError) {
+      console.warn('⚠️ 미디어 장치 접근 실패:', mediaError)
+    }
+
+    // 3. 네트워크 연결 확인
+    console.log('🌐 네트워크 상태:', navigator.onLine ? '온라인' : '오프라인')
+    
+    // 4. 백엔드 서버 연결 확인
+    try {
+      const response = await fetch('/api/health', { method: 'GET' })
+      console.log('🔗 백엔드 서버 상태:', response.status === 200 ? '정상' : '오류')
+    } catch (backendError) {
+      console.warn('⚠️ 백엔드 서버 연결 실패:', backendError)
+    }
+    
+    // 5. STUN 서버 연결 테스트
+    try {
+      const pc = new RTCPeerConnection({
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' }
+        ]
+      })
+      
+      const offer = await pc.createOffer()
+      await pc.setLocalDescription(offer)
+      
+      // ICE 후보 수집 대기
+      await new Promise((resolve) => {
+        pc.onicecandidate = (event) => {
+          if (event.candidate) {
+            console.log('✅ ICE 후보 수집:', event.candidate.type)
+          } else {
+            console.log('✅ ICE 후보 수집 완료')
+            resolve(true)
+          }
+        }
+        
+        // 5초 타임아웃
+        setTimeout(() => {
+          console.log('⚠️ ICE 후보 수집 타임아웃')
+          resolve(true)
+        }, 5000)
+      })
+      
+      pc.close()
+    } catch (stunError) {
+      console.error('❌ STUN 서버 연결 실패:', stunError)
+    }
+    
+    console.log('=== 연결 진단 완료 ===')
+  }
+
+  // ===== 연결 재시도 함수 =====
+  const retryConnection = async () => {
+    setError(null)
+    await diagnoseConnection()
+    
+    const urlParams = new URLSearchParams(window.location.search)
+    const wsUrl = urlParams.get('wsUrl')
+    const token = urlParams.get('token')
+
+    if (wsUrl && token) {
+      await initializeLiveKitSession(wsUrl, token)
+    } else if (sessionInfo) {
+      await initializeLiveKitSession(sessionInfo.wsUrl, sessionInfo.token)
+    }
+  }
 
   // ===== 컴포넌트 언마운트 시 정리 =====
   useEffect(() => {
@@ -507,13 +745,27 @@ const VideoConferencePage: React.FC<VideoConferencePageProps> = ({
       {/* 에러 메시지 표시 */}
       {error && (
         <div className="fixed top-4 right-4 bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 max-w-md">
-          <div className="whitespace-pre-line text-sm">{error}</div>
-          <button
-            onClick={() => setError(null)}
-            className="absolute top-2 right-2 text-white hover:text-gray-300"
-          >
-            ✕
-          </button>
+          <div className="whitespace-pre-line text-sm mb-3">{error}</div>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={retryConnection}
+              className="bg-red-700 hover:bg-red-800 text-white px-3 py-1 rounded text-sm transition-colors"
+            >
+              다시 시도
+            </button>
+            <button
+              onClick={diagnoseConnection}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
+            >
+              연결 진단
+            </button>
+            <button
+              onClick={() => setError(null)}
+              className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm transition-colors"
+            >
+              닫기
+            </button>
+          </div>
         </div>
       )}
 

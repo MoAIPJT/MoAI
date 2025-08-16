@@ -52,7 +52,7 @@ const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({
     setPageNumber(1)
   }
 
-  const onDocumentLoadError = (error: Error) => {
+  const onDocumentLoadError = (_error: Error) => {
     setError('PDF를 표시할 수 없습니다. 새 창에서 열기를 시도해보세요.')
   }
 

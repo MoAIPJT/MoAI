@@ -23,12 +23,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       return []
     }
 
-    const converted = apiData.map((study, index) => {
+    const converted = apiData.map((study, _index) => {
       const convertedStudy = {
         id: study.studyId,
         name: study.name,
         image: study.studyImg || '/src/assets/MoAI/thinking.png',
-        summaries: study.summaries.map((summary, summaryIndex) => {
+        summaries: study.summaries.map((summary, _summaryIndex) => {
           const convertedSummary = {
             id: summary.summaryId,  // summaryId 사용
             title: summary.title,

@@ -29,6 +29,16 @@ export interface AiSummarySidebarListRes {
   summaries: AiSummary[]
 }
 
+// 대시보드용 AI 요약본 응답 타입 추가
+export interface AiSummaryDashboardRes {
+  summaries: Array<{
+    summaryId: number
+    title: string
+    description: string
+    createdAt: string
+  }>
+}
+
 export interface AiSummaryEditReq {
   title?: string
   description?: string

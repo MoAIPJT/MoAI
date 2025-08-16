@@ -34,7 +34,7 @@ export interface ResetPasswordVerifyReq {
 
 export interface ResetPasswordUpdateReq {
   email: string
-  code: string
+  token: string
   newPassword: string
 }
 
