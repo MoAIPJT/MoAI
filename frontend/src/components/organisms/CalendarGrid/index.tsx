@@ -193,7 +193,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           <div className="text-white">
             {timeSlots.map((time, i) => (
               <div key={i} className="h-20 border-b border-white/10 pr-2 text-right text-xs text-white flex items-center justify-end">
-                {time > 12 ? `${time - 12} PM` : `${time} AM`}
+                {time > 12 ? `${time - 12} 오후` : `${time} 오전`}
               </div>
             ))}
           </div>

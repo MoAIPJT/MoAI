@@ -8,19 +8,19 @@ import type { CalendarEvent as GridCalendarEvent } from '../../organisms/Calenda
 import type { CalendarEvent as UICalendarEvent } from '@/components/ui/calendar'
 import type { Calendar as CalendarType } from '../../molecules/CalendarList/types'
 import { useEditSchedule, useDeleteSchedule } from '../../../hooks/useSchedules'
+import calendarMoAi from '../../../assets/calendar-moai.png'
+
 
 const StudyCalendar: React.FC<StudyCalendarProps> = ({
   schedules = [],
   isLoading = false,
-  studyId
+  studyId,
+  currentUserRole
 }) => {
   const [date, setDate] = useState<Date | undefined>(new Date())
   const [showEventModal, setShowEventModal] = useState(false)
-  const [showCreateModal, setShowCreateModal] = useState(false)
-
-  // studyId 디버깅
-  console.log('StudyCalendar에서 받은 studyId:', studyId)
-  console.log('StudyCalendar에서 받은 studyId 타입:', typeof studyId)
+  const [showFullCalendarModal, setShowFullCalendarModal] = useState(false)
+  const [selectedEvent, setSelectedEvent] = useState<StudyEvent | null>(null)
 
   // Modal specific states
   const [modalCurrentView, setModalCurrentView] = useState("week")
@@ -28,12 +28,8 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
     // 현재 날짜 설정
     const now = new Date()
     const currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    console.log('StudyCalendar modalCurrentDate 초기값:', currentDate)
-    console.log('현재 시간:', now)
     return currentDate
   })
-  const [selectedEvent, setSelectedEvent] = useState<StudyEvent | null>(null)
-
   // CalendarSidebar 모달 제어를 위한 상태
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -51,7 +47,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
       date: startDate,
       startTime: startDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
       endTime: endDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-      color: "bg-blue-500", // 기본 색상
+      color: "#AA64FF", // 모든 이벤트를 보라색으로 통일
       day: startDate.getDate(),
       description: schedule.memo || '',
       location: '스터디룸',
@@ -59,9 +55,6 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
       organizer: '스터디장'
     }
   })
-
-  console.log('StudyCalendar에서 받은 schedules:', schedules)
-  console.log('변환된 apiEvents:', apiEvents)
 
   // 공유 이벤트 데이터 - API 데이터가 있으면 사용, 없으면 기본 데이터 사용
   const [events, setEvents] = useState<StudyEvent[]>(apiEvents.length > 0 ? apiEvents : [
@@ -72,7 +65,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
       date: new Date(new Date().getFullYear(), new Date().getMonth(), 9), // 현재 월 9일
       startTime: "14:00",
       endTime: "15:00",
-      color: "bg-blue-500",
+      color: "#AA64FF", // 보라색으로 통일
       day: 9,
       description: "주간 팀 미팅",
       location: "회의실 A",
@@ -85,7 +78,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
       date: new Date(new Date().getFullYear(), new Date().getMonth(), 16), // 현재 월 16일
       startTime: "10:00",
       endTime: "12:00",
-      color: "bg-green-500",
+      color: "#AA64FF", // 보라색으로 통일
       day: 16,
       description: "최종 프로젝트 발표",
       location: "발표실",
@@ -98,7 +91,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
       date: new Date(new Date().getFullYear(), new Date().getMonth(), 25), // 현재 월 25일
       startTime: "19:00",
       endTime: "21:00",
-      color: "bg-purple-500",
+      color: "#AA64FF", // 보라색으로 통일
       day: 25,
       description: "알고리즘 스터디",
       location: "온라인",
@@ -106,7 +99,6 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
       organizer: "스터디장"
     }
   ])
-
 
   const handleEventClick = (event: StudyEvent) => {
     setSelectedEvent(event)
@@ -161,20 +153,9 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
     setShowEventModal(false)
   }
 
-  // const handleDeleteEvent = (eventId: number) => {
-  //   setEvents(events.filter(e => e.id !== eventId))
-  //   setSelectedEvent(null)
-  // }
-
   // Get current date info for modal
   const getModalCurrentMonth = () => {
-    const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ]
-    const result = `${months[modalCurrentDate.getMonth()]} ${modalCurrentDate.getFullYear()}`
-    console.log('getModalCurrentMonth - modalCurrentDate:', modalCurrentDate)
-    console.log('getModalCurrentMonth - result:', result)
+    const result = `${modalCurrentDate.getFullYear()}.${modalCurrentDate.getMonth() + 1}`
     return result
   }
 
@@ -184,16 +165,12 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
     const day = startOfWeek.getDay()
     startOfWeek.setDate(startOfWeek.getDate() - day)
 
-    console.log('getModalWeekDates - modalCurrentDate:', modalCurrentDate)
-    console.log('getModalWeekDates - startOfWeek:', startOfWeek)
-
     const weekDates = []
     for (let i = 0; i < 7; i++) {
       const date = new Date(startOfWeek)
       date.setDate(startOfWeek.getDate() + i)
       weekDates.push(date.getDate())
     }
-    console.log('getModalWeekDates - weekDates:', weekDates)
     return weekDates
   }
 
@@ -203,16 +180,12 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
     const day = startOfWeek.getDay()
     startOfWeek.setDate(startOfWeek.getDate() - day)
 
-    console.log('getModalWeekDateObjects - modalCurrentDate:', modalCurrentDate)
-    console.log('getModalWeekDateObjects - startOfWeek:', startOfWeek)
-
     const weekDateObjects = []
     for (let i = 0; i < 7; i++) {
       const date = new Date(startOfWeek)
       date.setDate(startOfWeek.getDate() + i)
       weekDateObjects.push(new Date(date))
     }
-    console.log('getModalWeekDateObjects - weekDateObjects:', weekDateObjects)
     return weekDateObjects
   }
 
@@ -286,7 +259,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
   }
 
   // Calendar data for modal
-  const modalWeekDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
+  const modalWeekDays = ["일", "월", "화", "수", "목", "금", "토"]
   const modalWeekDates = getModalWeekDates()
   const modalWeekDateObjects = getModalWeekDateObjects()
   // 8시부터 23시까지 (16개 슬롯)
@@ -295,33 +268,30 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
 
   // Sample my calendars
   const calendars: CalendarType[] = [
-    { name: "My Calendar", color: "bg-blue-500" },
-    { name: "Work", color: "bg-green-500" },
-    { name: "Personal", color: "bg-purple-500" },
-    { name: "Family", color: "bg-orange-500" },
+    // { name: "내 일정", color: "bg-purple-500" },
+    { name: "업무", color: "bg-purple-500" },
+    { name: "개인", color: "bg-purple-500" },
+    // { name: "가족", color: "bg-purple-500" },
+    { name: "스터디", color: "bg-purple-500" },
+    { name: "회의", color: "bg-purple-500" },
   ]
 
   // Calendar 컴포넌트용 이벤트 데이터 변환 (dot 표시용)
-  const getColorValue = (colorClass: string) => {
-    switch (colorClass) {
-      case 'bg-blue-500': return '#3b82f6';
-      case 'bg-green-500': return '#10b981';
-      case 'bg-purple-500': return '#8b5cf6';
-      case 'bg-red-500': return '#ef4444';
-      case 'bg-yellow-500': return '#eab308';
-      case 'bg-pink-500': return '#ec4899';
-      case 'bg-orange-500': return '#f97316';
-      default: return '#8b5cf6';
-    }
+  const getColorValue = (_colorClass: string) => {
+    // 모든 색상을 보라색으로 통일
+    return '#AA64FF';
   };
 
-  const calendarEventsForDot = apiEvents.map(event => ({
-    date: event.date,
-    color: getColorValue(event.color),
-    title: event.title,
-    startTime: event.startTime,
-    endTime: event.endTime
-  }))
+  // 일정이 있는 날짜만 필터링하여 동그라미 표시
+  const calendarEventsForDot = apiEvents
+    .filter(event => event.date) // date가 있는 이벤트만 필터링
+    .map(event => ({
+      date: event.date,
+      color: getColorValue(event.color),
+      title: event.title,
+      startTime: event.startTime,
+      endTime: event.endTime
+    }))
 
   const handleDateSelect = (selectedDate: Date) => {
     setDate(selectedDate)
@@ -329,20 +299,20 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
 
   const handleAddEvent = () => {
     // Full Calendar 모달 열기
-    setShowEventModal(true)
+    setShowFullCalendarModal(true)
   }
 
   const handleCreateEventInFullCalendar = () => {
     // Full Calendar 내에서 일정 생성 버튼을 눌렀을 때 EventModal 열기
-    setShowCreateModal(true)
+    setShowEventModal(true)
   }
 
   const handleCloseModal = () => {
-    setShowEventModal(false)
+    setShowFullCalendarModal(false)
   }
 
   const handleCloseCreateModal = () => {
-    setShowCreateModal(false)
+    setShowEventModal(false)
     setSelectedEvent(null)
   }
 
@@ -354,12 +324,22 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
     title: string
     memo?: string
   }) => {
+    console.log('🎯 handleCreateSchedule 호출됨:', data)
     try {
-      console.log('일정 생성 요청 데이터:', data)
+      // 백엔드 API 형식에 맞게 데이터 변환
+      const scheduleData = {
+        studyId: data.studyId,
+        startDatetime: data.startDatetime,
+        endDatetime: data.endDatetime,
+        title: data.title,
+        memo: data.memo || ''
+      }
+
+      console.log('📝 백엔드로 전송할 스케줄 데이터:', scheduleData)
 
       // scheduleService를 사용하여 API 호출
       const { scheduleService } = await import('../../../services/scheduleService')
-      await scheduleService.createSchedule(data)
+      await scheduleService.createSchedule(scheduleData)
 
       // 성공 메시지
       alert('일정이 성공적으로 생성되었습니다.')
@@ -367,19 +347,21 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
       // 페이지 새로고침하여 최신 데이터 반영
       window.location.reload()
     } catch (error) {
-      console.error('일정 생성 실패:', error)
-
-      // 에러 상세 정보 출력
+      console.error('❌ 일정 생성 실패:', error)
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { data?: unknown; status?: number } }
-        console.error('에러 상태:', axiosError.response?.status)
-        console.error('에러 데이터:', axiosError.response?.data)
+        const status = axiosError.response?.status
 
-        // 사용자에게 더 구체적인 에러 메시지 표시
-        if (axiosError.response?.status === 400) {
-          alert('잘못된 요청입니다. 입력 데이터를 확인해주세요.')
+        if (status === 400) {
+          alert('잘못된 요청입니다. 입력 정보를 확인해주세요.')
+        } else if (status === 401) {
+          alert('권한이 없습니다. 로그인 상태를 확인해주세요.')
+        } else if (status === 403) {
+          alert('일정을 생성할 권한이 없습니다.')
+        } else if (status && status >= 500) {
+          alert('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
         } else {
-          alert(`일정 생성에 실패했습니다. (${axiosError.response?.status})`)
+          alert('일정 생성에 실패했습니다. 다시 시도해주세요.')
         }
       } else {
         alert('일정 생성에 실패했습니다. 다시 시도해주세요.')
@@ -390,6 +372,18 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
   // 일정 수정 및 삭제 훅
   const editScheduleMutation = useEditSchedule(Number(studyId), new Date().getFullYear(), new Date().getMonth() + 1)
   const deleteScheduleMutation = useDeleteSchedule(Number(studyId), new Date().getFullYear(), new Date().getMonth() + 1)
+
+  // 이벤트 수정 모달 열기
+  const handleEditEvent = (event: GridCalendarEvent) => {
+    setEventToEdit(event)
+    setShowEditModal(true)
+  }
+
+  // 이벤트 삭제 모달 열기
+  const handleDeleteEvent = (event: GridCalendarEvent) => {
+    setEventToDelete(event)
+    setShowDeleteModal(true)
+  }
 
   // 일정 수정 핸들러
   const handleEditSchedule = async (data: {
@@ -415,8 +409,7 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
       setShowEditModal(false)
       setEventToEdit(null)
     } catch (error) {
-      console.error('일정 수정 실패:', error)
-      alert('일정 수정에 실패했습니다.')
+      alert('일정 수정에 실패했습니다. 다시 시도해주세요.')
     }
   }
 
@@ -428,36 +421,17 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
       setShowDeleteModal(false)
       setEventToDelete(null)
     } catch (error) {
-      console.error('일정 삭제 실패:', error)
-      alert('일정 삭제에 실패했습니다.')
+      alert('일정 삭제에 실패했습니다. 다시 시도해주세요.')
     }
-  }
-
-  // 이벤트 수정 모달 열기
-  const handleEditEvent = (event: GridCalendarEvent) => {
-    setEventToEdit(event)
-    setShowEditModal(true)
-  }
-
-  // 이벤트 삭제 모달 열기
-  const handleDeleteEvent = (event: GridCalendarEvent) => {
-    setEventToDelete(event)
-    setShowDeleteModal(true)
   }
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
       {/* 달력 헤더 */}
       <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <div className="w-2 h-8 rounded-full mr-3" style={{ backgroundColor: '#F8BB50' }}></div>
           <h3 className="text-lg font-semibold text-gray-900">일정</h3>
-          <button
-            onClick={handleAddEvent}
-            className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors"
-            disabled={isLoading}
-          >
-            {isLoading ? '로딩 중...' : '+ 일정 추가'}
-          </button>
         </div>
       </div>
 
@@ -473,21 +447,21 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
             events={calendarEventsForDot as UICalendarEvent[]}
             selectedDate={date}
             onDateSelect={handleDateSelect}
-            onAddEvent={handleAddEvent}
+            onAddEvent={currentUserRole === 'ADMIN' || currentUserRole === 'DELEGATE' ? handleAddEvent : undefined}
             className="w-fit"
           />
         )}
       </div>
 
       {/* Full Calendar Modal */}
-      {showEventModal && (
+      {showFullCalendarModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-2 border-b border-gray-200">
               <div className="flex items-center gap-3">
                 <img
-                  src="/src/assets/calendar-moai.png"
+                  src={calendarMoAi}
                   alt="Calendar Moai"
                   className="w-24 h-24 object-contain"
                 />
@@ -529,18 +503,19 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
                 onEditEvent={handleEditEvent}
                 onDeleteEvent={handleDeleteEvent}
                 studyId={studyId}
+                currentUserRole={currentUserRole}
               />
             </div>
           </div>
         </div>
       )}
 
-      {/* Event Modal */}
-      {showCreateModal && (
+      {/* Event Modal - FullCalendar 내에서 일정 생성 시에만 사용 */}
+      {showEventModal && (
         <EventModal
-          isOpen={showCreateModal}
+          isOpen={showEventModal}
           onClose={handleCloseCreateModal}
-          onSave={(event) => handleSaveEvent(event as StudyEvent)}
+          onSave={(event) => handleSaveEvent(event as any)}
           selectedDate={date}
           event={selectedEvent ? {
             id: selectedEvent.id,
@@ -554,6 +529,8 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
             attendees: selectedEvent.attendees,
             organizer: selectedEvent.organizer
           } as Event : undefined}
+          onCreateSchedule={handleCreateSchedule}
+          studyId={studyId}
         />
       )}
 
@@ -565,14 +542,14 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
             setShowEditModal(false)
             setEventToEdit(null)
           }}
-          onSave={() => { }} // 수정 모드에서는 사용하지 않음
+          onSave={() => {}} // 수정 모드에서는 사용하지 않음
           selectedDate={modalCurrentDate}
           event={{
             id: eventToEdit.id,
             title: eventToEdit.title,
             startTime: eventToEdit.startTime,
             endTime: eventToEdit.endTime,
-            color: eventToEdit.color || 'bg-blue-500',
+            color: eventToEdit.color || 'bg-purple-500', // 보라색으로 통일
             description: eventToEdit.description,
             location: eventToEdit.location,
             attendees: eventToEdit.attendees

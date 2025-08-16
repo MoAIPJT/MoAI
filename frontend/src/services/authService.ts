@@ -83,6 +83,17 @@ export interface RefreshTokenResponse {
   accessToken: string
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string
+  newPassword: string
+  confirmNewPassword: string
+}
+
+export interface ChangePasswordResponse {
+  accessToken: string
+  refreshToken: string
+}
+
 // 일반 로그인 API
 export const login = async (data: LoginFormData): Promise<LoginResponse> => {
   const response = await apiClient.post('/users/login', {
@@ -149,6 +160,12 @@ export const confirmResetPassword = async (data: ResetPasswordConfirmRequest): P
 // 토큰 갱신 API
 export const refreshToken = async (data: RefreshTokenRequest): Promise<RefreshTokenResponse> => {
   const response = await apiClient.post('/auth/refresh', data)
+  return response.data
+}
+
+// 비밀번호 변경 API
+export const changePassword = async (data: ChangePasswordRequest): Promise<ChangePasswordResponse> => {
+  const response = await apiClient.patch('/users/profile/change-password', data)
   return response.data
 }
 

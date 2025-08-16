@@ -43,6 +43,23 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({
     }
   }
 
+  // 월 표시를 한글 형식으로 변환
+  const formatMonthDisplay = (monthString: string) => {
+    const monthMatch = monthString.match(/^(\w+) (\d+)$/)
+    if (monthMatch) {
+      const [, monthName, year] = monthMatch
+      const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ]
+      const monthIndex = monthNames.indexOf(monthName)
+      if (monthIndex !== -1) {
+        return `${year}.${monthIndex + 1}`
+      }
+    }
+    return monthString
+  }
+
   const isCurrentDate = (day: number | null) => {
     if (!day || !currentDate) return false
     return day === currentDate.getDate()
@@ -51,7 +68,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-white font-medium">{currentMonth}</h3>
+        <h3 className="text-white font-medium">{formatMonthDisplay(currentMonth)}</h3>
         <div className="flex gap-1">
           <button
             onClick={onPreviousMonth}
@@ -69,7 +86,7 @@ const MiniCalendar: React.FC<MiniCalendarProps> = ({
       </div>
 
       <div className="grid grid-cols-7 gap-1 text-center">
-        {["S", "M", "T", "W", "T", "F", "S"].map((day: string, i: number) => (
+        {["일", "월", "화", "수", "목", "금", "토"].map((day: string, i: number) => (
           <div key={i} className="text-xs text-white font-medium py-1">
             {day}
           </div>

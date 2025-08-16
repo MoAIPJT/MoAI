@@ -6,5 +6,4 @@ export interface StudyHeaderProps {
   currentUserRole?: string
   onSettingsClick?: () => void
   onUserCountClick?: () => void
-  onLeaveStudy?: () => void
 }

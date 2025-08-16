@@ -16,7 +16,7 @@ export interface StudyMembersModalProps {
 
   // 멤버 권한 변경 관련 props 추가
   onMemberRoleChange?: (userId: number, newRole: 'ADMIN' | 'DELEGATE' | 'MEMBER') => void
-
+  
   // 탈퇴 관련 props 추가
   onLeaveStudy?: () => void
 }

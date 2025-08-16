@@ -45,7 +45,7 @@ interface StudyDetailTemplateProps {
   isSchedulesLoading?: boolean
   // 스터디 ID
   studyId?: number
-  hashId?: string // URL에 사용할 해시 ID
+  hashId?: string
   onItemClick: (itemId: string) => void
   onStudyClick: (studyId: string) => void
   onSearch: () => void
@@ -93,6 +93,8 @@ interface StudyDetailTemplateProps {
   }>
   onAcceptJoinRequest?: (userId: number, role: 'ADMIN' | 'DELEGATE' | 'MEMBER') => void
   onRejectJoinRequest?: (userId: number) => void
+  // AI 요약본 생성 성공 핸들러
+  onAISummarySuccess?: () => void
 }
 
 const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
@@ -158,6 +160,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   joinRequests = [],
   onAcceptJoinRequest,
   onRejectJoinRequest,
+  onAISummarySuccess,
 }) => {
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false)
   const [isManagementModalOpen, setIsManagementModalOpen] = useState(false)
@@ -202,7 +205,6 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
           currentUserRole={currentUserRole}
           onSettingsClick={handleOpenManagementModal}
           onUserCountClick={handleOpenMembersModal}
-          onLeaveStudy={onLeaveStudy}
         />
 
         {/* 메인 콘텐츠 */}
@@ -217,24 +219,30 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
                   content={noticeContent}
                   onEdit={onEditNotice}
                   userName={userName}
+                  studyName={currentStudy?.name}
+                  isAdmin={currentUserRole === 'ADMIN'}
                 />
               </div>
               <div className="flex-1">
                 <StudyVideoConference
                   onCreateRoom={onCreateRoom}
                   participants={participants}
+                  currentUserRole={currentUserRole}
                   hashId={hashId}
                 />
               </div>
             </div>
 
-            {/* 오른쪽: 캘린더 (4/10) */}
+            {/* 오른쪽: 일정 (4/10) */}
             <div className="col-span-4">
-              <StudyCalendar
-                schedules={studySchedules || []}
-                isLoading={isSchedulesLoading}
-                studyId={studyId}
-              />
+              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm h-fit">
+                <StudyCalendar
+                  schedules={studySchedules || []}
+                  isLoading={isSchedulesLoading}
+                  studyId={studyId}
+                  currentUserRole={currentUserRole as 'ADMIN' | 'DELEGATE' | 'MEMBER' | undefined}
+                />
+              </div>
             </div>
           </div>
 
@@ -257,6 +265,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
             onContentDownload={onContentDownload}
             onUploadData={onUploadData}
             currentUserRole={currentUserRole}
+            onAISummarySuccess={onAISummarySuccess}
           />
         </div>
       </div>
@@ -298,13 +307,13 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
           categories={categories}
           currentUserRole={currentUserRole}
           currentUserName={userName}
-          onStudyNameChange={onStudyNameChange || (() => { })}
-          onStudyDescriptionChange={onStudyDescriptionChange || (() => { })}
-          onStudyImageChange={onStudyImageChange || (() => { })}
-          onMaxMembersChange={onMaxMembersChange || (() => { })}
-          onCategoryRemove={onCategoryRemove || (() => { })}
-          onCategoryAdd={onCategoryAdd || (() => { })}
-          onMemberRemove={onMemberRemove || (() => { })}
+          onStudyNameChange={onStudyNameChange || (() => {})}
+          onStudyDescriptionChange={onStudyDescriptionChange || (() => {})}
+          onStudyImageChange={onStudyImageChange || (() => {})}
+          onMaxMembersChange={onMaxMembersChange || (() => {})}
+          onCategoryRemove={onCategoryRemove || (() => {})}
+          onCategoryAdd={onCategoryAdd || (() => {})}
+          onMemberRemove={onMemberRemove || (() => {})}
           onStudyUpdate={onStudyUpdate}
           onSave={() => {
             handleCloseManagementModal()

@@ -3,6 +3,8 @@ import { Document, Page, pdfjs } from 'react-pdf'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 import SplitResizer from '../../atoms/SplitResizer'
+import fileImage from '../../../assets/MoAI/file.png'
+
 // 타입 정의
 interface PDFItem {
   id: string
@@ -226,7 +228,7 @@ const AITestViewer: React.FC<AITestViewerProps> = ({
         <div className="text-center">
           <div className="mb-6">
             <img
-              src="/src/assets/MoAI/file.png"
+              src={fileImage}
               alt="File Icon"
               className="w-72 h-72 mx-auto mb-4"
             />
@@ -356,7 +358,9 @@ const AITestViewer: React.FC<AITestViewerProps> = ({
               setCurrentPage(p => Math.min(Math.max(1, p), numPages))
             }}
             loading={<div className="text-center p-8">PDF 문서를 불러오는 중...</div>}
-            onLoadError={console.error}
+            onLoadError={() => {
+              // 에러 처리
+            }}
           >
             <div
               ref={pageRef}

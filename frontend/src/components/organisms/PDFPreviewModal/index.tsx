@@ -41,7 +41,6 @@ const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({
       const response = await refService.getViewUrl(fileId)
       setPdfUrl(response.presignedUrl)
     } catch (err) {
-      console.error('PDF URL 가져오기 실패:', err)
       setError('PDF를 불러오는데 실패했습니다.')
     } finally {
       setLoading(false)
@@ -53,8 +52,7 @@ const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({
     setPageNumber(1)
   }
 
-  const onDocumentLoadError = (error: Error) => {
-    console.error('PDF 로드 에러:', error)
+  const onDocumentLoadError = (_error: Error) => {
     setError('PDF를 표시할 수 없습니다. 새 창에서 열기를 시도해보세요.')
   }
 
@@ -73,19 +71,9 @@ const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({
   const openInNewWindow = () => {
     if (pdfUrl) {
       try {
-        const newWindow = window.open(pdfUrl, '_blank')
-        if (!newWindow) {
-          // 팝업 차단된 경우
-          alert('팝업이 차단되었습니다. 브라우저 설정을 확인해주세요.')
-        }
+        window.open(pdfUrl, '_blank')
       } catch (error) {
-        console.error('새 창 열기 실패:', error)
-        // 직접 URL 복사
-        navigator.clipboard.writeText(pdfUrl).then(() => {
-          alert('PDF URL이 클립보드에 복사되었습니다. 새 탭에서 직접 열어보세요.')
-        }).catch(() => {
-          alert('PDF URL을 복사할 수 없습니다. 직접 복사해서 사용해주세요: ' + pdfUrl)
-        })
+        // 새 창 열기 실패 처리
       }
     }
   }

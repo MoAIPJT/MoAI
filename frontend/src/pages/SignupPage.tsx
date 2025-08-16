@@ -30,7 +30,7 @@ const SignupPage: React.FC = () => {
       if (err instanceof Error) {
         // 백엔드에서 오는 에러 메시지를 사용자 친화적으로 변환
         let userFriendlyMessage = err.message
-
+        
         if (err.message.includes('이미 존재하는 이메일')) {
           userFriendlyMessage = '이미 가입된 이메일입니다.'
         } else if (err.message.includes('비밀번호는 최소 8자')) {
@@ -40,7 +40,7 @@ const SignupPage: React.FC = () => {
         } else if (err.message.includes('이름은 2자 이상 20자 이하')) {
           userFriendlyMessage = '이름은 2자 이상 20자 이하여야 합니다.'
         }
-
+        
         setError(userFriendlyMessage)
       } else {
         setError('회원가입에 실패했습니다.')

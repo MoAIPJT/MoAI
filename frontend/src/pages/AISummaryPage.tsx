@@ -8,6 +8,7 @@ import { editAiSummary, deleteAiSummary } from '../services/aiSummaryService'
 import type { ProfileData } from '../components/organisms/ProfileSettingsModal/types'
 import { useAppStore } from '../store/appStore'
 import { useNavigate } from 'react-router-dom'
+import fileImage from '../assets/MoAI/file.png'
 
 // 타입 정의 (AITestViewer에서 사용)
 interface PDFItem {
@@ -101,7 +102,7 @@ const AISummaryPage: React.FC = () => {
     setSummaryList([])
   }, [])
 
-  // 요약본 상세 정보 가져오기 (사이드바 클릭 시)
+    // 요약본 상세 정보 가져오기 (사이드바 클릭 시)
   const fetchSummaryDetailData = async (summaryId: string) => {
     console.log('요약본 선택:', summaryId)
 
@@ -287,7 +288,7 @@ const AISummaryPage: React.FC = () => {
           <div className="text-center">
             <div className="mb-6">
               <img
-                src="/src/assets/MoAI/file.png"
+                src={fileImage}
                 alt="File Icon"
                 className="w-72 h-72 mx-auto mb-4"
               />
@@ -332,7 +333,6 @@ const AISummaryPage: React.FC = () => {
         onUpdateProfile={handleUpdateProfile}
         onChangePassword={handleOpenChangePasswordModal}
         onWithdrawMembership={handleWithdrawMembership}
-        onOpenChangePasswordModal={handleOpenChangePasswordModal}
       />
 
       {/* 비밀번호 변경 모달 */}

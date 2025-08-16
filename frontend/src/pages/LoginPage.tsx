@@ -1,7 +1,7 @@
 import React from 'react'
-import LoginTemplate from '@/components/templates/LoginTemplate'
-import type { LoginFormData } from '@/components/organisms/LoginForm/types'
-import { useAuth } from '@/hooks/useAuth'
+import LoginTemplate from '../components/templates/LoginTemplate'
+import type { LoginFormData } from '../components/organisms/LoginForm/types'
+import { useAuth } from '../hooks/useAuth'
 
 const LoginPage: React.FC = () => {
   const { login, loading, error } = useAuth()

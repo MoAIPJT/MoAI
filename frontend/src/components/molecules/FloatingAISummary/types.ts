@@ -1,9 +1,4 @@
-export interface SelectedContent {
-  id: string
-  title: string
-  description: string
-  tags: string[]
-}
+import type { ContentItem } from '../../../types/content'
 
 export interface FloatingAISummaryProps {
   title: string
@@ -12,14 +7,14 @@ export interface FloatingAISummaryProps {
   prompt: string
   isSelectAll: boolean
   isVisible: boolean
-  selectedContents: SelectedContent[]
+  selectedContents: ContentItem[]
   onTitleChange: (title: string) => void
   onDescriptionChange: (description: string) => void
   onModelChange: (model: string) => void
   onPromptChange: (prompt: string) => void
   onSelectAllChange: (isSelectAll: boolean) => void
   onContentRemove: (contentId: string) => void
-  onSubmit: (summaryData: {
+  onSubmit: (data: {
     fileId: number[]
     title: string
     description: string
@@ -27,4 +22,5 @@ export interface FloatingAISummaryProps {
     promptType: string
   }) => Promise<void>
   onClose: () => void
+  onSuccess?: () => void // AI 요약본 생성 성공 시 호출되는 콜백
 }

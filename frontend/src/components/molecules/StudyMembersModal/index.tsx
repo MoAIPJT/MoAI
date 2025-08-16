@@ -1,6 +1,25 @@
 import React, { useState } from 'react'
 import type { StudyMembersModalProps } from './types'
 
+// 이미지 URL이 유효한지 확인하는 함수
+const isValidImageUrl = (url: string): boolean => {
+  if (!url || typeof url !== 'string') return false
+
+  // URL이 실제 이미지 파일 확장자를 가지고 있는지 확인
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg']
+  const hasImageExtension = imageExtensions.some(ext =>
+    url.toLowerCase().includes(ext)
+  )
+
+  // URL이 http:// 또는 https://로 시작하는지 확인
+  const hasValidProtocol = url.startsWith('http://') || url.startsWith('https://')
+
+  // URL이 실제 도메인을 가지고 있는지 확인 (간단한 검증)
+  const hasValidDomain = url.includes('.') && url.length > 10
+
+  return hasImageExtension && hasValidProtocol && hasValidDomain
+}
+
 const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
   isOpen,
   onClose,
@@ -59,6 +78,8 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
       onMemberRoleChange?.(pendingRoleChange.userId, pendingRoleChange.newRole as 'ADMIN' | 'DELEGATE' | 'MEMBER')
       setPendingRoleChange(null)
       setShowConfirmModal(false)
+      // 권한 변경 후 새로고침
+      window.location.reload()
     }
   }
 
@@ -67,12 +88,23 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
     setShowConfirmModal(false)
   }
 
-  // 멤버 목록을 정렬: 내가 항상 가장 위에 위치
+  // 멤버 목록을 정렬: 내가 항상 가장 위에 위치, 그 다음 역할별 정렬
   const sortedMembers = [...members].sort((a, b) => {
-    // 내가 항상 첫 번째 (실제 사용자 이름으로 비교)
+    // 1. 내가 항상 첫 번째 (실제 사용자 이름으로 비교)
     if (currentUserName && a.member === currentUserName) return -1
     if (currentUserName && b.member === currentUserName) return 1
-    return 0
+
+    // 2. 역할별 정렬: ADMIN > DELEGATE > MEMBER
+    const roleOrder = { 'ADMIN': 3, 'DELEGATE': 2, 'MEMBER': 1 }
+    const aRoleOrder = roleOrder[a.role as keyof typeof roleOrder] || 0
+    const bRoleOrder = roleOrder[b.role as keyof typeof roleOrder] || 0
+
+    if (aRoleOrder !== bRoleOrder) {
+      return bRoleOrder - aRoleOrder // 내림차순 정렬
+    }
+
+    // 3. 같은 역할인 경우 이름순 정렬
+    return a.member.localeCompare(b.member)
   })
 
   return (
@@ -99,8 +131,23 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
               return (
                 <div key={index} className="flex items-center justify-between p-2 border-b border-gray-200 last:border-b-0">
                   <div className="flex items-center">
-                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-xl mr-3">
-                      {member.imageUrl || '👤'}
+                    <div className="w-10 h-10 rounded-full bg-gray-200 mr-3 overflow-hidden">
+                      {member.imageUrl && isValidImageUrl(member.imageUrl) ? (
+                        <img
+                          src={member.imageUrl}
+                          alt={`${member.member}의 프로필`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // 이미지 로드 실패 시 기본 아이콘 표시
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <div className={`w-full h-full flex items-center justify-center text-xl ${member.imageUrl && isValidImageUrl(member.imageUrl) ? 'hidden' : ''}`}>
+                        👤
+                      </div>
                     </div>
                     <div>
                       <p className="font-semibold text-gray-800">
@@ -113,13 +160,11 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
 
                   <div className="flex items-center gap-3">
 
-                    {/* Role 표시 (ADMIN 제외)*/}
-                    {currentUserRole !== 'ADMIN' && (
-                      <span className="text-gray-600 font-medium">
-                        {member.role === 'ADMIN' ? '운영자' :
-                          member.role === 'DELEGATE' ? '대리인' : '회원'}
-                      </span>
-                    )}
+                    {/* Role 표시 */}
+                    <span className="text-gray-600 font-medium">
+                      {member.role === 'ADMIN' ? '운영자' :
+                      member.role === 'DELEGATE' ? '대리인' : '회원'}
+                    </span>
 
                     {/* 권한 변경 드롭다운 (ADMIN만 가능) */}
                     {canChangeRole && (
@@ -140,7 +185,7 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
                         {/* 드롭다운 화살표 */}
                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                           <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
                           </svg>
                         </div>
                       </div>
@@ -235,7 +280,7 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
 
       {/* 권한 변경 확인 모달 */}
       {showConfirmModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-60">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-[60]">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold mb-4 text-gray-900">
               관리자 권한 변경

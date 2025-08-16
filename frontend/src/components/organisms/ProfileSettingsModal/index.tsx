@@ -1,7 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { ProfileSettingsModalProps, ProfileData } from './types'
 import Button from '../../atoms/Button'
 import InputText from '../../atoms/InputText'
+import ChangePasswordModal from '../ChangePasswordModal'
+import { changePassword } from '../../../services/authService'
+import smiling from '../../../assets/MoAI/smiling.png'
+
 
 const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   isOpen,
@@ -9,19 +14,29 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   profileData,
   onUpdateProfile,
   onWithdrawMembership,
-  onOpenChangePasswordModal,
   isLoading = false
 }) => {
+  const navigate = useNavigate()
   const [name, setName] = useState(profileData.name)
   const [isEditing, setIsEditing] = useState(false)
-  const [previewUrl, setPreviewUrl] = useState<string>(profileData.profileImageUrl || '/src/assets/MoAI/smiling.png')
+  const [previewUrl, setPreviewUrl] = useState<string>(
+    typeof profileData.profileImageUrl === 'string' 
+      ? profileData.profileImageUrl || smiling
+      : smiling
+  )
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [hasChanges, setHasChanges] = useState(false)
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // profileData가 변경될 때마다 상태 초기화
   useEffect(() => {
     setName(profileData.name)
-    setPreviewUrl(profileData.profileImageUrl || '/src/assets/MoAI/smiling.png')
+    setPreviewUrl(
+      typeof profileData.profileImageUrl === 'string' 
+        ? profileData.profileImageUrl || smiling
+        : smiling
+    )
     setHasChanges(false)
     setIsEditing(false)
   }, [profileData.name, profileData.profileImageUrl, profileData.providerType])
@@ -29,6 +44,7 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
+      setSelectedFile(file)
       const reader = new FileReader()
       reader.onload = (e) => {
         setPreviewUrl(e.target?.result as string)
@@ -57,7 +73,12 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
 
     // 이미지가 변경된 경우에만 포함 (null이 아닌 경우)
     if (previewUrl !== profileData.profileImageUrl) {
-      updateData.profileImageUrl = previewUrl
+      // 파일이 선택된 경우 파일 객체를, 그렇지 않으면 URL을 전달
+      if (selectedFile) {
+        updateData.profileImageUrl = selectedFile
+      } else {
+        updateData.profileImageUrl = previewUrl
+      }
     }
 
     // 변경사항이 있으면 API 호출
@@ -65,12 +86,17 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
       onUpdateProfile(updateData)
       setHasChanges(false)
       setIsEditing(false)
+      setSelectedFile(null) // 파일 객체 초기화
     }
   }
 
   const handleCancel = () => {
     setName(profileData.name)
-    setPreviewUrl(profileData.profileImageUrl || '/src/assets/MoAI/smiling.png')
+    setPreviewUrl(
+      typeof profileData.profileImageUrl === 'string' 
+        ? profileData.profileImageUrl || smiling
+        : smiling
+    )
     setIsEditing(false)
     setHasChanges(false)
   }
@@ -84,6 +110,52 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
     } else {
       onClose()
     }
+  }
+
+  const handleChangePassword = async (data: {
+    currentPassword: string
+    newPassword: string
+    confirmPassword: string
+  }) => {
+    try {
+      const response = await changePassword({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+        confirmNewPassword: data.confirmPassword
+      })
+
+      // 새로운 토큰을 로컬 스토리지에 저장
+      localStorage.setItem('accessToken', response.accessToken)
+      localStorage.setItem('refreshToken', response.refreshToken)
+
+      alert('비밀번호가 성공적으로 변경되었습니다. 보안을 위해 다시 로그인해주세요.')
+
+      // 로그아웃 처리
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+
+      // 모달 닫기
+      setIsChangePasswordModalOpen(false)
+      onClose()
+
+      // 로그인 페이지로 이동
+      navigate('/login')
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'response' in error) {
+        const response = error.response as { status?: number }
+        if (response?.status === 400) {
+          alert('현재 비밀번호가 올바르지 않습니다.')
+        } else {
+          alert('비밀번호 변경 중 오류가 발생했습니다. 다시 시도해주세요.')
+        }
+      } else {
+        alert('비밀번호 변경 중 오류가 발생했습니다. 다시 시도해주세요.')
+      }
+    }
+  }
+
+  const handleOpenChangePasswordModal = () => {
+    setIsChangePasswordModalOpen(true)
   }
 
   // 계정 종류에 따른 로고와 스타일 반환
@@ -134,7 +206,7 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
             {/* 왼쪽 - 프로필 이미지 */}
             <div className="flex-shrink-0">
               <div className="w-24 h-24 rounded-full bg-purple-100 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors"
-                onClick={isEditing ? () => fileInputRef.current?.click() : undefined}>
+                   onClick={isEditing ? () => fileInputRef.current?.click() : undefined}>
                 {previewUrl ? (
                   <img
                     src={previewUrl}
@@ -246,7 +318,7 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
               <Button
                 variant="outline"
                 size="md"
-                onClick={onOpenChangePasswordModal}
+                onClick={handleOpenChangePasswordModal}
               >
                 비밀번호 변경
               </Button>
@@ -259,6 +331,13 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
             </div>
           </div>
         </div>
+
+        {/* 비밀번호 변경 모달 */}
+        <ChangePasswordModal
+          isOpen={isChangePasswordModalOpen}
+          onClose={() => setIsChangePasswordModalOpen(false)}
+          onSubmit={handleChangePassword}
+        />
       </div>
     </div>
   )

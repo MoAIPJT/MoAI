@@ -24,6 +24,7 @@ interface ContentManagementTemplateProps {
   onContentDownload: (contentId: string) => void
   onUploadData: () => void
   currentUserRole?: string
+  onAISummarySuccess?: () => void
 }
 
 const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
@@ -44,12 +45,13 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
   onContentDownload,
   onUploadData,
   currentUserRole,
+  onAISummarySuccess,
 }) => {
   // AI Summary Modal 상태 관리
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [modalTitle, setModalTitle] = useState('')
   const [modalDescription, setModalDescription] = useState('')
-  const [selectedModel, setSelectedModel] = useState('gpt-40-mini')
+  const [selectedModel, setSelectedModel] = useState('gpt-4o')
   const [prompt, setPrompt] = useState('')
   const [isSelectAll, setIsSelectAll] = useState(false)
   const [selectionOrder, setSelectionOrder] = useState<string[]>([])
@@ -65,7 +67,10 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
         id: content.id,
         title: content.title,
         description: content.description,
-        tags: content.tags
+        tags: content.tags,
+        author: content.author,
+        date: content.date,
+        isSelected: content.isSelected
       })), [contents]
   )
 
@@ -87,7 +92,7 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
 
     // 선택된 항목이 실제로 변경된 경우에만 selectionOrder 업데이트
     if (currentSelectedSet.size !== prevSelectedSet.size ||
-      ![...currentSelectedSet].every(id => prevSelectedSet.has(id))) {
+        ![...currentSelectedSet].every(id => prevSelectedSet.has(id))) {
       const newOrder = selectionOrder.filter(id => currentSelected.includes(id))
       const newSelections = currentSelected.filter(id => !selectionOrder.includes(id))
       setSelectionOrder([...newOrder, ...newSelections])
@@ -167,25 +172,29 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
     promptType: string
   }): Promise<void> => {
     try {
-      // 요청 데이터 로깅
-      console.log('🔄 ContentManagementTemplate에서 받은 데이터:', {
-        summaryData,
-        timestamp: new Date().toISOString()
-      })
-
       // API 호출
       await createAISummaryMutation.mutateAsync(summaryData)
+
+      // 성공 후 onAISummarySuccess 콜백 호출
+      if (onAISummarySuccess) {
+        onAISummarySuccess()
+      }
 
       // 성공 후 모달 닫기
       handleModalClose()
     } catch (error) {
-      console.error('AI 요약본 생성 실패:', error)
       alert('AI 요약본 생성에 실패했습니다. 다시 시도해주세요.')
     }
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
+    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+      {/* 제목과 세로바 */}
+      <div className="flex items-center mb-6">
+        <div className="w-2 h-8 rounded-full mr-3" style={{ backgroundColor: '#477866' }}></div>
+        <h2 className="text-2xl font-bold text-gray-900">공부 자료</h2>
+      </div>
+
       {/* Category Tabs - attached to the box */}
       <div className="px-0 pt-0 pb-0">
         <CategoryTab
@@ -198,7 +207,7 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
       </div>
 
       {/* Main Content Box - 스크롤 가능하게 수정 */}
-      <div className="flex-1 bg-white rounded-lg shadow-sm flex flex-col min-h-0 relative">
+      <div className="flex-1 bg-gray-50 rounded-lg flex flex-col min-h-0 relative mt-4">
         {/* Upload Button - MainContent 박스의 오른쪽 위에 배치 */}
         <div className="absolute top-4 right-4 z-10 flex gap-3">
           <button
@@ -256,6 +265,7 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
         onContentRemove={handleContentRemove}
         onSubmit={handleModalSubmit}
         onClose={handleModalClose}
+        onSuccess={onAISummarySuccess}
       />
     </div>
   )

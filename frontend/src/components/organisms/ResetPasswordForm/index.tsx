@@ -31,7 +31,7 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
           onChange={e => setEmail(e.target.value)}
           fullWidth
         />
-
+        
         {/* 에러 메시지 */}
         {error && (
           <div className="text-red-500 text-sm text-center font-medium">

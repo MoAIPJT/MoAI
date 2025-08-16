@@ -17,6 +17,7 @@ const FloatingAISummary: React.FC<FloatingAISummaryProps> = ({
   onContentRemove,
   onSubmit,
   onClose,
+  onSuccess, // 새로운 prop 추가
 }) => {
   const [isDragging, setIsDragging] = useState(false)
   const [position, setPosition] = useState({ x: 0, y: 0 })
@@ -83,14 +84,12 @@ const FloatingAISummary: React.FC<FloatingAISummaryProps> = ({
         promptType: prompt || 'study-summary.v1'
       }
 
-      // 요청 데이터 로깅
-      console.log('📝 FloatingAISummary에서 준비된 데이터:', {
-        summaryData,
-        selectedContents: selectedContents.map(c => ({ id: c.id, title: c.title })),
-        userInputs: { title, description, selectedModel, prompt }
-      })
-
       await onSubmit(summaryData)
+
+      // 성공 시 onSuccess 콜백 호출
+      if (onSuccess) {
+        onSuccess()
+      }
     } finally {
       setIsLoading(false)
     }
@@ -211,10 +210,10 @@ const FloatingAISummary: React.FC<FloatingAISummaryProps> = ({
               onChange={(e) => onModelChange(e.target.value)}
               className="px-2 py-1 border-transparent rounded text-xs bg-white focus:outline-none focus:ring-1 focus:ring-purple-500"
             >
-              <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-              <option value="gpt-40-mini">GPT-4o Mini</option>
-              <option value="gpt-4">GPT-4</option>
-              <option value="claude">Claude</option>
+              <option value="gpt-4o">GPT-4</option>
+              <option value="gpt-4o-mini">GPT-4o Mini</option>
+              <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+              <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite</option>
             </select>
           </div>
 

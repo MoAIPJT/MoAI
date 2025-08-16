@@ -99,7 +99,7 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
           {/* 이미지 업로드 섹션 */}
           <div className="flex flex-col items-center">
             <div className="w-48 h-48 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors"
-              onClick={() => fileInputRef.current?.click()}>
+                 onClick={() => fileInputRef.current?.click()}>
               {previewUrl ? (
                 <img
                   src={previewUrl}
