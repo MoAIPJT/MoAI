@@ -51,8 +51,16 @@ const VideoGrid = forwardRef<HTMLDivElement, VideoGridProps>(({
   // 로컬 비디오 트랙 연결
   useEffect(() => {
     if (localVideoTrack && videoRef.current) {
+      console.log('로컬 비디오 트랙 연결:', localVideoTrack);
       localVideoTrack.attach(videoRef.current);
     }
+    
+    return () => {
+      if (localVideoTrack && videoRef.current) {
+        console.log('로컬 비디오 트랙 해제');
+        localVideoTrack.detach(videoRef.current);
+      }
+    };
   }, [localVideoTrack]);
 
   const getGridStyle = () => ({

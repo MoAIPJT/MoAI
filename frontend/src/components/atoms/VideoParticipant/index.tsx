@@ -12,12 +12,29 @@ const VideoParticipant = forwardRef<HTMLVideoElement, VideoParticipantProps>(({
   isDemo = false,
   isMuted = false
 }, ref) => {
-  // 비디오 트랙 연결 (원격 참가자인 경우)
+  // 비디오 트랙 연결
   useEffect(() => {
-    if (videoTrack && ref && typeof ref === 'object' && ref.current && !isLocal) {
-      videoTrack.attach(ref.current)
+    if (ref && typeof ref === 'object' && ref.current) {
+      if (videoTrack && !isLocal) {
+        // 원격 참가자의 비디오 트랙 연결
+        console.log('원격 비디오 트랙 연결:', participantId, videoTrack);
+        videoTrack.attach(ref.current);
+      } else if (isLocal) {
+        // 로컬 비디오는 VideoGrid에서 localVideoTrack으로 연결됨
+        console.log('로컬 비디오 엘리먼트 준비:', participantId);
+      }
     }
-  }, [videoTrack, ref, isLocal])
+  }, [videoTrack, ref, isLocal, participantId])
+
+  // 컴포넌트 언마운트 시 트랙 해제
+  useEffect(() => {
+    return () => {
+      if (videoTrack && ref && typeof ref === 'object' && ref.current && !isLocal) {
+        console.log('비디오 트랙 해제:', participantId);
+        videoTrack.detach(ref.current);
+      }
+    };
+  }, [videoTrack, ref, isLocal, participantId])
 
   return (
     <div className="relative bg-gray-800 rounded-lg overflow-hidden">

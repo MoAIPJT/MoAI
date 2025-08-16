@@ -43,8 +43,6 @@ const VideoConferenceMainContent: React.FC<VideoConferenceMainContentProps> = ({
   pdfViewerRef: _pdfViewerRef,
   speakingParticipantId,
 }) => {
-  const allParticipants = isDemoMode ? demoParticipants : Array.from(remoteParticipants.values());
-  const hasParticipants = isDemoMode ? demoParticipants.length > 0 : allParticipants.length > 0;
   const screenShareVideoRef = useRef<HTMLVideoElement>(null);
 
   // 화면 공유 스트림 연결
@@ -55,13 +53,18 @@ const VideoConferenceMainContent: React.FC<VideoConferenceMainContentProps> = ({
   }, [screenShareStream]);
 
   if (!isDemoMode && !isConnected) {
-    return null;
+    return (
+      <div className="flex-1 flex items-center justify-center p-2 min-h-0 overflow-hidden">
+        <div className="text-center text-white">
+          <p className="text-lg mb-4">화상회의에 연결 중...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+        </div>
+      </div>
+    );
   }
 
-  // 데모 모드가 아닌 경우 참가자가 있어야 함
-  if (!isDemoMode && !hasParticipants) {
-    return null;
-  }
+  // 연결된 경우 항상 화면 표시 (로컬 참가자는 항상 있음)
+  // 원격 참가자가 없어도 본인 화면은 보여줘야 함
 
   // 화면 공유 모드일 때
   if (isScreenSharing) {
