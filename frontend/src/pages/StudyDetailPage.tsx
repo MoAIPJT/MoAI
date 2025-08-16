@@ -1056,6 +1056,7 @@ const StudyDetailPage: React.FC = () => {
     <>
       <StudyDetailTemplate
         studies={Array.isArray(studies) ? studies : []}
+        hashId={activeStudyId ?? undefined}
         activeStudyId={activeStudyId}
         expandedStudy={expandedStudy}
         loading={loading}

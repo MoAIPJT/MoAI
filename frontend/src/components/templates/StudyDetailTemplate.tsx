@@ -45,6 +45,7 @@ interface StudyDetailTemplateProps {
   isSchedulesLoading?: boolean
   // 스터디 ID
   studyId?: number
+  hashId?: string // URL에 사용할 해시 ID
   onItemClick: (itemId: string) => void
   onStudyClick: (studyId: string) => void
   onSearch: () => void
@@ -120,6 +121,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
   isSchedulesLoading,
   // 스터디 ID
   studyId,
+  hashId,
   onItemClick,
   onStudyClick,
   onSearch,
@@ -221,6 +223,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
                 <StudyVideoConference
                   onCreateRoom={onCreateRoom}
                   participants={participants}
+                  hashId={hashId}
                 />
               </div>
             </div>
@@ -274,7 +277,7 @@ const StudyDetailTemplate: React.FC<StudyDetailTemplateProps> = ({
         studyName={currentStudy?.name || 'Study'}
         currentUserRole={currentUserRole}
         currentUserName={userName}
-        hashId={activeStudyId || undefined} // activeStudyId는 hashId입니다
+        hashId={activeStudyId || undefined}
         joinRequests={joinRequests}
         onAcceptJoinRequest={onAcceptJoinRequest}
         onRejectJoinRequest={onRejectJoinRequest}
