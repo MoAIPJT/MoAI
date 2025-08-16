@@ -1,4 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { RemoteParticipant } from 'livekit-client';
+
+// minimal track shape used for attach/detach
+type MediaTrackWithAttach = {
+  attach: (el: HTMLMediaElement) => void;
+  detach?: (el?: HTMLMediaElement) => void;
+}
 import VideoGrid from '../../molecules/VideoGrid';
 import PDFViewer from '../../atoms/PDFViewer';
 
@@ -10,8 +17,12 @@ interface VideoConferenceMainContentProps {
   screenShareParticipant: string;
   screenShareStream: MediaStream | null;
   demoParticipants: Array<{id: string, name: string, hasAudio: boolean, hasVideo: boolean}>;
-  remoteParticipants: Map<string, any>;
-  localVideoTrack: any;
+  remoteParticipants: Map<string, RemoteParticipant>;
+  // LiveKit/Track types are not imported here; use unknown for safety
+  // minimal shape for tracks provided by the RTC client (attach/detach)
+  remoteVideoTracks?: Map<string, MediaTrackWithAttach | null>;
+  remoteAudioTracks?: Map<string, MediaTrackWithAttach | null>;
+  localVideoTrack: MediaTrackWithAttach | null;
   isVideoEnabled: boolean;
   participantName: string;
   remoteParticipantStates: Map<string, {audio: boolean, video: boolean}>;
@@ -32,6 +43,8 @@ const VideoConferenceMainContent: React.FC<VideoConferenceMainContentProps> = ({
   screenShareStream,
   demoParticipants,
   remoteParticipants,
+  remoteVideoTracks,
+  remoteAudioTracks,
   localVideoTrack,
   isVideoEnabled,
   participantName,
@@ -40,10 +53,145 @@ const VideoConferenceMainContent: React.FC<VideoConferenceMainContentProps> = ({
   currentPdfName,
   cols,
   rows,
-  pdfViewerRef: _pdfViewerRef,
+  // pdfViewerRef removed (not used here)
   speakingParticipantId,
 }) => {
   const screenShareVideoRef = useRef<HTMLVideoElement>(null);
+
+  // 원격 참가자 비디오/오디오 트랙 attach/detach
+  useEffect(() => {
+    if (!remoteVideoTracks && !remoteAudioTracks) return;
+
+    remoteVideoTracks?.forEach((track, id: string) => {
+      const videoEl = document.getElementById(`remote-video-${id}`) as HTMLVideoElement | null;
+      if (videoEl && track && typeof track.attach === 'function') {
+        try {
+          track.attach(videoEl);
+          // try to play in case autoplay is allowed
+          if (videoEl.play) {
+            const p = videoEl.play();
+            if (p && typeof (p as Promise<unknown>).catch === 'function') {
+              (p as Promise<unknown>).catch(() => { /* ignore autoplay rejection */ })
+            }
+          }
+          console.log('Attached remote video track for', id);
+        } catch (e) { console.warn('attach video failed', e); }
+      }
+    });
+
+  remoteAudioTracks?.forEach((track, id: string) => {
+      const audioEl = document.getElementById(`remote-audio-${id}`) as HTMLAudioElement | null;
+      if (audioEl && track && typeof track.attach === 'function') {
+        try {
+          track.attach(audioEl);
+          // ensure audio element is able to play
+          try {
+      // keep element muted for autoplay safety; user action will unmute
+      audioEl.volume = 1;
+      const p = audioEl.play && audioEl.play();
+      if (p && typeof p.catch === 'function') p.catch(() => console.warn('Audio play blocked by browser autoplay policy'))
+          } catch (err) {
+            console.warn('audio play attempt failed', err)
+          }
+          console.log('Attached remote audio track for', id);
+        } catch (e) { console.warn('attach audio failed', e); }
+      }
+    });
+
+    return () => {
+      remoteVideoTracks?.forEach((track, id: string) => {
+        const videoEl = document.getElementById(`remote-video-${id}`) as HTMLVideoElement | null;
+        if (videoEl && track && typeof track.detach === 'function') {
+          try { track.detach(videoEl); } catch { /* ignore */ }
+        }
+      });
+      remoteAudioTracks?.forEach((track, id: string) => {
+        const audioEl = document.getElementById(`remote-audio-${id}`) as HTMLAudioElement | null;
+        if (audioEl && track && typeof track.detach === 'function') {
+          try { track.detach(audioEl); } catch { /* ignore */ }
+        }
+      });
+    };
+  }, [remoteVideoTracks, remoteAudioTracks, remoteParticipants]);
+
+  // Helper to render hidden media elements for attach
+  const renderHiddenMediaElements = () => {
+    // collect ids from participants and any remote track maps so we don't miss elements during races
+    const idSet = new Set<string>();
+    if (remoteParticipants) for (const k of remoteParticipants.keys()) idSet.add(k);
+    if (remoteVideoTracks) for (const k of Array.from(remoteVideoTracks.keys())) idSet.add(k);
+    if (remoteAudioTracks) for (const k of Array.from(remoteAudioTracks.keys())) idSet.add(k);
+    const keys = Array.from(idSet);
+    if (keys.length === 0) return null;
+    console.log('Rendering hidden media elements for', keys);
+    
+    // Use visually-hidden container instead of display:none so audio can play
+    return (
+      <div style={{ position: 'absolute', left: -9999, top: -9999, width: 1, height: 1, overflow: 'hidden' }}>
+        {keys.map(id => {
+          const hasVideo = remoteVideoTracks?.has(id);
+          const hasAudio = remoteAudioTracks?.has(id);
+          
+          return (
+            <div key={`media-${id}`}>
+              {hasVideo && (
+                <video 
+                  id={`remote-video-${id}`} 
+                  autoPlay 
+                  playsInline 
+                  muted={false}
+                  style={{ width: '1px', height: '1px' }}
+                />
+              )}
+              {hasAudio && (
+                <audio 
+                  id={`remote-audio-${id}`} 
+                  autoPlay 
+                  muted
+                  style={{ width: '1px', height: '1px' }}
+                />
+              )}
+            </div>
+          );
+        })}
+
+        {renderAudioActivationButton(keys)}
+      </div>
+    );
+  }
+
+  const [audioActivated, setAudioActivated] = useState(false);
+
+  const renderAudioActivationButton = (ids: string[]) => {
+    // show button only when there are remote audio tracks and audio hasn't been activated
+    const hasRemoteAudio = !!(remoteAudioTracks && remoteAudioTracks.size > 0);
+    if (!hasRemoteAudio || audioActivated) return null;
+
+    return (
+      <div style={{ position: 'absolute', right: 12, bottom: 12 }}>
+        <button
+            onClick={() => {
+              // unmute and play all audio elements; this must be triggered by user gesture
+              ids.forEach(id => {
+                const audioEl = document.getElementById(`remote-audio-${id}`) as HTMLAudioElement | null;
+                if (audioEl) {
+                  try {
+                    audioEl.muted = false;
+                    audioEl.volume = 1;
+                    const p = audioEl.play && audioEl.play();
+                    if (p && typeof p.catch === 'function') p.catch(() => console.warn('Audio play blocked after activation'));
+                  } catch (err) { console.warn('activate audio failed for', id, err); }
+                }
+              });
+              setAudioActivated(true);
+            }}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm font-medium"
+        >
+          소리 켜기
+        </button>
+      </div>
+    );
+  }
 
   // 화면 공유 스트림 연결
   useEffect(() => {
@@ -135,6 +283,7 @@ const VideoConferenceMainContent: React.FC<VideoConferenceMainContentProps> = ({
                 </div>
               )}
             </div>
+            {renderHiddenMediaElements()}
           </div>
         </div>
       </div>
@@ -176,6 +325,7 @@ const VideoConferenceMainContent: React.FC<VideoConferenceMainContentProps> = ({
               onError={() => {}}
             />
           </div>
+          {renderHiddenMediaElements()}
         </div>
       </div>
     );
@@ -184,7 +334,8 @@ const VideoConferenceMainContent: React.FC<VideoConferenceMainContentProps> = ({
   // 일반 화상회의 모드
   return (
     <div className="flex-1 flex items-center justify-center p-2 min-h-0 overflow-hidden">
-      <VideoGrid
+  <>
+  <VideoGrid
         isDemoMode={isDemoMode}
         demoParticipants={demoParticipants}
         remoteParticipants={remoteParticipants}
@@ -196,6 +347,8 @@ const VideoConferenceMainContent: React.FC<VideoConferenceMainContentProps> = ({
         rows={rows}
         speakingParticipantId={speakingParticipantId}
       />
+  {renderHiddenMediaElements()}
+  </>
     </div>
   );
 };

@@ -14,36 +14,65 @@ const VideoParticipant = forwardRef<HTMLVideoElement, VideoParticipantProps>(({
 }, ref) => {
   // 비디오 트랙 연결
   useEffect(() => {
-    if (ref && typeof ref === 'object' && ref.current) {
-      if (videoTrack && !isLocal) {
-        // 원격 참가자의 비디오 트랙 연결
-        console.log('원격 비디오 트랙 연결:', participantId, videoTrack);
-        videoTrack.attach(ref.current);
-      } else if (isLocal) {
-        // 로컬 비디오는 VideoGrid에서 localVideoTrack으로 연결됨
-        console.log('로컬 비디오 엘리먼트 준비:', participantId);
+    const videoElement = ref && typeof ref === 'object' ? ref.current : null;
+    
+    console.log('VideoParticipant useEffect:', {
+      participantId,
+      hasVideoTrack: !!videoTrack,
+      hasVideoElement: !!videoElement,
+      isLocal
+    });
+    
+    if (videoElement && videoTrack && !isLocal) {
+      console.log('원격 비디오 트랙 연결 시도:', participantId, videoTrack);
+      try {
+        // 기존 트랙이 연결되어 있다면 먼저 해제
+        videoTrack.detach();
+        // 새 트랙 연결
+        videoTrack.attach(videoElement);
+        
+        console.log('원격 비디오 트랙 연결 성공:', participantId);
+        
+        // 비디오 재생 시도
+        if (videoElement.play) {
+          const playPromise = videoElement.play();
+          if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch((error) => {
+              console.warn('비디오 자동재생 실패 (정상):', error);
+            });
+          }
+        }
+      } catch (error) {
+        console.error('비디오 트랙 연결 실패:', participantId, error);
       }
+    } else if (isLocal) {
+      // 로컬 비디오는 VideoGrid에서 localVideoTrack으로 연결됨
+      console.log('로컬 비디오 엘리먼트 준비:', participantId);
     }
-  }, [videoTrack, ref, isLocal, participantId])
-
-  // 컴포넌트 언마운트 시 트랙 해제
-  useEffect(() => {
+    
+    // 클린업
     return () => {
-      if (videoTrack && ref && typeof ref === 'object' && ref.current && !isLocal) {
-        console.log('비디오 트랙 해제:', participantId);
-        videoTrack.detach(ref.current);
+      if (videoTrack && videoElement && !isLocal) {
+        try {
+          console.log('비디오 트랙 해제:', participantId);
+          videoTrack.detach(videoElement);
+        } catch (error) {
+          console.warn('비디오 트랙 해제 중 에러:', error);
+        }
       }
     };
-  }, [videoTrack, ref, isLocal, participantId])
+  }, [videoTrack, participantId, isLocal, ref])
 
   return (
     <div className="relative bg-gray-800 rounded-lg overflow-hidden">
-      {hasVideo && isVideoEnabled ? (
+      {hasVideo && isVideoEnabled && (videoTrack || isLocal) ? (
         <video
           ref={ref}
           autoPlay
           muted={isLocal || isMuted}
           playsInline
+          data-participant-id={participantId}
+          id={participantId}
           className={`w-full h-full object-cover ${isSpeaking ? 'ring-2 ring-blue-400' : ''}`}
         />
       ) : (

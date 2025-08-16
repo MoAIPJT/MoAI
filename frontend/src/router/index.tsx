@@ -17,6 +17,7 @@ const DashboardPage = React.lazy(() => import('../pages/DashboardPage'))
 const TestPage = React.lazy(() => import('../pages/TestPage'))
 const StudyDetailPage = React.lazy(() => import('../pages/StudyDetailPage'))
 const VideoConferencePage = React.lazy(() => import('../pages/VideoConferencePage'))
+const NewVideoConferencePage = React.lazy(() => import('../pages/NewVideoConferencePage'))
 const GoogleCallback = React.lazy(() => import('../pages/GoogleCallback'))
 
 // Loading component for Suspense fallback
@@ -67,6 +68,16 @@ const Router: React.FC = () => {
         <Route path="/video-conference/:studyId" element={
           <ProtectedRoute>
             <VideoConferencePage />
+          </ProtectedRoute>
+        } />
+        <Route path="/new-video-conference" element={
+          <ProtectedRoute>
+            <NewVideoConferencePage />
+          </ProtectedRoute>
+        } />
+        <Route path="/new-video-conference/:studyId" element={
+          <ProtectedRoute>
+            <NewVideoConferencePage />
           </ProtectedRoute>
         } />
 
