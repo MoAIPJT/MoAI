@@ -63,13 +63,12 @@ const ContentList: React.FC<ContentListProps> = ({
             <p className="text-sm text-gray-600 mb-2">{content.description}</p>
             <div className="flex items-center justify-between text-xs text-gray-500">
               <div className="flex items-center gap-1">
-                <img
-                  src={content.author.avatar}
-                  alt={content.author.name}
-                  className="w-4 h-4 rounded-full"
-                />
                 <span>{content.author.name}</span>
-                <span className="ml-2">{content.date}</span>
+                <span className="ml-2">
+                  {content.date
+                    ? new Date(content.date).toISOString().slice(0, 10)
+                    : ""}
+                </span>
               </div>
             </div>
           </div>

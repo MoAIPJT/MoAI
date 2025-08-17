@@ -233,8 +233,8 @@ const StudyManagementModal: React.FC<StudyManagementModalProps> = ({
                     max="10"
                     value={localMaxMembers}
                     onChange={(e) => {
-                      const value = parseInt(e.target.value) || 2
-                      setLocalMaxMembers(Math.max(2, Math.min(10, value)))
+                      const value = parseInt(e.target.value) || 2;
+                      setLocalMaxMembers(Math.max(2, Math.min(10, value)));
                     }}
                     className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                     placeholder="최대 인원 수를 입력하세요"
@@ -316,41 +316,47 @@ const StudyManagementModal: React.FC<StudyManagementModalProps> = ({
           {/* 멤버 관리 섹션 */}
           <div className="bg-yellow-50 p-4 rounded-lg">
             <h3 className="text-lg font-semibold mb-4 text-gray-800">멤버 관리</h3>
-            <div className="space-y-3 max-h-40 overflow-y-auto">
+            <div className="space-y-2 h-full overflow-y-auto">
               {members.map((member, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border-b border-gray-100 last:border-b-0 bg-white rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-2 border-b border-gray-100 last:border-b-0 bg-white rounded"
+                  style={{ minHeight: 36 }}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
                       {member.imageUrl && isValidImageUrl(member.imageUrl) ? (
                         <img
                           src={member.imageUrl}
                           alt={`${member.member}의 프로필`}
                           className="w-full h-full object-cover"
+                          style={{ minWidth: 0, minHeight: 0 }}
                           onError={(e) => {
-                            // 이미지 로드 실패 시 기본 아이콘 표시
                             const target = e.target as HTMLImageElement;
                             target.style.display = 'none';
                             target.nextElementSibling?.classList.remove('hidden');
                           }}
                         />
                       ) : null}
-                      <div className={`w-full h-full flex items-center justify-center text-sm ${member.imageUrl && isValidImageUrl(member.imageUrl) ? 'hidden' : ''}`}>
+                      <div className={`w-full h-full flex items-center justify-center text-xs ${member.imageUrl && isValidImageUrl(member.imageUrl) ? 'hidden' : ''}`}>
                         👤
                       </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-800 text-sm">
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-800 text-xs truncate max-w-[7rem]">
                         {member.member}
-                        {currentUserName && member.member === currentUserName && <span className="text-xs text-gray-500 ml-1">(me)</span>}
+                        {currentUserName && member.member === currentUserName && (
+                          <span className="text-[10px] text-gray-500 ml-1">(me)</span>
+                        )}
                       </p>
-                      <p className="text-xs text-gray-500">{member.email}</p>
+                      <p className="text-[10px] text-gray-500 truncate max-w-[7rem]">{member.email}</p>
                     </div>
                   </div>
-                  {/* admin 자신에게는 추방 버튼 표시되지 않음 */}
                   {currentUserName && member.member !== currentUserName && currentUserRole === 'ADMIN' && (
                     <button
                       onClick={() => handleMemberDelete(member)}
-                      className="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
+                      className="px-2 py-1 bg-red-500 text-white text-[10px] rounded hover:bg-red-600 flex-shrink-0"
+                      style={{ minWidth: 36 }}
                     >
                       추방
                     </button>

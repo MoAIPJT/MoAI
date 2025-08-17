@@ -85,36 +85,11 @@ const DashboardPage: React.FC = () => {
       setCalendarEvents(events)
     } catch (error) {
       console.error('일정 데이터 로드 실패:', error)
-
-      // 에러 시 기본 더미 데이터 사용 (모두 보라색으로 통일)
-      const defaultEvents: CalendarEvent[] = [
-        {
-          date: new Date(new Date().getFullYear(), new Date().getMonth(), 15),
-          color: '#AA64FF',
-          title: '알고리즘 스터디',
-          startTime: '14:00',
-          endTime: '16:00'
-        },
-        {
-          date: new Date(new Date().getFullYear(), new Date().getMonth(), 20),
-          color: '#AA64FF',
-          title: 'CS 면접 준비',
-          startTime: '19:00',
-          endTime: '21:00'
-        },
-        {
-          date: new Date(new Date().getFullYear(), new Date().getMonth(), 25),
-          color: '#AA64FF',
-          title: '프로젝트 회의',
-          startTime: '10:00',
-          endTime: '12:00'
-        }
-      ]
-      setCalendarEvents(defaultEvents)
+      setCalendarEvents([])
     }
   }
 
-    // 다가오는 일정을 달력 이벤트에서 동적으로 생성
+  // 다가오는 일정을 달력 이벤트에서 동적으로 생성
   const upcomingEvents: Array<{
     id: number;
     title: string;
