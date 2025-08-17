@@ -2,8 +2,6 @@ import React from 'react'
 import type { ParticipantListProps } from './types'
 
 const ParticipantList: React.FC<ParticipantListProps> = ({
-  isDemoMode,
-  demoParticipants,
   remoteParticipants,
   remoteParticipantStates,
   participantName,
@@ -12,7 +10,7 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
   onToggleAudio,
   onToggleVideo,
 }: ParticipantListProps) => {
-  const allParticipants = isDemoMode ? demoParticipants : Array.from(remoteParticipants.values())
+  const allParticipants = Array.from(remoteParticipants.values())
 
   return (
     <div className="flex-1 overflow-y-auto p-4">
@@ -33,21 +31,19 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
           <div className="flex space-x-2">
             <button
               onClick={onToggleAudio}
-              className={`p-2 rounded-lg transition-colors ${
-                isAudioEnabled
-                  ? 'bg-green-600 hover:bg-green-700 text-white'
-                  : 'bg-red-600 hover:bg-red-700 text-white'
-              }`}
+              className={`p-2 rounded-lg transition-colors ${isAudioEnabled
+                ? 'bg-green-600 hover:bg-green-700 text-white'
+                : 'bg-red-600 hover:bg-red-700 text-white'
+                }`}
             >
               {isAudioEnabled ? '🔊' : '🔇'}
             </button>
             <button
               onClick={onToggleVideo}
-              className={`p-2 rounded-lg transition-colors ${
-                isVideoEnabled
-                  ? 'bg-green-600 hover:bg-green-700 text-white'
-                  : 'bg-red-600 hover:bg-red-700 text-white'
-              }`}
+              className={`p-2 rounded-lg transition-colors ${isVideoEnabled
+                ? 'bg-green-600 hover:bg-green-700 text-white'
+                : 'bg-red-600 hover:bg-red-700 text-white'
+                }`}
             >
               {isVideoEnabled ? '📹' : '🚫'}
             </button>
@@ -60,11 +56,10 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
         <h5 className="text-gray-300 text-sm font-medium mb-3">다른 참가자 ({allParticipants.length}명)</h5>
 
         {allParticipants.map((participant) => {
-          const isDemoParticipant = 'id' in participant
-          const participantId = isDemoParticipant ? participant.id : participant.sid
-          const participantName = isDemoParticipant ? participant.name : participant.identity
-          const hasAudio = isDemoParticipant ? participant.hasAudio : (remoteParticipantStates.get(participantId)?.audio ?? true)
-          const hasVideo = isDemoParticipant ? participant.hasVideo : (remoteParticipantStates.get(participantId)?.video ?? true)
+          const participantId = participant.sid
+          const participantName = participant.identity
+          const hasAudio = remoteParticipantStates.get(participantId)?.audio ?? true
+          const hasVideo = remoteParticipantStates.get(participantId)?.video ?? true
 
           return (
             <div key={participantId} className="p-3 bg-gray-700 rounded-lg">
@@ -77,20 +72,16 @@ const ParticipantList: React.FC<ParticipantListProps> = ({
                   </div>
                   <div>
                     <h6 className="text-white text-sm font-medium">{participantName}</h6>
-                    <p className="text-gray-400 text-xs">
-                      {isDemoMode ? '데모 참가자' : '원격 참가자'}
-                    </p>
+                    <p className="text-gray-400 text-xs">원격 참가자</p>
                   </div>
                 </div>
                 <div className="flex space-x-1">
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    hasAudio ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-                  }`}>
+                  <span className={`text-xs px-2 py-1 rounded ${hasAudio ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+                    }`}>
                     {hasAudio ? '🔊' : '🔇'}
                   </span>
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    hasVideo ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-                  }`}>
+                  <span className={`text-xs px-2 py-1 rounded ${hasVideo ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+                    }`}>
                     {hasVideo ? '📹' : '🚫'}
                   </span>
                 </div>

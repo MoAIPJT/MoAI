@@ -13,6 +13,7 @@ import {
 } from 'livekit-client';
 import VideoConferenceMainContent from '../components/organisms/VideoConferenceMainContent';
 import VideoConferenceBar from '@/components/organisms/VideoConferenceBar';
+import VideoConferenceSidebar from '@/components/organisms/VideoConferenceSidebar';
 
 // TrackInfo 타입 정의
 interface TrackInfo {
@@ -150,39 +151,53 @@ const VideoConferencePage: React.FC = () => {
         room?.localParticipant.setMicrophoneEnabled(!isAudioEnabled);
     };
 
-    /
+    // 사용자 카메라 ON/OFF
     const toggleVideo = () => {
         setIsVideoEnabled(!isVideoEnabled);
         room?.localParticipant.setCameraEnabled(!isVideoEnabled);
-        // TODO: Implement actual video toggle logic with LiveKit
     };
 
+    // 사이드바 토글
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
-        // TODO: Implement sidebar toggle logic
+
     };
 
+    // 화면 공유 토글
     const toggleScreenShare = () => {
         setIsScreenSharing(!isScreenSharing);
-        // TODO: Implement screen share logic with LiveKit
     };
 
-    const
+    // 세션 종료
+    const closeSession = () => {
+        leaveRoom();
+        window.close();
+    }
 
     return (
         <div style={{ width: '100vw', height: '100vh', background: '#222' }}>
-            <VideoConferenceMainContent participants={participants} />
-            <VideoConferenceBar
-                isAudioEnabled={isAudioEnabled}
-                isVideoEnabled={isVideoEnabled}
-                isSidebarOpen={isSidebarOpen}
-                isScreenSharing={isScreenSharing}
-                onToggleAudio={toggleAudio}
-                onToggleVideo={toggleVideo}
-                onToggleSidebar={toggleSidebar}
-                onToggleScreenShare={toggleScreenShare}
-                onExitSession={leaveRoom}
-            />
+            <div style={{ display: 'flex', width: '100%', height: '100%' }}>
+                <div style={{ flex: isSidebarOpen ? '1 1 0%' : '1 1 100%', height: '100%' }}>
+                    <VideoConferenceMainContent participants={participants} />
+                    <VideoConferenceBar
+                        isAudioEnabled={isAudioEnabled}
+                        isVideoEnabled={isVideoEnabled}
+                        isSidebarOpen={isSidebarOpen}
+                        isScreenSharing={isScreenSharing}
+                        onToggleAudio={toggleAudio}
+                        onToggleVideo={toggleVideo}
+                        onToggleSidebar={toggleSidebar}
+                        onToggleScreenShare={toggleScreenShare}
+                        onExitSession={closeSession}
+                    />
+                </div>
+                {isSidebarOpen && (
+                    <div style={{ width: 320, height: '100%', background: '#2d2d2d', zIndex: 100 }}>
+                        <VideoConferenceSidebar />
+                    </div>
+                )}
+            </div>
+
         </div>
     );
 };
