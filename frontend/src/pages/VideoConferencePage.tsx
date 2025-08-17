@@ -12,6 +12,7 @@ import {
     RemoteVideoTrack
 } from 'livekit-client';
 import VideoConferenceMainContent from '../components/organisms/VideoConferenceMainContent';
+import VideoConferenceBar from '@/components/organisms/VideoConferenceBar';
 
 // TrackInfo 타입 정의
 interface TrackInfo {
@@ -51,6 +52,12 @@ const VideoConferencePage: React.FC = () => {
     const [room, setRoom] = useState<Room | undefined>(undefined);
     const [localTrack, setLocalTrack] = useState<LocalVideoTrack | undefined>(undefined);
     const [remoteTracks, setRemoteTracks] = useState<TrackInfo[]>([]);
+
+    // Add state for video conference controls
+    const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+    const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isScreenSharing, setIsScreenSharing] = useState(false);
 
     async function joinRoom() {
         if (!LIVEKIT_URL || !TOKEN) return;
@@ -125,7 +132,7 @@ const VideoConferencePage: React.FC = () => {
         }
     });
 
-    // local 참가자 추가
+    // local 참가자 추가 
     if (localTrack) {
         participantMap.set(PARTICIPANT_NAME, {
             id: PARTICIPANT_NAME,
@@ -136,9 +143,46 @@ const VideoConferencePage: React.FC = () => {
     }
 
     const participants: ParticipantMedia[] = Array.from(participantMap.values());
+
+    // 사용자 마이크 ON/OFF
+    const toggleAudio = () => {
+        setIsAudioEnabled(!isAudioEnabled);
+        room?.localParticipant.setMicrophoneEnabled(!isAudioEnabled);
+    };
+
+    /
+    const toggleVideo = () => {
+        setIsVideoEnabled(!isVideoEnabled);
+        room?.localParticipant.setCameraEnabled(!isVideoEnabled);
+        // TODO: Implement actual video toggle logic with LiveKit
+    };
+
+    const toggleSidebar = () => {
+        setIsSidebarOpen(!isSidebarOpen);
+        // TODO: Implement sidebar toggle logic
+    };
+
+    const toggleScreenShare = () => {
+        setIsScreenSharing(!isScreenSharing);
+        // TODO: Implement screen share logic with LiveKit
+    };
+
+    const
+
     return (
         <div style={{ width: '100vw', height: '100vh', background: '#222' }}>
             <VideoConferenceMainContent participants={participants} />
+            <VideoConferenceBar
+                isAudioEnabled={isAudioEnabled}
+                isVideoEnabled={isVideoEnabled}
+                isSidebarOpen={isSidebarOpen}
+                isScreenSharing={isScreenSharing}
+                onToggleAudio={toggleAudio}
+                onToggleVideo={toggleVideo}
+                onToggleSidebar={toggleSidebar}
+                onToggleScreenShare={toggleScreenShare}
+                onExitSession={leaveRoom}
+            />
         </div>
     );
 };

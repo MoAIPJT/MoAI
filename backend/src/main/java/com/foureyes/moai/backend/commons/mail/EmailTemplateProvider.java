@@ -17,7 +17,7 @@ public class EmailTemplateProvider {
     public String getBody(EmailType type, String link) {
         return switch (type) {
             case VERIFY -> """
-                 <div style="font-family:Arial,sans-serif; max-width:600px; margin:0 auto; border:1px solid #AA64FF; border-radius:5px; overflow:hidden;">
+                <div style="font-family:Arial,sans-serif; max-width:600px; margin:0 auto; border:1px solid #AA64FF; border-radius:5px; overflow:hidden;">
                     <div style="background-color:#AA64FF; padding:20px; text-align:center;">
                         <h1 style="color:white; margin:0; font-size:28px;">이메일 인증</h1>
                     </div>

@@ -26,7 +26,11 @@ function VideoComponent({ track, participantIdentity, local = false }: VideoComp
             <div className="participant-data">
                 <p>{participantIdentity + (local ? " (당신)" : "")}</p>
             </div>
-            <video ref={videoElement} id={track.sid}></video>
+            <video
+                ref={videoElement}
+                id={track.sid}
+                className={local ? "local-mirror" : ""}
+            />
         </div>
     );
 }
