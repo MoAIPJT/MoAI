@@ -177,30 +177,43 @@ const VideoConferencePage: React.FC = () => {
     return (
         <div style={{ width: '100vw', height: '100vh', background: '#222' }}>
             <div style={{ display: 'flex', width: '100%', height: '100%' }}>
-                <div style={{ flex: isSidebarOpen ? '1 1 0%' : '1 1 100%', height: '100%' }}>
+                <div style={{ flex: isSidebarOpen ? '1 1 0%' : '1 1 100%', height: '100%', position: 'relative' }}>
                     <VideoConferenceMainContent participants={participants} />
-                    <VideoConferenceBar
-                        isAudioEnabled={isAudioEnabled}
-                        isVideoEnabled={isVideoEnabled}
-                        isSidebarOpen={isSidebarOpen}
-                        isScreenSharing={isScreenSharing}
-                        onToggleAudio={toggleAudio}
-                        onToggleVideo={toggleVideo}
-                        onToggleSidebar={toggleSidebar}
-                        onToggleScreenShare={toggleScreenShare}
-                        onExitSession={closeSession}
-                    />
+                    <div
+                        style={{
+                            position: 'absolute',
+                            left: 0,
+                            right: isSidebarOpen ? 320 : 0,
+                            bottom: 0,
+                            zIndex: 50,
+                            transition: 'right 0.3s',
+                        }}
+                    >
+                        <VideoConferenceBar
+                            isAudioEnabled={isAudioEnabled}
+                            isVideoEnabled={isVideoEnabled}
+                            isSidebarOpen={isSidebarOpen}
+                            isScreenSharing={isScreenSharing}
+                            onToggleAudio={toggleAudio}
+                            onToggleVideo={toggleVideo}
+                            onToggleSidebar={toggleSidebar}
+                            onToggleScreenShare={toggleScreenShare}
+                            onExitSession={closeSession}
+                        />
+                    </div>
                 </div>
                 {isSidebarOpen && (
                     <div style={{ width: 320, height: '100%', background: '#2d2d2d', zIndex: 100 }}>
-                        <VideoConferenceSidebar />
+                        <VideoConferenceSidebar
+                            participants={participants}
+                            onCloseSidebar={toggleSidebar}
+                        />
                     </div>
                 )}
             </div>
-
         </div>
     );
 };
-
 export default VideoConferencePage;
+
 

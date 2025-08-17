@@ -25,7 +25,7 @@ const VideoConferenceBar: React.FC<VideoConferenceBarProps> = ({
     onExitSession,
 }) => {
     return (
-        <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-700 p-4 z-50">
+        <div className="w-full bg-gray-900 border-t border-gray-700 p-4 z-50">
             <div className="flex justify-center items-center gap-4">
                 {/* Mute/Unmute Button */}
                 <CircleButton
