@@ -51,7 +51,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
   return (
     <div className="w-full max-w-md">
-      <WelcomeText/>
+      <WelcomeText />
 
       {/* 로그인 폼 */}
       <form className="space-y-6" onSubmit={handleSubmit}>
@@ -110,6 +110,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
           </Button>
 
           <Button
+            className="invisible"
             variant="secondary"
             size="lg"
             fullWidth
@@ -119,6 +120,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
           </Button>
 
           <Button
+            className="invisible"
             variant="gray"
             size="lg"
             fullWidth

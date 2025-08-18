@@ -58,7 +58,8 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
                 token: joinResponse.token,
                 roomName: joinResponse.roomName,
                 displayName: joinResponse.displayName,
-                sessionId: hashId
+                sessionId: hashId,
+                studyId: openResponse.studyGroupId.toString()
             })
 
             const videoConferenceUrl = `/video-conference?${params.toString()}`
@@ -107,7 +108,8 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
                 wsUrl: response.wsUrl,
                 token: response.token,
                 roomName: response.roomName,
-                sessionId: hashId
+                sessionId: hashId,
+                studyId: response.studyId.toString()
             })
 
             const videoConferenceUrl = `/video-conference?${params.toString()}`
@@ -158,12 +160,6 @@ const StudyVideoConference: React.FC<StudyVideoConferenceProps> = ({
                             {isSessionOpen ? '진행 중' : '대기 중'}
                         </span>
                     </div>
-
-                    {isSessionOpen && (
-                        <span className="text-sm text-gray-600">
-                            참가자: {sessionStatus?.count || 0}명
-                        </span>
-                    )}
                 </div>
 
                 {/* 참가자 목록 */}

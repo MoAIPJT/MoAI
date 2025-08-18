@@ -6,6 +6,8 @@ import lombok.*;
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 @Schema(description = "세션 참가(토큰) 응답")
 public class JoinSessionResponseDto {
+    @Schema(description = "스터디 아이디")
+    private int studyId;
     @Schema(description = "룸 이름", example = "study-aB9xZK31")
     private String roomName;
     @Schema(description = "LiveKit WebSocket URL", example = "wss://livekit.example")

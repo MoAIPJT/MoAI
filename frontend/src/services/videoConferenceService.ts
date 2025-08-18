@@ -14,6 +14,7 @@ export interface JoinSessionResponseDto {
   wsUrl: string
   displayName: string
   token: string
+  studyId: number
 }
 
 export interface ParticipantDto {

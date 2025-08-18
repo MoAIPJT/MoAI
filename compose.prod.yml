@@ -68,6 +68,7 @@ services:
       - mysql_data:/var/lib/mysql
       - ./db/sql-scripts/01_init.sql:/docker-entrypoint-initdb.d/01_init.sql
       - ./db/mysql-utf8mb4.cnf:/etc/mysql/conf.d/mysql-utf8mb4.cnf
+      - ./db/sql-scripts/dump.sql:/docker-entrypoint-initdb.d/dump.sql
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
