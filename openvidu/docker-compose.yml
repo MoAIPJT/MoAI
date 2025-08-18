@@ -1,0 +1,280 @@
+services:
+  caddy-proxy:
+    image: docker.io/openvidu/openvidu-caddy-local:3.3.0
+    container_name: caddy-proxy
+    restart: unless-stopped
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    environment:
+      - LAN_DOMAIN=${LAN_DOMAIN:-}
+      - LAN_PRIVATE_IP=${LAN_PRIVATE_IP:-}
+      - LAN_MODE=${LAN_MODE:-false}
+      - USE_HTTPS=${USE_HTTPS:-false}
+      - CERTIFICATE_TYPE=${CERTIFICATE_TYPE:-none}
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET:-}
+      - DASHBOARD_ADMIN_USERNAME=${DASHBOARD_ADMIN_USERNAME:-}
+      - DASHBOARD_ADMIN_PASSWORD=${DASHBOARD_ADMIN_PASSWORD:-}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-}
+    volumes:
+      - ./OpenVidu/custom-layout:/var/www/custom-layout
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    networks:
+      - shared-network
+
+  redis:
+    image: docker.io/redis:7.4.4-alpine
+    container_name: ov-redis
+    restart: unless-stopped
+    ports:
+      - "6378:6378"
+    volumes:
+      - redis:/data
+    command: >
+      redis-server
+      --bind 0.0.0.0
+      --port 6378
+      --requirepass ${REDIS_PASSWORD:-}
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    networks:
+      - shared-network
+
+  minio:
+    image: docker.io/bitnami/minio:2025.5.24-debian-12-r1
+    container_name: minio
+    restart: unless-stopped
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY:-}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY:-}
+      - MINIO_DEFAULT_BUCKETS=openvidu-appdata
+      - MINIO_CONSOLE_SUBPATH=/minio-console
+      - MINIO_BROWSER_REDIRECT_URL=http://localhost:7880/minio-console
+    volumes:
+      - minio-data:/bitnami/minio/data
+      - minio-certs:/certs
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    networks:
+      - shared-network
+
+  mongo:
+    image: docker.io/bitnami/mongodb:8.0.9
+    container_name: mongo
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/bitnami/mongodb
+    environment:
+      - MONGODB_ROOT_USER=${MONGO_ADMIN_USERNAME:-}
+      - MONGODB_ROOT_PASSWORD=${MONGO_ADMIN_PASSWORD:-}
+      - MONGODB_ADVERTISED_HOSTNAME=mongo
+      - MONGODB_REPLICA_SET_MODE=primary
+      - MONGODB_REPLICA_SET_NAME=rs0
+      - MONGODB_REPLICA_SET_KEY=devreplicasetkey
+      - EXPERIMENTAL_DOCKER_DESKTOP_FORCE_QEMU=${EXPERIMENTAL_DOCKER_DESKTOP_FORCE_QEMU:-0}
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    networks:
+      - shared-network
+
+  dashboard:
+    image: docker.io/openvidu/openvidu-dashboard:3.3.0
+    container_name: dashboard
+    restart: unless-stopped
+    environment:
+      - SERVER_PORT=5000
+      - ADMIN_USERNAME=${DASHBOARD_ADMIN_USERNAME:-}
+      - ADMIN_PASSWORD=${DASHBOARD_ADMIN_PASSWORD:-}
+      - DATABASE_URL=mongodb://${MONGO_ADMIN_USERNAME}:${MONGO_ADMIN_PASSWORD}@mongo:27017/?replicaSet=rs0&readPreference=primaryPreferred
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    networks:
+      - shared-network
+
+  openvidu:
+    build:
+      context: ./OpenVidu
+      dockerfile: server/Dockerfile
+    image: custom-openvidu-server:3.3.0
+    container_name: openvidu
+    restart: unless-stopped
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    environment:
+      - OPENVIDU_DOMAIN_OR_PUBLIC_IP=${LAN_DOMAIN}
+    ports:
+      - "3478:3478/udp"
+      - "7881:7881"
+      - "7900-7999:7900-7999/udp"
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    networks:
+      - shared-network
+
+  ingress:
+    build:
+      context: ./OpenVidu
+      dockerfile: ingress/Dockerfile
+    container_name: ingress
+    restart: unless-stopped
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    ports:
+      - 1935:1935
+      - 8085:8085
+      - 7895:7895/udp
+    environment:
+      - INGRESS_CONFIG_FILE=/etc/ingress.yaml
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    networks:
+      - shared-network
+
+  egress:
+    build:
+      context: ./OpenVidu
+      dockerfile: egress/Dockerfile
+    restart: unless-stopped
+    container_name: egress
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    environment:
+      - EGRESS_CONFIG_FILE=/etc/egress.yaml
+    volumes:
+      - egress-data:/home/egress/tmp
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    networks:
+      - shared-network
+
+  default-app:
+    build:
+      context: ./OpenVidu
+      dockerfile: call/Dockerfile
+    image: custom-openvidu-call:3.3.0-demo
+    container_name: openvidu-call
+    restart: on-failure
+    environment:
+      - USE_HTTPS=${USE_HTTPS:-false}
+      - LAN_MODE=${LAN_MODE:-false}
+      - LAN_DOMAIN=${LAN_DOMAIN:-}
+      - LAN_PRIVATE_IP=${LAN_PRIVATE_IP:-}
+      - SERVER_PORT=6080
+      - CALL_NAME_ID=OpenViduCall-LOCAL
+      - LIVEKIT_URL_PRIVATE=ws://openvidu:7880/
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
+      - CALL_PRIVATE_ACCESS=${CALL_PRIVATE_ACCESS:-false}
+      - CALL_USER=${CALL_USER:-}
+      - CALL_SECRET=${CALL_SECRET:-}
+      - CALL_RECORDING=${CALL_RECORDING:-}
+      - CALL_ADMIN_USER=${CALL_ADMIN_USER:-admin}
+      - CALL_ADMIN_SECRET=${CALL_ADMIN_SECRET:-admin}
+      - CALL_LOG_LEVEL=${CALL_LOG_LEVEL:-info}
+      - CALL_S3_BUCKET=${CALL_S3_BUCKET:-openvidu-appdata}
+      - CALL_S3_SERVICE_ENDPOINT=${CALL_S3_SERVICE_ENDPOINT:-http://minio:9000}
+      - CALL_S3_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - CALL_S3_SECRET_KEY=${MINIO_SECRET_KEY}
+      - CALL_AWS_REGION=${CALL_AWS_REGION:-us-east-1}
+      - CALL_S3_WITH_PATH_STYLE_ACCESS=${CALL_S3_WITH_PATH_STYLE_ACCESS:-true}
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    networks:
+      - shared-network
+
+  operator:
+    image: docker.io/openvidu/openvidu-operator:3.3.0
+    container_name: operator
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - agents-config:/agents-config
+      - ./OpenVidu/:/deployment
+    environment:
+      - PLATFORM=linux/amd64
+      - MODE=agent-manager-local
+      - DEPLOYMENT_FILES_DIR=/deployment
+      - AGENTS_CONFIG_DIR=/agents-config
+      - NETWORK_NAME=openvidu-community
+      - AGENTS_CONFIG_VOLUME=openvidu-agents-config
+      - LIVEKIT_URL=ws://openvidu:7880/
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET:-}
+      - REDIS_ADDRESS=redis:6378
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    networks:
+      - shared-network
+
+  ready-check:
+    image: docker.io/curlimages/curl:8.13.0
+    container_name: ready-check
+    restart: on-failure
+    environment:
+      - USE_HTTPS=${USE_HTTPS:-false}
+      - LAN_DOMAIN=${LAN_DOMAIN:-}
+      - LAN_MODE=${LAN_MODE:-false}
+      - LAN_PRIVATE_IP=${LAN_PRIVATE_IP:-}
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET:-}
+      - DASHBOARD_ADMIN_USERNAME=${DASHBOARD_ADMIN_USERNAME:-}
+      - DASHBOARD_ADMIN_PASSWORD=${DASHBOARD_ADMIN_PASSWORD:-}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-}
+    depends_on:
+      - openvidu
+      - ingress
+      - egress
+      - dashboard
+      - minio
+      - mongo
+    volumes:
+      - ./OpenVidu/scripts/ready-check.sh:/scripts/ready-check.sh
+      - ./OpenVidu/scripts/utils.sh:/scripts/utils.sh
+    command: /bin/sh /scripts/ready-check.sh
+    networks:
+      - shared-network
+
+  setup:
+    image: docker.io/busybox:1.37.0
+    container_name: setup
+    restart: "no"
+    volumes:
+      - minio-data:/minio
+      - mongo-data:/mongo
+      - egress-data:/egress
+      - ./OpenVidu/scripts/setup.sh:/scripts/setup.sh
+    environment:
+      - USE_HTTPS=${USE_HTTPS:-false}
+      - LAN_MODE=${LAN_MODE:-false}
+      - LAN_PRIVATE_IP=${LAN_PRIVATE_IP:-}
+      - RUN_WITH_SCRIPT=${RUN_WITH_SCRIPT:-false}
+    user: root
+    command: /bin/sh /scripts/setup.sh
+    networks:
+      - shared-network
+
+volumes:
+  redis:
+  minio-data:
+  minio-certs:
+  mongo-data:
+  egress-data:
+  agents-config:
+
+networks:
+  shared-network:
+    external: true
