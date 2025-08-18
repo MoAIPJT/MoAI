@@ -29,21 +29,15 @@ const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   onCreateSchedule,
   onEditSchedule,
   studyId,
+  currentUserRole,
 }) => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
-  const [selectedDate, setSelectedDate] = useState<Date>(() => {
-    // 현재 날짜로 초기화
+  const [selectedDate, setSelectedDate] = useState(() => {
     const now = new Date()
-    console.log('CalendarSidebar selectedDate 초기값:', now)
-    console.log('CalendarSidebar currentDate prop:', currentDate)
     return now
   })
-
-  // studyId 디버깅
-  console.log('CalendarSidebar에서 받은 studyId:', studyId)
-  console.log('CalendarSidebar에서 받은 studyId 타입:', typeof studyId)
 
   // 날짜 클릭 핸들러
   const handleDateClick = (date: Date) => {
@@ -52,12 +46,12 @@ const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   }
 
   const handleCreateEvent = () => {
-    if (onCreateSchedule && studyId) {
-      // 일정 생성 모달 열기
-      setIsCreateModalOpen(true)
-    } else if (onCreateEvent) {
+    if (onCreateEvent) {
       // FullCalendar 내에서 일정 생성 버튼을 눌렀을 때
       onCreateEvent()
+    } else if (onCreateSchedule && studyId) {
+      // 일정 생성 모달 열기 (fallback)
+      setIsCreateModalOpen(true)
     }
   }
 
@@ -94,13 +88,15 @@ const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
     <>
       <div className="w-64 h-full bg-white/10 backdrop-blur-lg p-4 shadow-xl border-r border-white/20 rounded-tr-3xl flex flex-col justify-between">
         <div>
-          <button
-            onClick={handleCreateEvent}
-            className="mb-6 flex items-center justify-center gap-2 rounded-full bg-[#795AA1] px-4 py-3 text-white w-full hover:bg-[#795AA1]/80 transition-colors"
-          >
-            <Plus className="h-5 w-5" />
-            <span>Create</span>
-          </button>
+          {(currentUserRole === 'ADMIN' || currentUserRole === 'DELEGATE') && (
+            <button
+              onClick={handleCreateEvent}
+              className="mb-6 flex items-center justify-center gap-2 rounded-full bg-[#795AA1] px-4 py-3 text-white w-full hover:bg-[#795AA1]/80 transition-colors"
+            >
+              <Plus className="h-5 w-5" />
+              <span>일정 생성</span>
+            </button>
+          )}
 
           <MiniCalendar
             currentMonth={currentMonth}

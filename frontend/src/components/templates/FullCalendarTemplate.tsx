@@ -3,6 +3,8 @@ import CalendarSidebar from '../organisms/CalendarSidebar'
 import CalendarHeader from '../molecules/CalendarHeader'
 import CalendarGrid from '../organisms/CalendarGrid'
 import type { CalendarEvent } from '../organisms/CalendarGrid/types'
+import calendarBackgroundColor from '../../assets/calendar-background1.png'
+
 
 export interface FullCalendarTemplateProps {
   currentMonth: string
@@ -46,6 +48,7 @@ export interface FullCalendarTemplateProps {
   onEditEvent?: (event: CalendarEvent) => void
   onDeleteEvent?: (event: CalendarEvent) => void
   studyId?: number // 현재 스터디 ID
+  currentUserRole?: 'ADMIN' | 'DELEGATE' | 'MEMBER' // 현재 사용자 권한
 }
 
 const FullCalendarTemplate: React.FC<FullCalendarTemplateProps> = ({
@@ -74,14 +77,11 @@ const FullCalendarTemplate: React.FC<FullCalendarTemplateProps> = ({
   onEditEvent,
   onDeleteEvent,
   studyId,
+  currentUserRole,
 }) => {
-  // Convert string date to Date object for sidebar and selected date
-  const currentDateObj = typeof currentDate === 'string' ? new Date(currentDate + 'T00:00:00') : currentDate
-  const selectedDateObj = selectedDate || currentDateObj
-
-  console.log('FullCalendarTemplate - currentDate prop:', currentDate)
-  console.log('FullCalendarTemplate - currentDateObj:', currentDateObj)
-  console.log('FullCalendarTemplate - selectedDateObj:', selectedDateObj)
+  // 현재 날짜와 선택된 날짜를 Date 객체로 변환
+  const currentDateObj = currentDate ? new Date(currentDate) : new Date()
+  const selectedDateObj = selectedDate ? new Date(selectedDate) : new Date()
 
   return (
     <div className="relative h-full w-full overflow-hidden">
@@ -89,7 +89,7 @@ const FullCalendarTemplate: React.FC<FullCalendarTemplateProps> = ({
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: "url('/src/assets/calendar-background1.png')",
+          backgroundImage: `url(${calendarBackgroundColor})`,
         }}
       />
 
@@ -108,6 +108,7 @@ const FullCalendarTemplate: React.FC<FullCalendarTemplateProps> = ({
           onCreateSchedule={onCreateSchedule}
           onEditSchedule={onEditSchedule}
           studyId={studyId}
+          currentUserRole={currentUserRole}
         />
 
         {/* Calendar View */}

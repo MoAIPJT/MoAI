@@ -50,33 +50,21 @@ const normalizeError = (error: unknown): ApiError => {
 // Study endpoints
 export const createStudy = async (data: CreateStudyReq): Promise<CreateStudyRes> => {
   try {
-    let response;
-
-    if (data.image) {
-      // 이미지가 있는 경우 FormData 사용
-      const formData = new FormData()
-      formData.append('name', data.name)
-      if (data.description) {
-        formData.append('description', data.description)
-      }
-      formData.append('image', data.image)
-      formData.append('maxCapacity', data.maxCapacity.toString())
-
-      response = await api.post<CreateStudyRes>('/study/register', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
-    } else {
-      // 이미지가 없는 경우 JSON 형식으로 전송
-      const requestBody = {
-        name: data.name,
-        description: data.description || '',
-        maxCapacity: data.maxCapacity
-      }
-
-      response = await api.post<CreateStudyRes>('/study/register', requestBody)
+    const formData = new FormData()
+    formData.append('name', data.name)
+    if (data.description) {
+      formData.append('description', data.description)
     }
+    if (data.image) {
+      formData.append('image', data.image)
+    }
+    formData.append('maxCapacity', data.maxCapacity.toString())
+
+    const response = await api.post<CreateStudyRes>('/study/register', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
 
     return response.data
   } catch (error) {
@@ -123,31 +111,49 @@ export const getAllStudies = async (): Promise<StudyAllItem[]> => {
 
 export const getStudyDetail = async (hashId: string): Promise<StudyDetail> => {
   try {
-    const response = await api.get<any>(`/study/detail?hashId=${hashId}`)
+    const response = await api.get<{
+      id: number
+      name: string
+      imageUrl: string
+      status: string | null
+      role?: string
+      description?: string
+      userCount?: number
+    }>(`/study/detail?hashId=${hashId}`)
     const data = response.data
 
-    console.log('Study detail API response:', data)
+    console.log('🔍 Study detail API response:', data)
+    console.log('🔍 Response data keys:', Object.keys(data))
+    console.log('🔍 Response data values:', Object.values(data))
 
-    // ✅ DB 구조에 맞게 수정: 'id' 필드가 실제 studyId
-    const studyId = data.id  // Study 테이블의 Primary Key
+    // ✅ 백엔드 응답 구조에 맞게 studyId 매핑
+    // StudyResponseDto의 id 필드를 studyId로 사용
+    const studyId = data.id
 
-    console.log('Found studyId from id field:', studyId)
-
-    const result: StudyDetail = {
-      studyId: studyId,  // data.id를 studyId로 사용
-      name: data.name || '',
-      imageUrl: data.imageUrl || data.image_url || '',
-      status: data.status,
-      role: data.role,
-      description: data.description,
-      userCount: data.userCount || data.user_count
+    // id가 0인 경우는 백엔드에서 해당 스터디를 찾지 못한 것
+    if (!studyId || studyId === 0) {
+      console.error('❌ 백엔드에서 스터디를 찾을 수 없음. id가 0입니다:', data)
+      console.error('❌ hashId:', hashId)
+      throw new Error('해당 스터디를 찾을 수 없습니다. 스터디가 존재하지 않거나 삭제되었을 수 있습니다.')
     }
 
-    console.log('Converted StudyDetail:', result)
+    console.log('🎯 최종 studyId:', studyId)
+
+    const result: StudyDetail = {
+      studyId: studyId,
+      name: data.name || '',
+      imageUrl: data.imageUrl || '',
+      status: data.status as 'PENDING' | 'APPROVED' | 'LEFT' | 'REJECTED' | null,
+      role: data.role as 'ADMIN' | 'DELEGATE' | 'MEMBER' | undefined,
+      description: data.description,
+      userCount: data.userCount
+    }
+
+    console.log('✅ Converted StudyDetail:', result)
     return result
 
   } catch (error) {
-    console.error('getStudyDetail API error:', error)
+    console.error('❌ getStudyDetail API error:', error)
     throw normalizeError(error)
   }
 }
@@ -163,7 +169,8 @@ export const getStudyMembers = async (studyId: string): Promise<Member[]> => {
         id: member.userId,
         name: member.member,
         role: member.role,
-        email: member.email
+        email: member.email,
+        imageUrl: member.imageUrl
       })
     })
     return response.data

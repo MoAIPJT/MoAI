@@ -9,6 +9,7 @@ interface SignupTemplateProps {
   onGoogleSignup: () => void
   loading: boolean
   error: string | null
+  socialButtonsDisabled?: boolean
 }
 
 const SignupTemplate: React.FC<SignupTemplateProps> = ({
@@ -16,7 +17,8 @@ const SignupTemplate: React.FC<SignupTemplateProps> = ({
   onKakaoSignup,
   onGoogleSignup,
   loading,
-  error
+  error,
+  socialButtonsDisabled = false
 }) => {
   return (
     <div className="flex min-h-screen bg-[#f9f9f9]">
@@ -31,6 +33,7 @@ const SignupTemplate: React.FC<SignupTemplateProps> = ({
             onGoogleSignup={onGoogleSignup}
             loading={loading}
             error={error}
+            socialButtonsDisabled={socialButtonsDisabled}
           />
         </div>
       </div>

@@ -46,10 +46,24 @@ const SummaryViewer: React.FC<SummaryViewerProps> = ({
               </p>
             </div>
           ))}
+
+          {/* 상세 정보 섹션 */}
+          {summaryData.summaryDetail && (
+            <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
+              <h3 className="text-lg font-semibold text-blue-800 mb-3">
+                상세 정보
+              </h3>
+              <div className="bg-white rounded p-4 border">
+                <pre className="text-sm text-gray-700 whitespace-pre-wrap overflow-auto max-h-96">
+                  {JSON.stringify(summaryData.summaryDetail, null, 2)}
+                </pre>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
   )
 }
 
-export default SummaryViewer 
+export default SummaryViewer

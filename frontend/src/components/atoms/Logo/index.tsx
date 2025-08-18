@@ -1,6 +1,8 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { LogoProps, LogoVariant } from './types'
+import mLogo from '../../../assets/(M)logo.png'
+
 
 const Logo: React.FC<LogoProps> = ({
   variant = 'default',
@@ -12,7 +14,7 @@ const Logo: React.FC<LogoProps> = ({
     if (onClick) {
       onClick()
     } else {
-      navigate('/') // 기본적으로 홈으로 이동
+      navigate('/dashboard')
     }
   }
 
@@ -26,7 +28,7 @@ const Logo: React.FC<LogoProps> = ({
   return (
     <div className={`${baseClasses} ${variantClasses[variant]}`} onClick={handleClick}>
       <img 
-        src="/src/assets/(M)logo.png" 
+        src={mLogo} 
         alt="MoAI Logo" 
         className="w-full h-full object-contain"
       />

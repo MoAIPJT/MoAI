@@ -3,19 +3,30 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    volumes:
+      - frontend-dist:/app/dist
+    networks:
+      - shared-network
+    restart: unless-stopped
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx.Dockerfile
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      # - ./frontend/dist:/usr/share/nginx/html
-      - ./frontend/nginx/nginx.prod.conf:/etc/nginx/conf.d/nginx.prod.conf
       - /etc/letsencrypt:/etc/letsencrypt
-      # - ./frontend/certbox/www:/var/www/certbot
+      - frontend-dist:/usr/share/nginx/html
     depends_on:
+      - frontend
       - backend
     networks:
       - shared-network
     restart: unless-stopped
+
+
 
   backend:
     build: ./backend
@@ -57,6 +68,7 @@ services:
       - mysql_data:/var/lib/mysql
       - ./db/sql-scripts/01_init.sql:/docker-entrypoint-initdb.d/01_init.sql
       - ./db/mysql-utf8mb4.cnf:/etc/mysql/conf.d/mysql-utf8mb4.cnf
+      - ./db/sql-scripts/dump.sql:/docker-entrypoint-initdb.d/dump.sql
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
@@ -71,6 +83,7 @@ services:
 
 volumes:
   mysql_data:
+  frontend-dist:
 
 networks:
   shared-network:

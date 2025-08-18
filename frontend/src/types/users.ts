@@ -34,7 +34,7 @@ export interface ResetPasswordVerifyReq {
 
 export interface ResetPasswordUpdateReq {
   email: string
-  code: string
+  token: string
   newPassword: string
 }
 
@@ -70,4 +70,5 @@ export interface SignupRes {
 export interface ApiError {
   code: string
   message: string
+  fieldErrors?: Record<string, string>
 }

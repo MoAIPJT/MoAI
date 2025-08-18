@@ -6,7 +6,9 @@ import InputText from '../../atoms/InputText'
 const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
   isOpen,
   onClose,
-  onSubmit
+  onSubmit,
+  isLoading = false,
+  onLoadingChange
 }) => {
   const [studyName, setStudyName] = useState('')
   const [studyDescription, setStudyDescription] = useState('')
@@ -14,6 +16,13 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string>('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // 스터디 이름의 첫 글자로 이미지 생성
+  const generateStudyImage = (name: string) => {
+    if (!name.trim()) return ''
+    const firstChar = name.charAt(0)
+    return firstChar
+  }
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -33,9 +42,14 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
       return
     }
 
-    if (maxCapacity < 2 || maxCapacity > 8) {
-      alert('최대 인원은 2명 이상 8명 이하로 설정해주세요.')
+    if (maxCapacity < 2 || maxCapacity > 10) {
+      alert('최대 인원은 2명 이상 10명 이하로 설정해주세요.')
       return
+    }
+
+    // 제출 버튼을 누르는 순간 로딩 상태 활성화
+    if (onLoadingChange) {
+      onLoadingChange(true)
     }
 
     onSubmit({
@@ -45,13 +59,16 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
       maxCapacity: maxCapacity
     })
 
-    // 폼 초기화
-    setStudyName('')
-    setStudyDescription('')
-    setMaxCapacity(8)
-    setSelectedImage(null)
-    setPreviewUrl('')
-    onClose()
+    // 로딩 중이 아닐 때만 폼 초기화 및 모달 닫기
+    if (!isLoading) {
+      // 폼 초기화
+      setStudyName('')
+      setStudyDescription('')
+      setMaxCapacity(8)
+      setSelectedImage(null)
+      setPreviewUrl('')
+      onClose()
+    }
   }
 
   const handleClose = () => {
@@ -69,7 +86,7 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">스터디 생성하기</h2>
+          <h2 className="text-2xl font-bold text-gray-900">스터디 시작하기</h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 text-2xl"
@@ -89,6 +106,11 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
                   alt="스터디 이미지 미리보기"
                   className="w-full h-full rounded-full object-cover"
                 />
+              ) : studyName.trim() ? (
+                // 스터디 이름이 있을 때 첫 글자로 이미지 생성
+                <div className="w-full h-full rounded-full bg-purple-500 text-white flex items-center justify-center text-6xl font-bold">
+                  {generateStudyImage(studyName)}
+                </div>
               ) : (
                 <>
                   <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,15 +157,15 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                인원 <span className="text-gray-500 text-xs">최대 8인</span>
+                인원 <span className="text-gray-500 text-xs">최대 10인</span>
               </label>
               <div className="w-24">
                 <input
                   type="number"
                   value={maxCapacity}
-                  onChange={(e) => setMaxCapacity(Math.max(2, Math.min(8, parseInt(e.target.value) || 2)))}
+                  onChange={(e) => setMaxCapacity(Math.max(2, Math.min(10, parseInt(e.target.value) || 2)))}
                   min={2}
-                  max={8}
+                  max={10}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-center"
                 />
               </div>
@@ -165,8 +187,9 @@ const CreateStudyModal: React.FC<CreateStudyModalProps> = ({
             variant="primary"
             size="md"
             onClick={handleSubmit}
+            disabled={isLoading}
           >
-            생성
+            {isLoading ? '시작 중...' : '시작'}
           </Button>
         </div>
       </div>

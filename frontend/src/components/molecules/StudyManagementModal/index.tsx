@@ -1,6 +1,25 @@
 import React, { useState } from 'react'
 import type { StudyManagementModalProps } from './types'
 
+// 이미지 URL이 유효한지 확인하는 함수
+const isValidImageUrl = (url: string): boolean => {
+  if (!url || typeof url !== 'string') return false
+
+  // URL이 실제 이미지 파일 확장자를 가지고 있는지 확인
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg']
+  const hasImageExtension = imageExtensions.some(ext =>
+    url.toLowerCase().includes(ext)
+  )
+
+  // URL이 http:// 또는 https://로 시작하는지 확인
+  const hasValidProtocol = url.startsWith('http://') || url.startsWith('https://')
+
+  // URL이 실제 도메인을 가지고 있는지 확인 (간단한 검증)
+  const hasValidDomain = url.includes('.') && url.length > 10
+
+  return hasImageExtension && hasValidProtocol && hasValidDomain
+}
+
 const StudyManagementModal: React.FC<StudyManagementModalProps> = ({
   isOpen,
   onClose,
@@ -11,6 +30,7 @@ const StudyManagementModal: React.FC<StudyManagementModalProps> = ({
   members,
   categories,
   currentUserRole,
+  currentUserName,
   onStudyImageChange,
   onCategoryRemove,
   onCategoryAdd,
@@ -23,8 +43,17 @@ const StudyManagementModal: React.FC<StudyManagementModalProps> = ({
   const [deleteConfirmMember, setDeleteConfirmMember] = useState<{ userId: number; name: string } | null>(null)
   const [localStudyName, setLocalStudyName] = useState(studyName)
   const [localStudyDescription, setLocalStudyDescription] = useState(studyDescription)
-  const [localMaxMembers, setLocalMaxMembers] = useState(maxMembers)
+  const [localMaxMembers, setLocalMaxMembers] = useState(Math.max(2, Math.min(10, maxMembers || 10))) // 2~10명 제한
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
+  const [isAddingCategory, setIsAddingCategory] = useState(false)
+
+  // props가 변경될 때마다 로컬 상태 업데이트
+  React.useEffect(() => {
+    setLocalStudyName(studyName)
+    setLocalStudyDescription(studyDescription)
+    setLocalMaxMembers(Math.max(2, Math.min(10, maxMembers || 10)))
+    setImagePreview(studyImage || null)
+  }, [studyName, studyDescription, maxMembers, studyImage])
 
   if (!isOpen) return null
 
@@ -38,6 +67,7 @@ const StudyManagementModal: React.FC<StudyManagementModalProps> = ({
     if (newCategory.trim() && onCategoryAdd) {
       onCategoryAdd(newCategory.trim())
       setNewCategory('')
+      setIsAddingCategory(false)
     }
   }
 
@@ -72,7 +102,7 @@ const StudyManagementModal: React.FC<StudyManagementModalProps> = ({
 
   const handleMemberDelete = (member: { userId: number; member: string }) => {
     // 자기 자신은 삭제할 수 없음
-    if (member.member === 'Kuromi') {
+    if (currentUserName && member.member === currentUserName) {
       alert('자기 자신은 강제탈퇴할 수 없습니다.')
       return
     }
@@ -111,7 +141,7 @@ const StudyManagementModal: React.FC<StudyManagementModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-4xl relative">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-7xl relative">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-black">스터디 관리</h2>
           <button
@@ -122,11 +152,52 @@ const StudyManagementModal: React.FC<StudyManagementModalProps> = ({
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-6 mb-6">
-          {/* 스터디 관리 섹션 */}
+        {/* 3개 섹션을 가로로 배치 */}
+        <div className="grid grid-cols-3 gap-6 mb-6">
+          {/* 스터디 정보 관리 섹션 */}
           <div className="bg-purple-50 p-4 rounded-lg">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">스터디 관리</h3>
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">스터디 정보 관리</h3>
             <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  스터디 대표 이미지
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    {imagePreview ? (
+                      <div className="relative">
+                        <img
+                          src={imagePreview}
+                          alt="스터디 이미지"
+                          className="w-20 h-20 rounded-lg object-cover border border-gray-300"
+                        />
+                        <button
+                          onClick={handleImageRemove}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="w-20 h-20 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50">
+                        <div className="text-gray-400 text-2xl mb-1">☁️</div>
+                        <div className="text-gray-400 text-sm text-center whitespace-nowrap">이미지 업로드</div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                  </div>
+                  {!imagePreview && (
+                    <div className="text-sm text-gray-500">
+                      클릭하여 이미지를 선택하세요
+                    </div>
+                  )}
+                </div>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   스터디 이름
@@ -153,157 +224,150 @@ const StudyManagementModal: React.FC<StudyManagementModalProps> = ({
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  스터디 대표 이미지
+                  최대 인원 수 (2인~10인)
                 </label>
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    {imagePreview ? (
-                      <div className="relative">
-                        <img
-                          src={imagePreview}
-                          alt="스터디 이미지"
-                          className="w-20 h-20 rounded-lg object-cover border border-gray-300"
-                        />
-                        <button
-                          onClick={handleImageRemove}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ) : (
-                      <label className="w-20 h-20 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50">
-                        <div className="text-gray-400 text-2xl mb-1">☁️</div>
-                        <div className="text-gray-400 text-xs text-center">이미지 업로드</div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageChange}
-                          className="hidden"
-                        />
-                      </label>
-                    )}
-                  </div>
-                  {!imagePreview && (
-                    <div className="text-sm text-gray-500">
-                      클릭하여 이미지를 선택하세요
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="2"
+                    max="10"
+                    value={localMaxMembers}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 2;
+                      setLocalMaxMembers(Math.max(2, Math.min(10, value)));
+                    }}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="최대 인원 수를 입력하세요"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 완료 버튼을 스터디 정보 관리 섹션 밑으로 이동 */}
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <button
+                onClick={handleSave}
+                className="w-full px-6 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                완료
+              </button>
+            </div>
+          </div>
+
+          {/* 카테고리 관리 섹션 */}
+          <div className="bg-green-50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">카테고리 관리</h3>
+            <div className="space-y-4">
+              {/* 카테고리 목록과 추가 버튼 */}
+              <div>
+                <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+                  {categories?.map((category) => (
+                    <div key={category.id} className="flex items-center gap-2 bg-white px-3 py-2 rounded-full border border-gray-200 shadow-sm">
+                      <span className="text-gray-800 text-sm">{category.name}</span>
+                      <button
+                        onClick={() => onCategoryRemove?.(category.id)}
+                        className="w-5 h-5 rounded-full bg-red-100 text-red-500 hover:bg-red-200 flex items-center justify-center text-xs font-bold"
+                        title="삭제"
+                      >
+                        ×
+                      </button>
                     </div>
+                  ))}
+
+                  {/* 새 카테고리 추가 버튼 */}
+                  {!isAddingCategory ? (
+                    <button
+                      onClick={() => setIsAddingCategory(true)}
+                      className="flex items-center gap-2 bg-green-500 text-white px-3 py-2 rounded-full hover:bg-green-600 shadow-sm"
+                      title="새 카테고리 추가"
+                    >
+                      <span className="text-sm">+</span>
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-full border border-gray-300 shadow-sm">
+                      <input
+                        type="text"
+                        value={newCategory}
+                        onChange={(e) => setNewCategory(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        onBlur={handleAddCategory}
+                        placeholder="카테고리 이름"
+                        className="w-24 text-sm border-none outline-none focus:ring-0"
+                        autoFocus
+                      />
+                      <button
+                        onClick={handleAddCategory}
+                        className="w-5 h-5 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center text-xs font-bold"
+                        title="저장"
+                      >
+                        ✓
+                      </button>
+                    </div>
+                  )}
+
+                  {(!categories || categories.length === 0) && !isAddingCategory && (
+                    <p className="text-gray-500 text-sm">등록된 카테고리가 없습니다.</p>
                   )}
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  최대 인원 수
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="50"
-                  value={localMaxMembers}
-                  onChange={(e) => setLocalMaxMembers(parseInt(e.target.value) || 1)}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="최대 인원 수를 입력하세요"
-                />
-              </div>
             </div>
           </div>
 
-          {/* 카테고리 관리 - ADMIN만 표시 */}
-          {currentUserRole === 'ADMIN' && (
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-4 text-gray-800">카테고리 관리</h3>
-              <div className="space-y-4">
-                {/* 기존 카테고리 목록 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    기존 카테고리
-                  </label>
-                  <div className="space-y-2">
-                    {categories?.map((category) => (
-                      <div key={category.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <span className="text-gray-800">{category.name}</span>
-                        <button
-                          onClick={() => onCategoryRemove?.(category.id)}
-                          className="text-red-500 hover:text-red-700 text-sm"
-                        >
-                          삭제
-                        </button>
+          {/* 멤버 관리 섹션 */}
+          <div className="bg-yellow-50 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">멤버 관리</h3>
+            <div className="space-y-2 h-full overflow-y-auto">
+              {members.map((member, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-2 border-b border-gray-100 last:border-b-0 bg-white rounded"
+                  style={{ minHeight: 36 }}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+                      {member.imageUrl && isValidImageUrl(member.imageUrl) ? (
+                        <img
+                          src={member.imageUrl}
+                          alt={`${member.member}의 프로필`}
+                          className="w-full h-full object-cover"
+                          style={{ minWidth: 0, minHeight: 0 }}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <div className={`w-full h-full flex items-center justify-center text-xs ${member.imageUrl && isValidImageUrl(member.imageUrl) ? 'hidden' : ''}`}>
+                        👤
                       </div>
-                    ))}
-                    {(!categories || categories.length === 0) && (
-                      <p className="text-gray-500 text-sm">등록된 카테고리가 없습니다.</p>
-                    )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-800 text-xs truncate max-w-[7rem]">
+                        {member.member}
+                        {currentUserName && member.member === currentUserName && (
+                          <span className="text-[10px] text-gray-500 ml-1">(me)</span>
+                        )}
+                      </p>
+                      <p className="text-[10px] text-gray-500 truncate max-w-[7rem]">{member.email}</p>
+                    </div>
                   </div>
-                </div>
-
-                {/* 새 카테고리 추가 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    새 카테고리 추가
-                  </label>
-                  <div className="flex space-x-2">
-                    <input
-                      type="text"
-                      value={newCategory}
-                      onChange={(e) => setNewCategory(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="카테고리 이름을 입력하세요"
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    />
+                  {currentUserName && member.member !== currentUserName && currentUserRole === 'ADMIN' && (
                     <button
-                      onClick={handleAddCategory}
-                      disabled={!newCategory.trim()}
-                      className="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 disabled:bg-gray-300 disabled:text-gray-500"
+                      onClick={() => handleMemberDelete(member)}
+                      className="px-2 py-1 bg-red-500 text-white text-[10px] rounded hover:bg-red-600 flex-shrink-0"
+                      style={{ minWidth: 36 }}
                     >
-                      추가
+                      추방
                     </button>
-                  </div>
+                  )}
                 </div>
-              </div>
+              ))}
             </div>
-          )}
-        </div>
-
-        {/* 멤버 관리 섹션 */}
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4 text-gray-800">멤버 관리</h3>
-          <div className="space-y-3">
-            {members.map((member, index) => (
-              <div key={index} className="flex items-center justify-between p-3 border-b border-gray-100 last:border-b-0">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-xl">
-                    {member.imageUrl || '👤'}
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-800">
-                      {member.member}
-                      {member.member === 'Kuromi' && <span className="text-sm text-gray-500 ml-2">(me)</span>}
-                    </p>
-                    <p className="text-sm text-gray-500">{member.email}</p>
-                  </div>
-                </div>
-                {member.member !== 'Kuromi' && currentUserRole === 'ADMIN' && (
-                  <button
-                    onClick={() => handleMemberDelete(member)}
-                    className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
-                  >
-                    추방
-                  </button>
-                )}
-              </div>
-            ))}
           </div>
         </div>
 
-        {/* 완료 버튼 */}
-        <div className="flex justify-end mt-6">
-          <button
-            onClick={handleSave}
-            className="px-6 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
-          >
-            완료
-          </button>
-        </div>
+
       </div>
 
       {/* 멤버 삭제 확인 모달 */}

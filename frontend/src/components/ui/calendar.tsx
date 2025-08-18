@@ -11,6 +11,10 @@ export interface CalendarEvent {
   title?: string;
   startTime?: string;
   endTime?: string;
+  studyId?: number;
+  studyName?: string;
+  studyDescription?: string;
+  studyImage?: string;
 }
 
 export interface CustomCalendarProps {
@@ -36,6 +40,7 @@ function CustomCalendar({
   });
 
   const [selected, setSelected] = useState<Date | undefined>(selectedDate);
+  const [showEvents, setShowEvents] = useState(false); // 일정 팝업 표시 여부
 
   useEffect(() => {
     if (selectedDate) {
@@ -45,7 +50,14 @@ function CustomCalendar({
   }, [selectedDate]);
 
   const handleDateSelect = (date: Date) => {
-    setSelected(date);
+    // 같은 날짜를 클릭한 경우 토글
+    if (selected && isSameDay(date, selected)) {
+      setShowEvents(!showEvents);
+    } else {
+      // 다른 날짜를 클릭한 경우 선택하고 일정 표시
+      setSelected(date);
+      setShowEvents(true);
+    }
     onDateSelect?.(date);
   };
 
@@ -57,6 +69,8 @@ function CustomCalendar({
       newMonth.setMonth(newMonth.getMonth() + 1);
     }
     setCurrentMonth(newMonth);
+    // 월이 변경되면 일정 팝업 닫기
+    setShowEvents(false);
     onMonthChange?.(newMonth);
   };
 
@@ -99,9 +113,6 @@ function CustomCalendar({
   };
 
   const days = getDaysInMonth(currentMonth);
-
-  // 선택된 날짜의 이벤트들
-  const selectedDateEvents = selected ? getEventsForDate(selected) : [];
 
   return (
     <div className={cn("w-fit bg-white rounded-lg shadow-sm border", className)}>
@@ -163,78 +174,70 @@ function CustomCalendar({
           const dayEvents = getEventsForDate(day);
           const hasEvents = dayEvents.length > 0;
 
-
-
           return (
-            <button
-              key={index}
-              onClick={() => handleDateSelect(day)}
-              className={cn(
-                "relative h-9 w-14 flex items-center justify-center text-sm rounded-lg transition-colors",
-                isOutsideMonth && "text-muted-foreground/30",
-                !isOutsideMonth && "text-foreground",
-                isSelected && "bg-[#AA64FF] text-white",
-                !isSelected && !isOutsideMonth && "hover:bg-[#9861FD]/20 hover:text-[#9861FD]",
-                isTodayDate && !isSelected && "font-bold"
-              )}
-            >
-              <span>{day.getDate()}</span>
-              {hasEvents && (
-                <div className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 flex gap-0.1">
-                  {dayEvents.slice(0, 3).map((event, eventIndex) => (
-                    <div
-                      key={eventIndex}
-                      className="w-2 h-2 rounded-full"
-                      style={{
-                        backgroundColor: isSelected ? '#ffffff' : event.color
-                      }}
-                    />
-                  ))}
-                  {dayEvents.length > 3 && (
+            <div key={index} className="relative">
+              <button
+                onClick={() => handleDateSelect(day)}
+                className={cn(
+                  "relative h-9 w-14 flex items-center justify-center text-sm rounded-lg transition-colors",
+                  isOutsideMonth && "text-muted-foreground/30",
+                  !isOutsideMonth && "text-foreground",
+                  isSelected && "bg-[#AA64FF] text-white",
+                  !isSelected && !isOutsideMonth && "hover:bg-[#AA64FF]/20 hover:text-[#AA64FF]",
+                  isTodayDate && !isSelected && "font-bold"
+                )}
+              >
+                <span>{day.getDate()}</span>
+                {hasEvents && (
+                  <div className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2">
                     <div
                       className="w-2 h-2 rounded-full"
                       style={{
-                        backgroundColor: isSelected ? '#ffffff' : '#9ca3af'
+                        backgroundColor: isSelected ? '#ffffff' : '#AA64FF'
                       }}
                     />
-                  )}
+                  </div>
+                )}
+              </button>
+
+              {/* Event Popup below the selected date - 토글 방식으로 표시 */}
+              {isSelected && hasEvents && showEvents && (
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-10">
+                  <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 min-w-48 max-w-64">
+                    <div className="text-sm font-medium text-gray-700 mb-2">
+                      {day.toLocaleDateString('ko-KR', {
+                        month: 'long',
+                        day: 'numeric',
+                        weekday: 'long'
+                      })} 일정
+                    </div>
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {dayEvents.map((event, eventIndex) => (
+                        <div key={eventIndex} className="flex items-center gap-2 p-2 bg-gray-50 rounded border">
+                          <div
+                            className="w-3 h-3 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: event.color }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-gray-900 truncate">
+                              {event.title || '제목 없음'}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {event.startTime} - {event.endTime}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Arrow pointing up to the date */}
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-white"></div>
+                  </div>
                 </div>
               )}
-            </button>
+            </div>
           );
         })}
       </div>
-
-      {/* Selected Date Events */}
-      {selected && selectedDateEvents.length > 0 && (
-        <div className="border-t p-3 bg-gray-50">
-          <div className="text-sm font-medium text-gray-700 mb-2">
-            {selected.toLocaleDateString('ko-KR', {
-              month: 'long',
-              day: 'numeric',
-              weekday: 'long'
-            })} 일정
-          </div>
-          <div className="space-y-2">
-            {selectedDateEvents.map((event, index) => (
-              <div key={index} className="flex items-center gap-2 p-2 bg-white rounded border">
-                <div
-                  className="w-3 h-3 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: event.color }}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-gray-900 truncate">
-                    {event.title || '제목 없음'}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {event.startTime} - {event.endTime}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

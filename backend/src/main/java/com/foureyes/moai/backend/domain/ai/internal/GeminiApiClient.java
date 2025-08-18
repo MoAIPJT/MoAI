@@ -18,7 +18,7 @@ public class GeminiApiClient {
 
     private final WebClient webClient;
 
-    @Value("${GEMINI_API_KEY}")
+    @Value("${GMS_API_KEY}")
     private String geminiApiKey;
 
     /** Gemini 호출 (풀 URL + key 쿼리) */
