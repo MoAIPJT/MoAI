@@ -54,6 +54,8 @@ public class AiServiceImpl implements AiService {
     private final SummaryParser summaryParser;
     private final ObjectMapper objectMapper;
 
+    private final AiClientRouter aiClientRouter;
+
     @Override
     public CreateAiSummaryResponse createSummary(int ownerId, CreateAiSummaryRequest req) {
         if (req.getFileId() == null || req.getFileId().isEmpty()) {
@@ -83,10 +85,9 @@ public class AiServiceImpl implements AiService {
 
             String prompt = promptBuilder.buildMultiDocPrompt(joinedBlocks, req.getPromptType());
 
-            String model = modelResolver.resolveModel(req.getModelType());
-            String apiUrl = modelResolver.buildApiUrl(model);
-            String summaryJson = geminiApiClient.generateContent(apiUrl, prompt).block();
-
+            String summaryJson = aiClientRouter
+                    .generateJsonArray(req.getModelType(), prompt)
+                    .block();
             List<SummaryDto> parsed = summaryParser.parse(summaryJson);
             log.info("AI 요약 파싱 결과: {} items", parsed.size());
 
@@ -94,7 +95,7 @@ public class AiServiceImpl implements AiService {
                 .owner(owner)
                 .title(Optional.ofNullable(req.getTitle()).orElse("").trim())
                 .description(Optional.ofNullable(req.getDescription()).orElse("").trim())
-                .modelType(model)
+                .modelType(req.getModelType())
                 .promptType(Optional.ofNullable(req.getPromptType()).orElse("").trim())
                 .summaryJson(objectMapper.readTree(summaryJson))
                 .build();

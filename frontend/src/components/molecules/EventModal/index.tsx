@@ -167,7 +167,7 @@ const EventModal: React.FC<EventModalProps> = ({
     return { hour, minute }
   }
 
-  const setTimeComponent = (timeType: 'startTime' | 'endTime', component: 'hour' | 'minute', value: string) => {
+    const setTimeComponent = (timeType: 'startTime' | 'endTime', component: 'hour' | 'minute', value: string) => {
     const currentTime = getTimeComponents(formData[timeType])
     const newTime = component === 'hour'
       ? `${value}:${currentTime.minute}`
@@ -217,14 +217,15 @@ const EventModal: React.FC<EventModalProps> = ({
       onClose()
     } else if (onCreateSchedule && studyId) {
       // onCreateSchedule을 위한 데이터 생성
-      const [startHour, startMinute] = formData.startTime.split(':').map(Number)
-      const [endHour, endMinute] = formData.endTime.split(':').map(Number)
+      console.log('🎯 EventModal에서 onCreateSchedule 호출됨:', { studyId, formData })
 
       // 선택한 날짜와 시작/종료 시간을 조합해서 datetime 생성
       const startDateTime = new Date(currentSelectedDate)
+      const [startHour, startMinute] = formData.startTime.split(':').map(Number)
       startDateTime.setHours(startHour, startMinute, 0, 0)
 
       const endDateTime = new Date(currentSelectedDate)
+      const [endHour, endMinute] = formData.endTime.split(':').map(Number)
       endDateTime.setHours(endHour, endMinute, 0, 0)
 
       // 로컬 시간 형식으로 변환 (YYYY-MM-DDTHH:mm:ss)
@@ -244,9 +245,10 @@ const EventModal: React.FC<EventModalProps> = ({
         title: formData.title,
         startDatetime: formatLocalDateTime(startDateTime),
         endDatetime: formatLocalDateTime(endDateTime),
-        memo: formData.description || ''
+        memo: formData.description || '' // description을 memo로 변환
       }
 
+      console.log('📝 전송할 스케줄 데이터:', scheduleData)
       onCreateSchedule(scheduleData)
       onClose()
     } else {
@@ -300,7 +302,7 @@ const EventModal: React.FC<EventModalProps> = ({
 
         {/* Form */}
         <form id="event-form" onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Title */}
+                              {/* Title */}
           <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
             <div className="relative">
               <button
@@ -317,43 +319,44 @@ const EventModal: React.FC<EventModalProps> = ({
                     onClick={() => setShowColorPicker(false)}
                   />
                   <div className="absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-50 min-w-[120px]">
-                    <div className="flex flex-col gap-1">
-                      {[
-                        { name: "My", color: "bg-blue-500" },
-                        { name: "Work", color: "bg-green-500" },
-                        { name: "Personal", color: "bg-purple-500" },
-                        { name: "Family", color: "bg-orange-500" },
-                        { name: "Study", color: "bg-red-500" },
-                        { name: "Meeting", color: "bg-yellow-500" },
-                      ].map((colorOption) => (
-                        <button
-                          key={colorOption.color}
-                          type="button"
-                          onClick={() => {
-                            setFormData({ ...formData, color: colorOption.color })
-                            setShowColorPicker(false)
-                          }}
-                          className={`flex items-center gap-2 w-full p-2 rounded hover:bg-gray-50 transition-colors ${formData.color === colorOption.color ? 'bg-gray-100' : ''
-                            }`}
-                        >
-                          <div className={`w-4 h-4 rounded-full ${colorOption.color} flex-shrink-0`}></div>
-                          <span className="text-sm text-gray-700">{colorOption.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
+                  <div className="flex flex-col gap-1">
+                  {[
+                    { name: "내 일정", color: "bg-purple-500" },
+                    { name: "업무", color: "bg-purple-500" },
+                    { name: "개인", color: "bg-purple-500" },
+                    // { name: "가족", color: "bg-purple-500" },
+                    { name: "스터디", color: "bg-purple-500" },
+                    { name: "회의", color: "bg-purple-500" },
+                  ].map((colorOption) => (
+                    <button
+                      key={colorOption.color}
+                      type="button"
+                      onClick={() => {
+                        setFormData({ ...formData, color: colorOption.color })
+                        setShowColorPicker(false)
+                      }}
+                      className={`flex items-center gap-2 w-full p-2 rounded hover:bg-gray-50 transition-colors ${
+                        formData.color === colorOption.color ? 'bg-gray-100' : ''
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded-full ${colorOption.color} flex-shrink-0`}></div>
+                      <span className="text-sm text-gray-700">{colorOption.name}</span>
+                    </button>
+                  ))}
+                </div>
+                </div>
+              </>
+            )}
             </div>
             <div className="flex-1">
-              <Input
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            <Input
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="일정 제목"
                 className="border-none bg-transparent text-lg font-medium p-0 focus:ring-0 focus:outline-none"
-                required
-              />
-            </div>
+              required
+            />
+          </div>
           </div>
 
           {/* Date */}
@@ -364,7 +367,7 @@ const EventModal: React.FC<EventModalProps> = ({
             <div className="flex-1">
               <div className="text-gray-600 text-sm mb-2">날짜</div>
               <div className="relative">
-                <button
+                                <button
                   type="button"
                   onClick={() => setShowDatePicker(!showDatePicker)}
                   className="text-lg hover:text-[#AA64FF] transition-colors font-medium"
@@ -441,8 +444,9 @@ const EventModal: React.FC<EventModalProps> = ({
                                     key={hour}
                                     type="button"
                                     onClick={() => setTimeComponent('startTime', 'hour', hour)}
-                                    className={`w-full p-1 text-xs hover:bg-gray-100 ${currentTime.hour === hour ? 'bg-[#AA64FF] text-white' : ''
-                                      }`}
+                                    className={`w-full p-1 text-xs hover:bg-gray-100 ${
+                                      currentTime.hour === hour ? 'bg-[#AA64FF] text-white' : ''
+                                    }`}
                                   >
                                     {hour}
                                   </button>
@@ -464,8 +468,9 @@ const EventModal: React.FC<EventModalProps> = ({
                                     key={minute}
                                     type="button"
                                     onClick={() => setTimeComponent('startTime', 'minute', minute)}
-                                    className={`w-full p-1 text-xs hover:bg-gray-100 ${currentTime.minute === minute ? 'bg-[#AA64FF] text-white' : ''
-                                      }`}
+                                    className={`w-full p-1 text-xs hover:bg-gray-100 ${
+                                      currentTime.minute === minute ? 'bg-[#AA64FF] text-white' : ''
+                                    }`}
                                   >
                                     {minute}
                                   </button>
@@ -511,8 +516,9 @@ const EventModal: React.FC<EventModalProps> = ({
                                     key={hour}
                                     type="button"
                                     onClick={() => setTimeComponent('endTime', 'hour', hour)}
-                                    className={`w-full p-1 text-xs hover:bg-gray-100 ${currentTime.hour === hour ? 'bg-[#AA64FF] text-white' : ''
-                                      }`}
+                                    className={`w-full p-1 text-xs hover:bg-gray-100 ${
+                                      currentTime.hour === hour ? 'bg-[#AA64FF] text-white' : ''
+                                    }`}
                                   >
                                     {hour}
                                   </button>
@@ -534,8 +540,9 @@ const EventModal: React.FC<EventModalProps> = ({
                                     key={minute}
                                     type="button"
                                     onClick={() => setTimeComponent('endTime', 'minute', minute)}
-                                    className={`w-full p-1 text-xs hover:bg-gray-100 ${currentTime.minute === minute ? 'bg-[#AA64FF] text-white' : ''
-                                      }`}
+                                    className={`w-full p-1 text-xs hover:bg-gray-100 ${
+                                      currentTime.minute === minute ? 'bg-[#AA64FF] text-white' : ''
+                                    }`}
                                   >
                                     {minute}
                                   </button>

@@ -1,7 +1,9 @@
+import React from 'react'
+
 export interface UserActionItem {
   id: string
   label: string
-  icon: string
+  icon: React.ReactElement
 }
 
 export interface SidebarUserActionsProps {

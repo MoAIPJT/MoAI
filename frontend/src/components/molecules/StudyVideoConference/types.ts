@@ -4,8 +4,17 @@ export interface Participant {
   avatar: string
 }
 
+export interface OnlineParticipant extends Participant {
+  isOnline: boolean
+}
+
 export interface StudyVideoConferenceProps {
-  hasActiveMeeting?: boolean
   onCreateRoom?: () => void
-  participants?: Participant[]
+  participants?: Array<{
+    id: string
+    name: string
+    avatar: string
+  }>
+  currentUserRole?: string
+  hashId?: string
 }

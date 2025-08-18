@@ -82,10 +82,10 @@ export interface StudyAllItem {
 
 // 스터디 상세 정보 (StudyDetailResponseDto 기반)
 export interface StudyDetail {
-  studyId?: number
+  studyId: number // 필수 필드로 변경
   name: string
   imageUrl: string
-  status: 'PENDING' | 'APPROVED' | 'LEFT' | 'REJECTED'
+  status: 'PENDING' | 'APPROVED' | 'LEFT' | 'REJECTED' | null
   role?: 'ADMIN' | 'DELEGATE' | 'MEMBER'
   description?: string
   userCount?: number
@@ -118,6 +118,19 @@ export interface ChangeMemberRoleReq {
   userId: number  // 사용자 ID로 식별 (백엔드에서 기대하는 필드명)
   role: 'ADMIN' | 'DELEGATE' | 'MEMBER'
 }
+
+// 🆕 스터디 참여자 응답 타입 추가
+export interface StudyParticipantsResponse {
+  id: string
+  study_id: string
+  participants: Array<{
+    member: string
+    role: string
+    email: string
+    avatar: string
+  }>
+}
+
 // 스터디 가입 요청
 export interface JoinRequest {
   userID: number

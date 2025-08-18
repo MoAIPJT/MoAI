@@ -79,7 +79,8 @@ export const useRefFiles = () => {
   // 카테고리 삭제
   const useDeleteCategory = (studyId: number) => {
     return useMutation({
-      mutationFn: (id: number) => refService.deleteCategory(id),
+      mutationFn: (id: number) =>
+        refService.deleteCategory(id),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: refKeys.categories(studyId) });
       },

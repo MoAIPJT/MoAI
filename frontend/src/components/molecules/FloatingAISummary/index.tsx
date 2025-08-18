@@ -17,6 +17,7 @@ const FloatingAISummary: React.FC<FloatingAISummaryProps> = ({
   onContentRemove,
   onSubmit,
   onClose,
+  onSuccess, // 새로운 prop 추가
 }) => {
   const [isDragging, setIsDragging] = useState(false)
   const [position, setPosition] = useState({ x: 0, y: 0 })
@@ -66,6 +67,33 @@ const FloatingAISummary: React.FC<FloatingAISummaryProps> = ({
       }
     }
   }, [isDragging, dragOffset])
+
+  const handleSubmit = async () => {
+    if (!title.trim() || selectedContents.length === 0) {
+      alert('제목을 입력하고 자료를 선택해주세요.')
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const summaryData = {
+        fileId: selectedContents.map(content => parseInt(content.id)), // ContentItem.id를 number로 변환
+        title: title,
+        description: description,
+        modelType: selectedModel,
+        promptType: prompt || 'study-summary.v1'
+      }
+
+      await onSubmit(summaryData)
+
+      // 성공 시 onSuccess 콜백 호출
+      if (onSuccess) {
+        onSuccess()
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   if (!isVisible) return null
 
@@ -182,9 +210,10 @@ const FloatingAISummary: React.FC<FloatingAISummaryProps> = ({
               onChange={(e) => onModelChange(e.target.value)}
               className="px-2 py-1 border-transparent rounded text-xs bg-white focus:outline-none focus:ring-1 focus:ring-purple-500"
             >
-              <option value="gpt-mini">GPT mini</option>
-              <option value="gpt-4">GPT-4</option>
-              <option value="claude">Claude</option>
+              <option value="gpt-4o">GPT-4</option>
+              <option value="gpt-4o-mini">GPT-4o Mini</option>
+              <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+              <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite</option>
             </select>
           </div>
 
@@ -199,16 +228,9 @@ const FloatingAISummary: React.FC<FloatingAISummaryProps> = ({
           {/* Bottom Section with Submit Button */}
           <div className="absolute top-1/2 right-2 transform -translate-y-1/2 flex items-center justify-end">
             <button
-              onClick={async () => {
-                setIsLoading(true)
-                try {
-                  await onSubmit()
-                } finally {
-                  setIsLoading(false)
-                }
-              }}
-              disabled={isLoading}
-              className="p-1 text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50"
+              onClick={handleSubmit}
+              disabled={isLoading || !title.trim() || selectedContents.length === 0}
+              className="p-1 text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import CategoryTab from '../atoms/CategoryTab'
 import SearchBar from '../molecules/SearchBar'
 import ContentList from '../organisms/ContentList'
-import FloatingAISummary from '../molecules/FloatingAISummary'
+import FloatingAISummary from '@/components/molecules/FloatingAISummary'
+import { useCreateAISummary } from '@/hooks/useAisummaries'
 import type { Category, ContentItem } from '@/types/content'
 
 interface ContentManagementTemplateProps {
@@ -23,6 +24,7 @@ interface ContentManagementTemplateProps {
   onContentDownload: (contentId: string) => void
   onUploadData: () => void
   currentUserRole?: string
+  onAISummarySuccess?: () => void
 }
 
 const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
@@ -43,45 +45,98 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
   onContentDownload,
   onUploadData,
   currentUserRole,
+  onAISummarySuccess,
 }) => {
   // AI Summary Modal 상태 관리
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [modalTitle, setModalTitle] = useState('')
   const [modalDescription, setModalDescription] = useState('')
-  const [selectedModel, setSelectedModel] = useState('gpt-mini')
+  const [selectedModel, setSelectedModel] = useState('gpt-4o')
   const [prompt, setPrompt] = useState('')
   const [isSelectAll, setIsSelectAll] = useState(false)
   const [selectionOrder, setSelectionOrder] = useState<string[]>([])
 
-  // 선택된 컨텐츠가 있는지 확인하여 모달 표시 여부 결정
-  const hasSelectedContents = contents.some(content => content.isSelected)
+  // 이전 selectedCount를 추적하기 위한 ref
+  const prevSelectedCountRef = useRef<number>(0)
 
-  // 선택 순서 업데이트
+  // 선택된 컨텐츠들을 useMemo로 계산
+  const selectedContents = useMemo(() =>
+    contents
+      .filter(content => content.isSelected)
+      .map(content => ({
+        id: content.id,
+        title: content.title,
+        description: content.description,
+        tags: content.tags,
+        author: content.author,
+        date: content.date,
+        isSelected: content.isSelected
+      })), [contents]
+  )
+
+  // 선택된 컨텐츠 개수 계산
+  const selectedCount = useMemo(() =>
+    contents.filter(content => content.isSelected).length,
+    [contents]
+  )
+
+  // 선택 순서 업데이트 및 모달 자동 열기 - 수정된 버전
   useEffect(() => {
     const currentSelected = contents.filter(content => content.isSelected).map(content => content.id)
-    const newOrder = selectionOrder.filter(id => currentSelected.includes(id))
-    const newSelections = currentSelected.filter(id => !selectionOrder.includes(id))
-    setSelectionOrder([...newOrder, ...newSelections])
-  }, [contents.map(c => c.isSelected).join(',')]) // 선택 상태가 변경될 때만 실행
 
-  useEffect(() => {
-    if (hasSelectedContents && !isModalVisible) {
-      setIsModalVisible(true)
-    } else if (!hasSelectedContents && isModalVisible) {
-      setIsModalVisible(false)
+    // 선택 순서 업데이트 (선택된 항목이 실제로 변경된 경우에만)
+    const currentSelectedSet = new Set(currentSelected)
+    const prevSelectedSet = new Set(selectionOrder.filter(id =>
+      contents.find(content => content.id === id)?.isSelected
+    ))
+
+    // 선택된 항목이 실제로 변경된 경우에만 selectionOrder 업데이트
+    if (currentSelectedSet.size !== prevSelectedSet.size ||
+        ![...currentSelectedSet].every(id => prevSelectedSet.has(id))) {
+      const newOrder = selectionOrder.filter(id => currentSelected.includes(id))
+      const newSelections = currentSelected.filter(id => !selectionOrder.includes(id))
+      setSelectionOrder([...newOrder, ...newSelections])
     }
-  }, [hasSelectedContents, isModalVisible])
 
-  // 전체선택 처리
+    // 선택된 컨텐츠가 있고 이전에 선택된게 없었을 때만 모달 자동 열기
+    if (currentSelected.length > 0 && prevSelectedCountRef.current === 0 && !isModalVisible) {
+      setIsModalVisible(true)
+      setModalTitle('')
+      setModalDescription('')
+    }
+
+    // 현재 selectedCount를 ref에 저장
+    prevSelectedCountRef.current = selectedCount
+  }, [selectedCount, contents, isModalVisible]) // selectionOrder를 의존성에서 제거
+
+  // AI 요약 버튼 클릭 시 모달 열기
+  const handleOpenAIModal = () => {
+    setIsModalVisible(true)
+    // 모달 열 때 모든 컨텐츠 선택 해제
+    contents.forEach(content => {
+      if (content.isSelected) {
+        onContentSelect(content.id)
+      }
+    })
+    // 모달 상태 초기화
+    setModalTitle('')
+    setModalDescription('')
+    setPrompt('')
+    setIsSelectAll(false)
+    setSelectionOrder([])
+  }
+
+  // 전체선택 처리 - 수정된 버전
   useEffect(() => {
     if (isSelectAll) {
-      contents.forEach(content => {
-        if (!content.isSelected) {
-          onContentSelect(content.id)
-        }
+      const unselectedContents = contents.filter(content => !content.isSelected)
+      unselectedContents.forEach(content => {
+        onContentSelect(content.id)
       })
+      // 전체선택 후 플래그 리셋
+      setIsSelectAll(false)
     }
-  }, [isSelectAll, contents, onContentSelect])
+  }, [isSelectAll]) // contents와 onContentSelect를 의존성에서 제거
 
   const handleModalClose = () => {
     setIsModalVisible(false)
@@ -97,6 +152,8 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
     setPrompt('')
     setIsSelectAll(false)
     setSelectionOrder([])
+    // ref도 초기화
+    prevSelectedCountRef.current = 0
   }
 
   const handleContentRemove = (contentId: string) => {
@@ -104,26 +161,40 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
     setSelectionOrder(prev => prev.filter(id => id !== contentId))
   }
 
-  // 선택된 컨텐츠들을 선택 순서대로 정렬하여 FloatingAISummary에 전달
-  const selectedContents = selectionOrder
-    .map(id => contents.find(content => content.id === id && content.isSelected))
-    .filter(Boolean)
-    .map(content => ({
-      id: content!.id,
-      title: content!.title,
-      description: content!.description,
-      tags: content!.tags
-    }))
+  // AI Summary 생성 훅
+  const createAISummaryMutation = useCreateAISummary()
 
-  const handleModalSubmit = async () => {
-    // 여기에 실제 AI 요약본 생성 API 호출 로직 추가
-    await new Promise(resolve => setTimeout(resolve, 2000)) // 임시 지연
+  const handleModalSubmit = async (summaryData: {
+    fileId: number[]
+    title: string
+    description: string
+    modelType: string
+    promptType: string
+  }): Promise<void> => {
+    try {
+      // API 호출
+      await createAISummaryMutation.mutateAsync(summaryData)
 
-    // 성공 후 모달 닫기
-    handleModalClose()
+      // 성공 후 onAISummarySuccess 콜백 호출
+      if (onAISummarySuccess) {
+        onAISummarySuccess()
+      }
+
+      // 성공 후 모달 닫기
+      handleModalClose()
+    } catch (error) {
+      alert('AI 요약본 생성에 실패했습니다. 다시 시도해주세요.')
+    }
   }
+
   return (
-    <div className="h-full flex flex-col bg-gray-50">
+    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+      {/* 제목과 세로바 */}
+      <div className="flex items-center mb-6">
+        <div className="w-2 h-8 rounded-full mr-3" style={{ backgroundColor: '#477866' }}></div>
+        <h2 className="text-2xl font-bold text-gray-900">공부 자료</h2>
+      </div>
+
       {/* Category Tabs - attached to the box */}
       <div className="px-0 pt-0 pb-0">
         <CategoryTab
@@ -136,9 +207,15 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
       </div>
 
       {/* Main Content Box - 스크롤 가능하게 수정 */}
-      <div className="flex-1 bg-white rounded-lg shadow-sm flex flex-col min-h-0 relative">
+      <div className="flex-1 bg-gray-50 rounded-lg flex flex-col min-h-0 relative mt-4">
         {/* Upload Button - MainContent 박스의 오른쪽 위에 배치 */}
-        <div className="absolute top-4 right-4 z-10">
+        <div className="absolute top-4 right-4 z-10 flex gap-3">
+          <button
+            onClick={handleOpenAIModal}
+            className="px-6 py-2 bg-[#AA64FF] text-white rounded-lg hover:bg-[#9955EE] transition-colors"
+          >
+            AI 요약
+          </button>
           <button
             onClick={onUploadData}
             className="px-6 py-2 bg-[#AA64FF] text-white rounded-lg hover:bg-[#9955EE] transition-colors"
@@ -148,7 +225,7 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
         </div>
 
         {/* Search Bar */}
-        <div className="p-4 pb-2 flex-shrink-0">
+        <div className="p-4 pb-2 flex-shrink-0 pr-72">
           <SearchBar
             searchTerm={searchTerm}
             onSearchChange={onSearchChange}
@@ -188,6 +265,7 @@ const ContentManagementTemplate: React.FC<ContentManagementTemplateProps> = ({
         onContentRemove={handleContentRemove}
         onSubmit={handleModalSubmit}
         onClose={handleModalClose}
+        onSuccess={onAISummarySuccess}
       />
     </div>
   )

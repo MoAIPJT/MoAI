@@ -4,7 +4,7 @@ import type { CalendarListProps } from './types'
 const CalendarList: React.FC<CalendarListProps> = ({ calendars }) => {
   return (
     <div>
-      <h3 className="text-white font-medium mb-3">My calendars</h3>
+      <h3 className="text-white font-medium mb-3">내 캘린더</h3>
       <div className="space-y-2">
         {calendars.map((cal, i) => (
           <div key={i} className="flex items-center gap-3">

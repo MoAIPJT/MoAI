@@ -6,7 +6,12 @@ const AISummaryCard: React.FC<AISummaryCardProps> = ({
   onClick
 }) => {
   const handleClick = () => {
-    onClick?.(summary.id)
+    if (onClick) {
+      onClick(summary.id)
+    } else {
+      // onClick이 없으면 기본적으로 새창으로 열기
+      window.open(`/ai-summary`, '_blank')
+    }
   }
 
   const formatDate = (dateString: string) => {
@@ -31,7 +36,7 @@ const AISummaryCard: React.FC<AISummaryCardProps> = ({
           {formatDate(summary.createdAt)}
         </span>
       </div>
-      <p 
+      <p
         className="text-sm text-gray-600"
         style={{
           display: '-webkit-box',
@@ -48,4 +53,4 @@ const AISummaryCard: React.FC<AISummaryCardProps> = ({
   )
 }
 
-export default AISummaryCard 
+export default AISummaryCard

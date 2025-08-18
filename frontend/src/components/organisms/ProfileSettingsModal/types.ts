@@ -1,7 +1,8 @@
 export interface ProfileData {
-  nickname: string
+  name: string
   email: string
-  profileImage?: string
+  profileImageUrl?: string | File
+  providerType?: string
 }
 
 export interface ProfileSettingsModalProps {
@@ -11,6 +12,5 @@ export interface ProfileSettingsModalProps {
   onUpdateProfile: (data: Partial<ProfileData>) => void
   onChangePassword: () => void
   onWithdrawMembership: () => void
-  onOpenChangePasswordModal: () => void
   isLoading?: boolean
 }

@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Button from '@/components/atoms/Button'
 import LabeledInput from '@/components/molecules/LabeledInput'
 import LinkText from '@/components/atoms/LinkText'
 import Checkbox from '@/components/atoms/CheckBox'
 import type { LoginFormProps, LoginFormData } from './types'
 import WelcomeText from '@/components/molecules/WelcomeText'
+
 const LoginForm: React.FC<LoginFormProps> = ({
   onLogin,
   onKakaoLogin,
@@ -17,6 +18,17 @@ const LoginForm: React.FC<LoginFormProps> = ({
     password: '',
     rememberEmail: false
   })
+
+  // 에러가 발생해도 폼 상태는 유지
+  // 에러 발생 시 비밀번호만 초기화 (보안상)
+  useEffect(() => {
+    if (error) {
+      setFormData(prev => ({
+        ...prev,
+        password: '' // 비밀번호만 초기화
+      }))
+    }
+  }, [error])
 
   const handleInputChange = (field: keyof LoginFormData) => (event: React.ChangeEvent<HTMLInputElement>) => {
     if (field === 'rememberEmail') {
@@ -39,7 +51,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
   return (
     <div className="w-full max-w-md">
-      <WelcomeText/>
+      <WelcomeText />
 
       {/* 로그인 폼 */}
       <form className="space-y-6" onSubmit={handleSubmit}>
@@ -74,13 +86,13 @@ const LoginForm: React.FC<LoginFormProps> = ({
             onChange={handleInputChange('rememberEmail')}
           />
           <LinkText href="/reset-password" variant="underline">
-            비밀번호 초기화 &gt;
+            비밀번호 초기화
           </LinkText>
         </div>
 
         {/* 에러 메시지 */}
         {error && (
-          <div className="text-red-500 text-sm text-center">
+          <div className="text-red-500 text-sm text-center font-medium">
             {error}
           </div>
         )}
@@ -98,6 +110,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
           </Button>
 
           <Button
+            className="invisible"
             variant="secondary"
             size="lg"
             fullWidth
@@ -107,6 +120,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
           </Button>
 
           <Button
+            className="invisible"
             variant="gray"
             size="lg"
             fullWidth

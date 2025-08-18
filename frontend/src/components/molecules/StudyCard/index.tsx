@@ -9,8 +9,6 @@ const StudyCard: React.FC<StudyCardProps> = ({
     onClick?.(study.id)
   }
 
-
-
   return (
     <div
       className="bg-white rounded-lg border border-gray-200 p-6 cursor-pointer hover:shadow-md transition-shadow duration-200"
@@ -36,9 +34,17 @@ const StudyCard: React.FC<StudyCardProps> = ({
 
         {/* 스터디 정보 */}
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate">
-            {study.name}
-          </h3>
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-lg font-semibold text-gray-900 truncate">
+              {study.name}
+            </h3>
+            {/* 승인 대기중 상태 표시 */}
+            {study.status === 'PENDING' && (
+              <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full font-medium">
+                승인 대기중
+              </span>
+            )}
+          </div>
           {study.description && (
             <p className="text-sm text-gray-500 mb-2 truncate">
               {study.description}

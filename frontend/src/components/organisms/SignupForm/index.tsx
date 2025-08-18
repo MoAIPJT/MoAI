@@ -10,7 +10,8 @@ const SignupForm: React.FC<SignupFormProps> = ({
   onKakaoSignup,
   onGoogleSignup,
   loading = false,
-  error = null
+  error = null,
+  socialButtonsDisabled = false
 }) => {
   const [form, setForm] = useState<SignupFormData>({
     email: '',
@@ -40,7 +41,7 @@ const SignupForm: React.FC<SignupFormProps> = ({
 
   return (
     <div className="w-full max-w-md">
-<WelcomeText/>
+      <WelcomeText actionText="회원가입하세요." />
       <form className="space-y-4" onSubmit={handleSignup}>
         <LabeledInput
           id="email"
@@ -68,47 +69,52 @@ const SignupForm: React.FC<SignupFormProps> = ({
           onChange={handleChange('password')}
           fullWidth
         />
-        <div className="space-y-1">
-          <LabeledInput
-            id="passwordConfirm"
-            label="비밀번호 확인"
-            type="password"
-            value={form.passwordConfirm}
-            placeholder="비밀번호를 다시 입력해주세요."
-            onChange={handleChange('passwordConfirm')}
-            fullWidth
-          />
-          {/* 비밀번호 일치 상태 표시 - 항상 공간 확보 */}
-          <div className="h-5 flex items-center">
-            {form.passwordConfirm && form.password && (
-              <div className={`text-xs transition-opacity duration-200 ${form.password === form.passwordConfirm ? 'text-green-600' : 'text-red-500'}`}>
-                {form.password === form.passwordConfirm ? '✅ 비밀번호가 일치합니다.' : '❌ 비밀번호가 일치하지 않습니다.'}
-              </div>
-            )}
+        {/* 비밀번호 길이 상태 표시 - 입력 시작 시에만 표시 */}
+        {form.password && (
+          <div className="text-xs transition-opacity duration-200 mb-3 ${form.password.length >= 8 ? 'text-green-600' : 'text-red-500'}">
+            {form.password.length >= 8 ? '✅ 비밀번호가 8자 이상입니다.' : '❌ 비밀번호가 8자 이상이어야 합니다.'}
           </div>
-        </div>
+        )}
+        <LabeledInput
+          id="passwordConfirm"
+          label="비밀번호 확인"
+          type="password"
+          value={form.passwordConfirm}
+          placeholder="비밀번호를 다시 입력해주세요."
+          onChange={handleChange('passwordConfirm')}
+          fullWidth
+        />
+        {/* 비밀번호 일치 상태 표시 - 입력 시작 시에만 표시 */}
+        {form.passwordConfirm && form.password && (
+          <div className="text-xs transition-opacity duration-200 mb-3 ${form.password === form.passwordConfirm ? 'text-green-600' : 'text-red-500'}">
+            {form.password === form.passwordConfirm ? '✅ 비밀번호가 일치합니다.' : '❌ 비밀번호가 일치하지 않습니다.'}
+          </div>
+        )}
         {/* 에러 메시지 */}
         {error && (
-          <div className="text-red-500 text-sm text-center">
+          <div className="text-red-500 text-sm text-center font-medium">
             {error}
           </div>
         )}
 
-        <Button
-          variant="primary"
-          size="lg"
-          fullWidth
-          type="submit"
-          disabled={isButtonDisabled}
-        >
-          {loading ? '회원가입 중...' : '회원가입'}
-        </Button>
-        <Button variant="secondary" size="lg" fullWidth onClick={onKakaoSignup}>
-          카카오톡 회원가입
-        </Button>
-        <Button variant="gray" size="lg" fullWidth onClick={onGoogleSignup}>
-          구글 회원가입
-        </Button>
+        {/* 버튼 묶음: 딱 붙게 설정 */}
+        <div className="flex flex-col gap-2">
+          <Button
+            variant="primary"
+            size="lg"
+            fullWidth
+            type="submit"
+            disabled={isButtonDisabled}
+          >
+            {loading ? '회원가입 중...' : '회원가입'}
+          </Button>
+          <Button variant="secondary" size="lg" fullWidth onClick={onKakaoSignup} disabled={socialButtonsDisabled}>
+            카카오톡 회원가입
+          </Button>
+          <Button variant="gray" size="lg" fullWidth onClick={onGoogleSignup} disabled={socialButtonsDisabled}>
+            구글 회원가입
+          </Button>
+        </div>
       </form>
       <div className="text-center mt-6">
         <span className="text-gray-600">이미 계정이 있으신가요? </span>

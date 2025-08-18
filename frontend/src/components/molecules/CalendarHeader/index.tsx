@@ -25,7 +25,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           onClick={onToday}
           className="px-4 py-2 text-white bg-[#795AA1] rounded-md hover:bg-[#795AA1]/80 transition-colors"
         >
-          Today
+          오늘
         </button>
         <div className="flex">
           <button
@@ -51,7 +51,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
             currentView === "day" ? "bg-[#795AA1] text-white" : "text-white hover:bg-[#795AA1]/20"
           } text-sm`}
         >
-          Day
+          일
         </button>
         <button
           onClick={() => onViewChange("week")}
@@ -59,7 +59,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
             currentView === "week" ? "bg-[#795AA1] text-white" : "text-white hover:bg-[#795AA1]/20"
           } text-sm`}
         >
-          Week
+          주
         </button>
         <button
           onClick={() => onViewChange("month")}
@@ -67,7 +67,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
             currentView === "month" ? "bg-[#795AA1] text-white" : "text-white hover:bg-[#795AA1]/20"
           } text-sm`}
         >
-          Month
+          월
         </button>
       </div>
     </div>

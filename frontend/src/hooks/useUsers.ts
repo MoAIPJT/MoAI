@@ -8,28 +8,18 @@ import type {
 } from '../types/users'
 
 // Query hooks
-export const useMe = () => {
-  return useQuery({
+export const useMe = (): ReturnType<typeof useQuery<Profile>> => {
+  return useQuery<Profile>({
     queryKey: userKeys.me(),
     queryFn: usersService.getProfile,
     staleTime: 60 * 1000, // 60 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error: unknown) => {
-      // Don't retry on 404 (user not found)
-      if (error && typeof error === 'object' && 'code' in error && error.code === '404') return false
+      // Don't retry on 404 (user not found) or 403 (forbidden/token expired)
+      if (error && typeof error === 'object' && 'code' in error &&
+          (error.code === '404' || error.code === '403')) return false
       return failureCount < 3
-    },
-    // 에러 발생 시 더미 데이터 반환 (개발용)
-    placeholderData: {
-      id: 1,
-      email: 'dksejrqus2@gmail.com',
-      name: '안덕현',
-      nickname: '안덕현',
-      profileImageUrl: '',
-      providerType: 'LOCAL',
-      isVerified: true,
-      createdAt: '2024-01-01'
-    } as Profile
+    }
   })
 }
 
@@ -59,6 +49,10 @@ export const useLogin = () => {
       })
       // Invalidate and refetch user profile
       queryClient.invalidateQueries({ queryKey: userKeys.me() })
+    },
+    onError: (error: unknown) => {
+      // 로그인 실패 시 에러 로깅
+      console.error('Login failed:', error)
     }
   })
 }

@@ -3,6 +3,10 @@ import api from './api'
 // API 문서에 맞는 일정 목록 조회 응답 타입
 export interface ScheduleListResponse {
   id: number
+  studyId: number
+  name: string
+  description: string
+  image: string
   startDatetime: string
   endDatetime: string
   title: string
