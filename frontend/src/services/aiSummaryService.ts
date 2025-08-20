@@ -101,21 +101,6 @@ export const createAISummary = async (summaryData: {
   modelType: string
   promptType: string
 }) => {
-  // 요청 데이터 로깅
-  console.log('🚀 AI 요약본 생성 요청:', {
-    endpoint: 'POST /ai/create',
-    requestData: summaryData,
-    timestamp: new Date().toISOString()
-  })
-
   const response = await api.post('/ai/create', summaryData)
-
-  // 응답 데이터 로깅
-  console.log('✅ AI 요약본 생성 응답:', {
-    status: response.status,
-    responseData: response.data,
-    timestamp: new Date().toISOString()
-  })
-
   return response.data
 }

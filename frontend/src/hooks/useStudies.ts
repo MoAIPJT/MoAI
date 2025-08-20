@@ -21,12 +21,9 @@ export const useStudySidebar = (userId: number) => {
 }
 
 export const useMyStudies = () => {
-  console.log('useMyStudies called')
-
   return useQuery({
     queryKey: studyKeys.allMine(),
     queryFn: () => {
-      console.log('useMyStudies queryFn executing')
       return studyService.getAllStudies()
     },
     staleTime: 60 * 1000, // 60 seconds
@@ -116,7 +113,7 @@ export const useCreateStudy = (userId: number, options?: {
       queryClient.invalidateQueries({ queryKey: studyKeys.sidebar(userId) }) // 사이드바용
       queryClient.invalidateQueries({ queryKey: studyKeys.allMine() }) // 대시보드용
 
-      console.log('스터디 생성 성공 - 쿼리 무효화 완료:', data)
+
 
       // 새 스터디 생성 후 전역 컨텍스트 갱신
       setCurrentStudy({

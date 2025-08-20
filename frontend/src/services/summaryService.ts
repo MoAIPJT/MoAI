@@ -59,23 +59,9 @@ export const fetchPdfList = async (userId: string): Promise<PDFListResponse> => 
 
 export const fetchSummaryDetail = async (summaryId: string) => {
   try {
-    console.log('🚀 요약본 상세 조회 요청:', {
-      endpoint: `GET /ai/detail/${summaryId}`,
-      summaryId,
-      timestamp: new Date().toISOString()
-    })
-
     const response = await apiClient.get(`/ai/detail/${summaryId}`)
-
-    console.log('✅ 요약본 상세 조회 응답:', {
-      status: response.status,
-      responseData: response.data,
-      timestamp: new Date().toISOString()
-    })
-
     return response.data
   } catch (error) {
-    console.error('❌ 요약본 상세 조회 실패:', error)
     throw error
   }
 }

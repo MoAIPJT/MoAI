@@ -27,7 +27,6 @@ const GoogleCallback = () => {
     const fetchGoogleToken = async () => {
       // If there's no code, we can't proceed. Navigate to an error/login page or log the error.
       if (!code) {
-        console.error('Authorization code not found.');
         navigate('/login?error=google_auth_failed'); // Redirect to login with an error message
         return;
       }
@@ -51,7 +50,6 @@ const GoogleCallback = () => {
         navigate('/dashboard');
 
       } catch (err) {
-        console.error('Google login failed:', err);
         // If the API call fails, redirect the user back to the login page with an error indicator.
         navigate('/login?error=token_exchange_failed');
       }

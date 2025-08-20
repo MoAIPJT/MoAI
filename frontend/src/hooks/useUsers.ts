@@ -31,15 +31,8 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: usersService.login,
     onSuccess: (data: TokenRes) => {
-      // 디버깅: 응답 데이터 확인
-      console.log('Login response data:', data)
-
       // 토큰이 유효한지 확인
       if (!data.accessToken || !data.refreshToken) {
-        console.error('Invalid tokens received:', {
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken
-        })
         return
       }
 
@@ -51,8 +44,7 @@ export const useLogin = () => {
       queryClient.invalidateQueries({ queryKey: userKeys.me() })
     },
     onError: (error: unknown) => {
-      // 로그인 실패 시 에러 로깅
-      console.error('Login failed:', error)
+      // 로그인 실패 시 에러 처리
     }
   })
 }
@@ -140,15 +132,8 @@ export const useChangePassword = () => {
     onSuccess: (data: TokenRes | void) => {
       // If new tokens are returned, update them
       if (data && 'accessToken' in data) {
-        // 디버깅: 응답 데이터 확인
-        console.log('Change password response data:', data)
-
         // 토큰이 유효한지 확인
         if (!data.accessToken || !data.refreshToken) {
-          console.error('Invalid tokens received:', {
-            accessToken: data.accessToken,
-            refreshToken: data.refreshToken
-          })
           return
         }
 

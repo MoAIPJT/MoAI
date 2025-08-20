@@ -115,7 +115,6 @@ const VideoConferencePage: React.FC = () => {
                 setLocalTrack(cameraTrack);
             }
         } catch (error) {
-            console.log('There was an error connecting to the room:', (error as Error).message);
             await leaveRoom();
         }
     }
@@ -357,7 +356,6 @@ const VideoConferencePage: React.FC = () => {
                 setIsScreenSharing(true);
             }
         } catch (error) {
-            console.error('Error toggling screen share:', error);
             setIsScreenSharing(false);
             setScreenShareTrack(undefined);
         }

@@ -422,7 +422,6 @@ const StudyDetailPage: React.FC = () => {
       }
 
       // 성공 메시지 (실제로는 toast 등을 사용)
-      console.log('공지사항이 업데이트되었습니다.')
 
       // 성공 시 스터디 상세 정보 React Query 캐시 무효화
       if (hashId) {
@@ -437,11 +436,10 @@ const StudyDetailPage: React.FC = () => {
           setNoticeContent(response.notice)
         }
       } catch (error) {
-        console.error('공지사항 동기화 실패:', error)
+        // 공지사항 동기화 실패 처리
       }
 
     } catch (error: unknown) {
-      console.error('공지사항 업데이트 실패:', error)
       // 에러 메시지 (실제로는 toast 등을 사용)
       alert('공지사항 업데이트에 실패했습니다. 다시 시도해주세요.')
     }
@@ -575,30 +573,19 @@ const StudyDetailPage: React.FC = () => {
     }
   }
   const handleJoinStudy = async () => {
-    console.log('🎯 handleJoinStudy 함수 시작')
-    console.log('📊 현재 상태:', {
-      isLoggedIn,
-      studyDetail,
-      hashId,
-      userProfile
-    })
-
     // 로그인되지 않은 경우 로그인 페이지로 리다이렉트
     if (!isLoggedIn) {
-      console.log('❌ 로그인되지 않음 - 로그인 페이지로 이동')
       navigate('/login')
       return
     }
 
     // studyDetail이 없거나 studyId가 없는 경우 에러 처리
     if (!studyDetail?.studyId || studyDetail.studyId <= 0) {
-      console.log('❌ studyDetail 또는 studyId가 없음:', studyDetail)
       alert('스터디 정보를 찾을 수 없습니다. 페이지를 새로고침해주세요.')
       return
     }
 
     const targetStudyId = studyDetail.studyId
-    console.log('🚀 가입 요청 시작 - studyId:', targetStudyId)
 
     try {
       // ✅ 즉시 로컬 상태 업데이트 (API 호출 전에 먼저 실행)
@@ -607,8 +594,6 @@ const StudyDetailPage: React.FC = () => {
           ...studyDetail,
           status: 'PENDING'
         }
-
-        console.log('📝 로컬 상태 업데이트:', updatedStudyDetail)
 
         // React Query 캐시 즉시 업데이트
         queryClient.setQueryData(['studyDetail', hashId], updatedStudyDetail)
@@ -627,17 +612,13 @@ const StudyDetailPage: React.FC = () => {
               : study
           )
 
-          console.log('📝 사이드바 데이터 업데이트:', updatedSidebarData)
-
           // 사이드바 데이터 즉시 업데이트
           queryClient.setQueryData(studyKeys.sidebar(userProfile.id), updatedSidebarData)
         }
       }
 
-      console.log('📡 API 호출 시작 - joinStudy')
       // 가입 요청 API 호출
       const result = await joinStudy({ studyId: targetStudyId })
-      console.log('✅ API 호출 성공:', result)
 
       // ✅ API 성공 후 추가 캐시 무효화 (백그라운드에서 최신 데이터 동기화)
       if (hashId) {
@@ -650,15 +631,12 @@ const StudyDetailPage: React.FC = () => {
 
       // ✅ 가입 성공 후 성공 메시지 표시하고 페이지 자동 새로고침
       alert('가입 요청이 성공적으로 전송되었습니다!')
-      console.log('🔄 페이지 새로고침 예정 (100ms 후)')
 
       setTimeout(() => {
-        console.log('🔄 페이지 새로고침 실행')
         window.location.reload()
       }, 100) // 0.1초 후 새로고침하여 "가입 승인 대기" 상태 표시
 
     } catch (error) {
-      console.error('❌ 가입 요청 실패:', error)
 
       // ✅ API 실패 시 원래 상태로 롤백
       if (studyDetail && hashId) {

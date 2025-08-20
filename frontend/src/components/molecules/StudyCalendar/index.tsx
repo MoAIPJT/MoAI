@@ -347,7 +347,6 @@ const StudyCalendar: React.FC<StudyCalendarProps> = ({
       // 페이지 새로고침하여 최신 데이터 반영
       window.location.reload()
     } catch (error) {
-      console.error('❌ 일정 생성 실패:', error)
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { data?: unknown; status?: number } }
         const status = axiosError.response?.status

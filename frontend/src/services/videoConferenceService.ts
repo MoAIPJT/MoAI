@@ -53,7 +53,6 @@ class VideoConferenceService {
       const response = await api.post(`${this.baseURL}/${hashId}/session/open`)
       return response.data
     } catch (error) {
-      console.error('세션 열기 실패:', error)
       throw new Error('세션을 열 수 없습니다.')
     }
   }
@@ -68,7 +67,6 @@ class VideoConferenceService {
       const response = await api.post(`${this.baseURL}/${hashId}/session/join`)
       return response.data
     } catch (error) {
-      console.error('세션 참가 실패:', error)
       throw new Error('세션에 참가할 수 없습니다.')
     }
   }
@@ -83,7 +81,6 @@ class VideoConferenceService {
       const response = await api.post(`${this.baseURL}/${hashId}/session/close`)
       return response.data
     } catch (error) {
-      console.error('세션 종료 실패:', error)
       throw new Error('세션을 종료할 수 없습니다.')
     }
   }
@@ -98,7 +95,6 @@ class VideoConferenceService {
       const response = await api.get(`${this.baseURL}/${hashId}/session/participants`)
       return response.data
     } catch (error) {
-      console.error('참가자 목록 조회 실패:', error)
       throw new Error('참가자 목록을 조회할 수 없습니다.')
     }
   }

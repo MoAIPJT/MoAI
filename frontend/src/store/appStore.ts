@@ -52,7 +52,6 @@ export const useAppStore = create<AppState>((set) => ({
       set((state) => {
         // 빈 값 저장 방지
         if (!tokens.accessToken || !tokens.refreshToken) {
-          console.error('빈 토큰으로 setAuth 호출됨:', tokens)
           return state
         }
 

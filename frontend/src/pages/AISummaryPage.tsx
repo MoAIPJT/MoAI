@@ -62,10 +62,8 @@ const AISummaryPage: React.FC = () => {
       setIsLoading(true)
       const userId = localStorage.getItem('userId') || '1'
       const response = await fetchSummaryList(userId)
-      console.log('API 응답:', response)
 
       const studies = response.studies || []
-      console.log('Studies 데이터:', studies)
 
       if (studies.length > 0) {
         setStudiesWithSummaries(studies)
@@ -82,7 +80,6 @@ const AISummaryPage: React.FC = () => {
         setActiveItem('')
       }
     } catch (error) {
-      console.error('AI 요약본 목록을 불러오는데 실패했습니다:', error)
       // 에러 시에도 빈 상태로 설정
       setStudiesWithSummaries([])
       setExpandedStudies([])
@@ -104,15 +101,11 @@ const AISummaryPage: React.FC = () => {
 
     // 요약본 상세 정보 가져오기 (사이드바 클릭 시)
   const fetchSummaryDetailData = async (summaryId: string) => {
-    console.log('요약본 선택:', summaryId)
-
     try {
       const detailResponse = await fetchSummaryDetail(summaryId)
-      console.log('요약본 상세 응답:', detailResponse)
 
       // summaryJson 데이터 처리 (이미 파싱된 객체)
       if (detailResponse?.summaryJson) {
-        console.log('받은 요약 데이터:', detailResponse.summaryJson)
 
         // summaryJson이 배열인 경우 직접 사용
         if (Array.isArray(detailResponse.summaryJson)) {
@@ -128,7 +121,6 @@ const AISummaryPage: React.FC = () => {
             summarySentence: item.summarySentence
           }))
           setSummaryList(convertedData)
-          console.log('변환된 요약 데이터:', convertedData)
         }
       }
 
@@ -149,15 +141,12 @@ const AISummaryPage: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error('요약본 상세 정보를 가져오는데 실패했습니다:', error)
       // 에러 발생 시 기본 데이터 유지
-      console.log('기본 데이터를 유지합니다.')
     }
   }
 
   // 사이드바 아이템 클릭 핸들러
   const handleItemClick = async (itemId: string) => {
-    console.log('요약본 클릭:', itemId)
     setActiveItem(itemId)
 
     // 요약본 상세 정보 가져오기
@@ -178,7 +167,6 @@ const AISummaryPage: React.FC = () => {
   }
 
   const handleSummaryClick = (item: SummaryItem) => {
-    console.log('요약 클릭:', item)
   }
 
   const handleSettingsClick = () => {
@@ -210,7 +198,6 @@ const AISummaryPage: React.FC = () => {
 
   // 요약본 수정 관련 함수들
   const handleEditSummary = (summary: { summaryId: string; title: string; description: string }) => {
-    console.log('수정할 요약본 데이터:', summary)
     setEditingSummary({
       id: summary.summaryId,
       title: summary.title,
@@ -232,10 +219,7 @@ const AISummaryPage: React.FC = () => {
     if (!editingSummary) return
 
     try {
-      console.log('수정 요청 데이터:', {
-        title: data.title,
-        description: data.description
-      })
+
 
       await editAiSummary(parseInt(editingSummary.id), {
         title: data.title,
@@ -249,7 +233,6 @@ const AISummaryPage: React.FC = () => {
       // 요약본 목록 새로고침
       fetchSummaries()
     } catch (error) {
-      console.error('요약본 수정 실패:', error)
       alert('요약본 수정에 실패했습니다.')
     }
   }
@@ -274,7 +257,6 @@ const AISummaryPage: React.FC = () => {
           setActiveItem('')
         }
       } catch (error) {
-        console.error('요약본 삭제 실패:', error)
         alert('요약본 삭제에 실패했습니다.')
       }
     }

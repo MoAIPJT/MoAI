@@ -84,7 +84,6 @@ const DashboardPage: React.FC = () => {
 
       setCalendarEvents(events)
     } catch (error) {
-      console.error('일정 데이터 로드 실패:', error)
       setCalendarEvents([])
     }
   }
@@ -479,7 +478,7 @@ const DashboardPage: React.FC = () => {
 
       setCalendarEvents(events)
     } catch {
-      console.error('월별 일정 데이터 로드 실패')
+      // 월별 일정 데이터 로드 실패 처리
     }
   }
 

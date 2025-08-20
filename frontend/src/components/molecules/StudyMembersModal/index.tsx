@@ -57,7 +57,6 @@ const StudyMembersModal: React.FC<StudyMembersModalProps> = ({
       // 복사 상태 초기화
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
-      console.error('클립보드 복사 실패:', err)
       alert('링크 복사에 실패했습니다.')
     }
   }

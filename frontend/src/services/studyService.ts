@@ -91,17 +91,13 @@ export const getSidebarStudies = async (): Promise<StudyListItem[]> => {
 
 export const getAllStudies = async (): Promise<StudyAllItem[]> => {
   try {
-    console.log('getAllStudies API call')
     const response = await api.get<StudyAllItem[]>('/study/all')
-    console.log('getAllStudies API response:', response.data)
     return response.data
   } catch (error) {
-    console.error('getAllStudies API error:', error)
     // 404 lists -> [] (empty array)
     if (error && typeof error === 'object' && 'response' in error) {
       const axiosError = error as { response?: { status?: number } }
       if (axiosError.response?.status === 404) {
-        console.log('getAllStudies: 404 error, returning empty array')
         return []
       }
     }
@@ -122,22 +118,14 @@ export const getStudyDetail = async (hashId: string): Promise<StudyDetail> => {
     }>(`/study/detail?hashId=${hashId}`)
     const data = response.data
 
-    console.log('🔍 Study detail API response:', data)
-    console.log('🔍 Response data keys:', Object.keys(data))
-    console.log('🔍 Response data values:', Object.values(data))
-
     // ✅ 백엔드 응답 구조에 맞게 studyId 매핑
     // StudyResponseDto의 id 필드를 studyId로 사용
     const studyId = data.id
 
     // id가 0인 경우는 백엔드에서 해당 스터디를 찾지 못한 것
     if (!studyId || studyId === 0) {
-      console.error('❌ 백엔드에서 스터디를 찾을 수 없음. id가 0입니다:', data)
-      console.error('❌ hashId:', hashId)
       throw new Error('해당 스터디를 찾을 수 없습니다. 스터디가 존재하지 않거나 삭제되었을 수 있습니다.')
     }
-
-    console.log('🎯 최종 studyId:', studyId)
 
     const result: StudyDetail = {
       studyId: studyId,
@@ -149,38 +137,22 @@ export const getStudyDetail = async (hashId: string): Promise<StudyDetail> => {
       userCount: data.userCount
     }
 
-    console.log('✅ Converted StudyDetail:', result)
     return result
 
   } catch (error) {
-    console.error('❌ getStudyDetail API error:', error)
     throw normalizeError(error)
   }
 }
 
 export const getStudyMembers = async (studyId: string): Promise<Member[]> => {
   try {
-    console.log('getStudyMembers API call with studyId:', studyId)
     const response = await api.get<Member[]>(`/study/${studyId}/members`)
-    console.log('getStudyMembers API response:', response.data)
-    // 디버깅을 위해 멤버 데이터 자세히 로깅
-    response.data.forEach(member => {
-      console.log('Member details:', {
-        id: member.userId,
-        name: member.member,
-        role: member.role,
-        email: member.email,
-        imageUrl: member.imageUrl
-      })
-    })
     return response.data
   } catch (error) {
-    console.error('getStudyMembers API error:', error)
     // 404 lists -> [] (empty array)
     if (error && typeof error === 'object' && 'response' in error) {
       const axiosError = error as { response?: { status?: number } }
       if (axiosError.response?.status === 404) {
-        console.log('getStudyMembers: 404 error, returning empty array')
         return []
       }
     }
@@ -260,11 +232,7 @@ export const updateStudy = async (studyId: number, data: {
       formData.append('maxCapacity', data.maxCapacity.toString())
 
 
-      console.log('FormData 사용 - maxCapacity:', data.maxCapacity.toString())
-      console.log('FormData 내용:')
-      for (const [key, value] of formData.entries()) {
-        console.log(`${key}:`, value)
-      }
+
 
       await api.patch(`/study/${studyId}/update`, formData, {
         headers: {
@@ -284,15 +252,12 @@ export const updateStudy = async (studyId: number, data: {
         studyId: studyId
       }
 
-      console.log('JSON 사용 - requestBody:', requestBody)
+
 
       await api.patch(`/study/${studyId}/update`, requestBody)
     }
 
-    console.log('=== updateStudy API 성공 ===')
   } catch (error) {
-    console.error('=== updateStudy API 에러 ===')
-    console.error('에러 상세:', error)
     throw normalizeError(error)
   }
 }

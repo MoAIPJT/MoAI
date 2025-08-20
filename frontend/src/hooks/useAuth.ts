@@ -56,15 +56,12 @@ export const useAuth = () => {
 
       // 로그인 성공 후 리다이렉트 - 저장된 URL이 있으면 해당 URL로, 없으면 대시보드로
       const redirectUrl = localStorage.getItem('redirectAfterLogin')
-      console.log('Login successful, redirectUrl:', redirectUrl) // 디버깅용
       if (redirectUrl) {
         localStorage.removeItem('redirectAfterLogin') // 사용 후 제거
-        console.log('Redirecting to:', redirectUrl) // 디버깅용
         // React Router navigate 문제를 피하기 위해 window.location.replace 사용
         // 강제로 페이지를 새로고침하여 컴포넌트 재마운트
         window.location.replace(redirectUrl)
       } else {
-        console.log('No redirect URL, going to dashboard') // 디버깅용
         // React Router navigate 문제를 피하기 위해 window.location.replace 사용
         window.location.replace('/dashboard')
       }

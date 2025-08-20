@@ -35,9 +35,7 @@ export const useStudySchedules = (studyId: number, year: number, month: number) 
     queryKey: scheduleKeys.byStudyMonth(studyId, year, month),
     queryFn: () => scheduleService.getStudySchedules(studyId, from, to),
     select: (data) => {
-      console.log('조회된 원본 데이터:', data)
       const filtered = filterByMonth(data, year, month)
-      console.log('필터링된 데이터:', filtered)
       return filtered
     },
     staleTime: 60 * 1000, // 60초

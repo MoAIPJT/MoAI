@@ -88,7 +88,7 @@ export const useCreateAISummary = () => {
       queryClient.invalidateQueries({ queryKey: ['aiSummaries'] })
     },
     onError: (error) => {
-      console.error('AI 요약본 생성 실패:', error)
+      // AI 요약본 생성 실패 처리
     }
   })
 }
